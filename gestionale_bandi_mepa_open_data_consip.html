@@ -1,0 +1,1455 @@
+<!DOCTYPE html>
+<html lang="it" class="h-full bg-[#0b1120]">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MePA &amp; Consip Desk Pro - SQLite 3 &amp; Monitoraggio Bandi</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Load official sql.js for real in-browser SQLite format 3 read & write -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/sql-wasm.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body class="h-full flex overflow-hidden bg-[#0b1120] text-slate-100 selection:bg-cyan-500/30 selection:text-cyan-200">
+
+  <!-- Mobile Sidebar Backdrop Overlay -->
+  <div id="sidebarOverlay" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-40 hidden lg:hidden"></div>
+
+  <!-- SIDEBAR NAVIGATION -->
+  <aside id="sidebar" class="fixed lg:static inset-y-0 left-0 z-50 w-72 bg-slate-950 border-r border-slate-800/80 flex flex-col justify-between transition-transform duration-200 -translate-x-full lg:translate-x-0 shadow-2xl lg:shadow-none">
+    
+    <!-- Top Branding -->
+    <div class="p-5 border-b border-slate-800/80">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="h-10 w-10 rounded-xl bg-gradient-to-tr from-cyan-600 via-blue-600 to-indigo-600 flex items-center justify-center font-bold text-white shadow-lg shadow-cyan-500/20">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"/></svg>
+          </div>
+          <div>
+            <h1 class="text-sm font-extrabold text-white tracking-tight flex items-center gap-1.5">
+              MePA Desk
+              <span class="text-[9px] uppercase font-mono px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 font-bold">SQLITE 3</span>
+            </h1>
+            <p class="text-[11px] text-slate-400 font-mono">Database Relazionale &amp; Bandi</p>
+          </div>
+        </div>
+        <button id="btnCloseMobileSidebar" aria-label="Chiudi menu laterale" class="lg:hidden text-slate-400 hover:text-white p-2 rounded-xl touch-target-action">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <!-- Quick Status Metric in Sidebar -->
+      <div class="mt-4 p-3 rounded-xl bg-slate-900/80 border border-slate-800 flex items-center justify-between">
+        <div class="space-y-0.5">
+          <div class="text-[10px] uppercase font-mono text-slate-400">Gare nel Database</div>
+          <div class="flex items-baseline gap-1.5">
+            <span id="sideStatFiltered" class="text-xl font-bold font-mono text-cyan-400">0</span>
+            <span id="sideStatTotal" class="text-xs font-mono text-slate-500">/ 0</span>
+          </div>
+        </div>
+        <div class="text-right space-y-0.5">
+          <div class="text-[10px] uppercase font-mono text-amber-400 font-semibold">&lt; 7gg Scadenza</div>
+          <span id="sideStatExpiring" class="text-xl font-bold font-mono text-amber-400">0</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Navigation Menu Items -->
+    <nav class="flex-1 px-3 py-4 space-y-1.5 overflow-y-auto custom-scrollbar text-xs">
+      <div class="px-3 pb-1 text-[10px] uppercase tracking-wider font-mono text-slate-500 font-semibold">Workspace Operativo</div>
+
+      <!-- Item 1: Cruscotto Operativo -->
+      <button onclick="switchView('cruscotto')" id="nav-cruscotto" class="w-full text-left px-3 py-2.5 rounded-xl flex items-center gap-3 transition nav-item-active">
+        <svg class="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
+        <div class="flex-1">
+          <div class="font-semibold text-slate-200">Cruscotto Gare &amp; Fasi</div>
+          <div class="text-[10px] text-slate-400 font-normal">Filtri rapidi, Tabella e Kanban</div>
+        </div>
+      </button>
+
+      <!-- Item 1.5: Wizard Deterministico Partecipazione Gara -->
+      <button onclick="window.openTenderWizard()" id="nav-wizard" class="w-full text-left px-3 py-2.5 rounded-xl flex items-center gap-3 transition nav-item-inactive">
+        <svg class="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+        <div class="flex-1">
+          <div class="flex items-center justify-between">
+            <span class="font-semibold text-slate-200">Wizard 4 Fasi</span>
+            <span class="text-[9px] font-mono px-1.5 py-0.2 rounded bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">Agent Ready</span>
+          </div>
+          <div class="text-[10px] text-slate-400 font-normal">Workflow guidato &amp; export Consip</div>
+        </div>
+      </button>
+
+      <!-- Item 2: Cataloghi Beni & Servizi MePA -->
+      <button onclick="switchView('cataloghi')" id="nav-cataloghi" class="w-full text-left px-3 py-2.5 rounded-xl flex items-center gap-3 transition nav-item-inactive">
+        <svg class="w-4 h-4 text-pink-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
+        <div class="flex-1">
+          <div class="flex items-center justify-between">
+            <span class="font-semibold text-slate-200">Cataloghi MePA</span>
+            <span class="text-[9px] font-mono px-1.5 py-0.2 rounded bg-pink-500/10 text-pink-400 border border-pink-500/20">287k</span>
+          </div>
+          <div class="text-[10px] text-slate-400 font-normal">Articoli, CPV e Listini Merci</div>
+        </div>
+      </button>
+
+      <!-- Item 3: Amministrazioni Pubbliche -->
+      <button onclick="switchView('amministrazioni')" id="nav-amministrazioni" class="w-full text-left px-3 py-2.5 rounded-xl flex items-center gap-3 transition nav-item-inactive">
+        <svg class="w-4 h-4 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+        <div class="flex-1">
+          <div class="flex items-center justify-between">
+            <span class="font-semibold text-slate-200">Enti &amp; Clienti PA</span>
+            <span class="text-[9px] font-mono px-1.5 py-0.2 rounded bg-sky-500/10 text-sky-400 border border-sky-500/20">20k</span>
+          </div>
+          <div class="text-[10px] text-slate-400 font-normal">Anagrafica, CF e Punti Ordinanti</div>
+        </div>
+      </button>
+
+      <!-- Item 4: Statistiche e Analisi di Mercato -->
+      <button onclick="switchView('analytics')" id="nav-analytics" class="w-full text-left px-3 py-2.5 rounded-xl flex items-center gap-3 transition nav-item-inactive">
+        <svg class="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+        <div class="flex-1">
+          <div class="font-semibold text-slate-200">Statistiche &amp; Mercato</div>
+          <div class="text-[10px] text-slate-400 font-normal">Valori gare, settori e trend</div>
+        </div>
+      </button>
+
+      <div class="pt-2 px-3 pb-1 text-[10px] uppercase tracking-wider font-mono text-slate-500 font-semibold">Strumenti &amp; Risorse</div>
+
+      <!-- Item 5: Hub Download Dati.consip.it -->
+      <button onclick="switchView('opendata')" id="nav-opendata" class="w-full text-left px-3 py-2.5 rounded-xl flex items-center gap-3 transition nav-item-inactive">
+        <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+        <div class="flex-1">
+          <div class="font-semibold text-slate-200">Open Data Consip Hub</div>
+          <div class="text-[10px] text-slate-400 font-normal">Dataset ufficiali 2025–2028</div>
+        </div>
+      </button>
+
+      <!-- Item 3: Guida Metodologica -->
+      <button onclick="switchView('guida')" id="nav-guida" class="w-full text-left px-3 py-2.5 rounded-xl flex items-center gap-3 transition nav-item-inactive">
+        <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+        <div class="flex-1">
+          <div class="font-semibold text-slate-200">Guida Metodologica</div>
+          <div class="text-[10px] text-slate-400 font-normal">Le 4 fasi, buste e semaforo</div>
+        </div>
+      </button>
+
+      <!-- Item 4: Motore SQLite & Import/Export -->
+      <button onclick="switchView('sqlite')" id="nav-sqlite" class="w-full text-left px-3 py-2.5 rounded-xl flex items-center gap-3 transition nav-item-inactive">
+        <svg class="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"/></svg>
+        <div class="flex-1">
+          <div class="font-semibold text-slate-200">Database SQLite 3 &amp; Dati</div>
+          <div class="text-[10px] text-slate-400 font-normal">Scarica .db binario &amp; Import</div>
+        </div>
+      </button>
+    </nav>
+
+    <!-- Sidebar Bottom Status & Quick Add -->
+    <div class="p-4 border-t border-slate-800/80 space-y-3">
+      <button id="btnSidebarDownloadDb" class="w-full py-2 px-3 rounded-xl bg-indigo-600/30 hover:bg-indigo-600/40 border border-indigo-500/40 text-indigo-200 font-bold text-xs flex items-center justify-center gap-2 transition" title="Scarica il file SQLite Format 3">
+        <svg class="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+        <span>Scarica DB SQLite 3 (.db)</span>
+      </button>
+      <button id="btnSidebarNewTender" class="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-bold text-xs flex items-center justify-center gap-2 shadow-lg shadow-cyan-500/20 active:scale-95 transition">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+        <span>Nuova Gara Manuale</span>
+      </button>
+      <div class="flex items-center justify-between text-[10px] font-mono text-slate-500">
+        <span id="sqliteStatusText">SQLite: Inizializzazione...</span>
+        <span id="sqliteStatusDot" class="text-amber-400 font-semibold">● Caricamento</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN VIEWPORT CONTAINER -->
+  <div class="flex-1 flex flex-col min-w-0 overflow-hidden bg-[#0b1120]">
+    
+    <!-- TOP BAR -->
+    <header class="h-16 bg-slate-950/80 border-b border-slate-800/80 backdrop-blur px-4 sm:px-6 flex items-center justify-between gap-4 z-30 shrink-0">
+      
+      <div class="flex items-center gap-3 min-w-0">
+        <button id="btnOpenMobileSidebar" aria-label="Apri menu laterale" class="lg:hidden p-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-300 hover:text-white touch-target-action">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+        </button>
+
+        <div class="truncate">
+          <h2 id="topBarTitle" class="text-sm sm:text-base font-bold text-white truncate flex items-center gap-2">
+            <span>Cruscotto Operativo Gare</span>
+            <span class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 hidden sm:inline-flex">Motore SQLite 3 Attivo</span>
+          </h2>
+          <p id="topBarSubtitle" class="text-xs text-slate-400 truncate hidden sm:block">Operazioni rapide con zero blocchi browser</p>
+        </div>
+      </div>
+
+      <!-- Top Right Global Actions -->
+      <div class="flex items-center gap-2">
+        <button id="btnTopLoadSample" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800/90 hover:bg-slate-700 text-slate-200 font-semibold text-xs border border-slate-700 transition" title="Carica dati demo nel database SQLite">
+          <svg class="w-3.5 h-3.5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+          <span class="hidden md:inline">Dati Demo</span>
+        </button>
+
+        <!-- Fast Local File Import (Async chunked) -->
+        <label class="cursor-pointer inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-emerald-600/30 to-teal-600/30 hover:from-emerald-600/40 hover:to-teal-600/40 text-emerald-300 font-semibold text-xs border border-emerald-500/40 transition" title="Carica file JSON, CSV o Database SQLite .db">
+          <svg class="w-3.5 h-3.5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+          <span>Importa JSON / CSV / .db</span>
+          <input id="inputUploadFile" type="file" accept=".json,.csv,.db,.sqlite,.sqlite3,.txt" class="hidden">
+        </label>
+
+        <button onclick="window.print()" aria-label="Stampa o Salva PDF" class="p-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-white transition touch-target-action" title="Stampa o Salva PDF (Ctrl + P)">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+        </button>
+      </div>
+
+    </header>
+
+    <!-- CONTENT SCROLL AREA -->
+    <main class="flex-1 overflow-y-auto custom-scrollbar p-4 sm:p-6 lg:p-8 space-y-6 bg-[#0b1120]">
+
+      <!-- Alert Notification Banner -->
+      <div id="importAlertBox" class="hidden p-3.5 rounded-2xl border text-xs flex items-center justify-between shadow-lg">
+        <span id="importAlertMsg" class="font-medium"></span>
+        <button onclick="document.getElementById('importAlertBox').classList.add('hidden')" aria-label="Chiudi notifica" class="text-xs font-bold px-2 py-1 rounded hover:bg-slate-800/80">✕</button>
+      </div>
+
+      <!-- SECTION 1: CRUSCOTTO GARE -->
+      <div id="view-cruscotto" class="section-view space-y-6">
+        
+        <!-- KPI METRICS ROW: UI-Craft Tier 1 (Hero) + Tier 2 (Supporting) -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          
+          <!-- Card 1 (Hero Metric): Primary focus with cyan glow & integrated SVG Sparkline -->
+          <div class="card-hero rounded-2xl p-4 sm:p-5 relative overflow-hidden flex flex-col justify-between">
+            <div class="flex items-start justify-between gap-2">
+              <div>
+                <span class="text-xs font-semibold text-cyan-300/90 tracking-wide flex items-center gap-1.5">
+                  <span class="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></span>
+                  Gare nel cruscotto
+                </span>
+                <div class="flex items-baseline gap-2 mt-2">
+                  <span id="statFiltered" class="text-3xl sm:text-4xl font-extrabold text-cyan-300 font-mono tracking-tight">0</span>
+                  <span id="statTotal" class="text-xs font-mono text-cyan-400/60">/ 0</span>
+                </div>
+              </div>
+              <div class="h-9 w-9 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 shrink-0">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+              </div>
+            </div>
+            
+            <!-- Integrated SVG Sparkline -->
+            <div class="mt-3 pt-2 border-t border-cyan-500/20 flex items-center justify-between">
+              <span class="text-[11px] font-mono text-cyan-200/70 truncate">⚡ Motore SQLite 3</span>
+              <svg class="w-20 h-6 shrink-0" viewBox="0 0 80 24" fill="none" aria-hidden="true">
+                <defs>
+                  <linearGradient id="heroSparklineGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.4"/>
+                    <stop offset="100%" stop-color="#38bdf8" stop-opacity="0.0"/>
+                  </linearGradient>
+                </defs>
+                <path d="M 0 18 Q 15 14, 25 16 T 45 8 T 65 11 T 80 4 L 80 24 L 0 24 Z" fill="url(#heroSparklineGrad)"/>
+                <path d="M 0 18 Q 15 14, 25 16 T 45 8 T 65 11 T 80 4" stroke="#38bdf8" stroke-width="2" stroke-linecap="round" fill="none"/>
+              </svg>
+            </div>
+          </div>
+
+          <!-- Card 2 (Supporting Metric): In Scadenza Imminente -->
+          <div class="card-secondary rounded-2xl p-4 sm:p-5 flex flex-col justify-between">
+            <div class="flex items-start justify-between gap-2">
+              <div>
+                <span class="text-xs font-semibold text-amber-300/90 tracking-wide flex items-center gap-1.5">
+                  <span class="status-dot status-dot-amber"></span>
+                  In scadenza (&lt; 7gg)
+                </span>
+                <div id="statExpiring" class="text-2xl sm:text-3xl font-extrabold text-amber-300 font-mono tracking-tight mt-2">0</div>
+              </div>
+              <div class="h-9 w-9 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 shrink-0">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              </div>
+            </div>
+            <div class="text-[11px] text-slate-400 font-mono mt-3 pt-2 border-t border-slate-800 flex items-center justify-between">
+              <span>Priorità immediata</span>
+              <span class="text-amber-400/90 font-medium">Buste A, B</span>
+            </div>
+          </div>
+
+          <!-- Card 3 (Supporting Metric): In Lavorazione & Inviate -->
+          <div class="card-secondary rounded-2xl p-4 sm:p-5 flex flex-col justify-between">
+            <div class="flex items-start justify-between gap-2">
+              <div>
+                <span class="text-xs font-semibold text-purple-300/90 tracking-wide flex items-center gap-1.5">
+                  <span class="status-dot status-dot-purple"></span>
+                  In lavorazione / Inviate
+                </span>
+                <div id="statInProgress" class="text-2xl sm:text-3xl font-extrabold text-purple-300 font-mono tracking-tight mt-2">0</div>
+              </div>
+              <div class="h-9 w-9 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400 shrink-0">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+              </div>
+            </div>
+            <div class="text-[11px] text-slate-400 font-mono mt-3 pt-2 border-t border-slate-800 flex items-center justify-between">
+              <span>Fasi operative attive</span>
+              <span class="text-purple-400/90 font-medium">Fase 2 e 3</span>
+            </div>
+          </div>
+
+          <!-- Card 4 (Supporting Metric): Monte Valore Filtrato -->
+          <div class="card-secondary rounded-2xl p-4 sm:p-5 flex flex-col justify-between">
+            <div class="flex items-start justify-between gap-2">
+              <div>
+                <span class="text-xs font-semibold text-emerald-300/90 tracking-wide flex items-center gap-1.5">
+                  <span class="status-dot status-dot-green"></span>
+                  Monte valore filtrato
+                </span>
+                <div id="statTotalValue" class="text-xl sm:text-2xl font-extrabold text-emerald-400 font-mono tracking-tight mt-2 truncate">€ 0</div>
+              </div>
+              <div class="h-9 w-9 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 shrink-0">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              </div>
+            </div>
+            <div class="text-[11px] text-slate-400 font-mono mt-3 pt-2 border-t border-slate-800 flex items-center justify-between">
+              <span>Base d'asta cumulativa</span>
+              <span class="text-emerald-400/90 font-medium">Bandi attivi</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- FILTER & CONTROL PANEL -->
+        <div class="bg-slate-900/70 border border-slate-800/90 rounded-3xl p-5 shadow-lg space-y-4 text-xs">
+          
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800/80 pb-3">
+            <div class="flex flex-wrap items-center gap-2">
+              <span class="text-[11px] font-mono text-cyan-400 font-bold uppercase flex items-center gap-1.5">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/></svg>
+                Filtri &amp; Ordinamento
+              </span>
+              <!-- Quick view presets -->
+              <div class="inline-flex rounded-xl bg-slate-950 p-1 border border-slate-800 text-xs">
+                <button id="tabPresetMyCategories" class="px-2.5 py-1 rounded-lg font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 transition">🎯 Mie Categorie</button>
+                <button id="tabPresetExpiring" class="px-2.5 py-1 rounded-lg font-semibold text-slate-400 hover:text-white transition">⏰ Imminenti</button>
+                <button id="tabPresetAll" class="px-2.5 py-1 rounded-lg font-semibold text-slate-400 hover:text-white transition">Tutte</button>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-3">
+              <button id="btnResetFilters" class="text-slate-400 hover:text-rose-400 text-[11px] font-mono underline transition">Reimposta</button>
+              
+              <!-- Toggle View Mode (Table / Kanban) -->
+              <div class="inline-flex rounded-xl bg-slate-950 p-1 border border-slate-800 text-xs">
+                <button id="btnViewTable" class="px-3 py-1 font-bold rounded-lg bg-cyan-500 text-slate-950 transition">Tabella</button>
+                <button id="btnViewKanban" class="px-3 py-1 font-semibold rounded-lg text-slate-400 hover:text-white transition">Kanban (4 Fasi)</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Parameter grid -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+            
+            <!-- Area Merceologica -->
+            <div>
+              <label class="block text-slate-400 font-semibold mb-1 text-[11px]">Area Merceologica:</label>
+              <select id="filterCategory" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-2.5 py-1.5 text-slate-200 focus:outline-none focus:border-cyan-400 text-xs font-medium">
+                <option value="ALL">Tutte le Aree</option>
+                <option value="IT">💻 Informatica &amp; TLC</option>
+                <option value="CANCELLERIA">📦 Cancelleria &amp; Carta</option>
+                <option value="ARREDI">🪑 Arredi &amp; Attrezzature</option>
+                <option value="SANITA">🏥 Sanità &amp; Dispositivi</option>
+                <option value="ENERGIA">⚡ Energia &amp; Utilities</option>
+                <option value="ALTRO">Altre Merceologie</option>
+              </select>
+            </div>
+
+            <!-- Ordinamento per Data -->
+            <div>
+              <label class="block text-slate-400 font-semibold mb-1 text-[11px]">Ordina Per:</label>
+              <select id="sortTenders" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-2.5 py-1.5 text-amber-300 font-medium focus:outline-none focus:border-cyan-400 text-xs">
+                <option value="deadline_asc" selected>⏳ Scadenza Più Vicina</option>
+                <option value="deadline_desc">Scadenza Più Lontana</option>
+                <option value="amount_desc">Importo Decrescente (€ max)</option>
+                <option value="amount_asc">Importo Crescente (€ min)</option>
+                <option value="cig_asc">CIG Alfabetico</option>
+              </select>
+            </div>
+
+            <!-- Regione -->
+            <div>
+              <label class="block text-slate-400 font-semibold mb-1 text-[11px]">Regione PA:</label>
+              <select id="filterRegion" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-2.5 py-1.5 text-slate-200 focus:outline-none focus:border-cyan-400 text-xs font-medium">
+                <option value="ALL">Tutte le Regioni</option>
+                <option value="Nazionale">Nazionale / Centrale</option>
+                <option value="Abruzzo">Abruzzo</option>
+                <option value="Basilicata">Basilicata</option>
+                <option value="Calabria">Calabria</option>
+                <option value="Campania">Campania</option>
+                <option value="Emilia-Romagna">Emilia-Romagna</option>
+                <option value="Friuli-Venezia Giulia">Friuli-Venezia Giulia</option>
+                <option value="Lazio">Lazio</option>
+                <option value="Liguria">Liguria</option>
+                <option value="Lombardia">Lombardia</option>
+                <option value="Marche">Marche</option>
+                <option value="Molise">Molise</option>
+                <option value="Piemonte">Piemonte</option>
+                <option value="Puglia">Puglia</option>
+                <option value="Sardegna">Sardegna</option>
+                <option value="Sicilia">Sicilia</option>
+                <option value="Toscana">Toscana</option>
+                <option value="Trentino-Alto Adige">Trentino-Alto Adige</option>
+                <option value="Umbria">Umbria</option>
+                <option value="Valle d'Aosta">Valle d'Aosta</option>
+                <option value="Veneto">Veneto</option>
+              </select>
+            </div>
+
+            <!-- Fonte Dataset -->
+            <div>
+              <label class="block text-slate-400 font-semibold mb-1 text-[11px]">Tipologia Gara:</label>
+              <select id="filterSource" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-2.5 py-1.5 text-slate-200 focus:outline-none focus:border-cyan-400 text-xs font-medium">
+                <option value="ALL">Tutte le Fonti</option>
+                <option value="RdO MePA">RdO &amp; Trattative MePA</option>
+                <option value="Bandi e Gare">Grandi Gare (Convenzioni/AQ)</option>
+                <option value="Gare ASP">Gare Singole PA (ASP)</option>
+                <option value="Manuale">Inserite Manualmente</option>
+              </select>
+            </div>
+
+            <!-- Stato / Fase -->
+            <div>
+              <label class="block text-slate-400 font-semibold mb-1 text-[11px]">Fase Ciclo di Vita:</label>
+              <select id="filterStatus" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-2.5 py-1.5 text-slate-200 focus:outline-none focus:border-cyan-400 text-xs font-medium">
+                <option value="ALL">Tutti gli Stati</option>
+                <option value="SOLO_ATTIVE">Solo Aperte (Non Concluse)</option>
+                <option value="Da Valutare">1. Da Valutare</option>
+                <option value="In Lavorazione">2. In Lavorazione</option>
+                <option value="Inviata">3. Inviata</option>
+                <option value="Vinta">4. Vinta</option>
+                <option value="Persa">4. Persa</option>
+                <option value="Scartata">Scartata</option>
+              </select>
+            </div>
+
+            <!-- Ricerca Testuale -->
+            <div>
+              <label class="block text-slate-400 font-semibold mb-1 text-[11px]">Cerca Testo / CIG:</label>
+              <div class="relative">
+                <input id="searchInput" type="text" placeholder="CIG, Ente, Oggetto..." class="w-full bg-slate-950/90 border border-slate-800 rounded-xl pl-2.5 pr-12 py-1.5 text-slate-200 placeholder-slate-500 focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 text-xs transition">
+                <div class="absolute right-2 top-2 pointer-events-none flex items-center gap-1">
+                  <kbd class="hidden sm:inline-block px-1.5 py-0.5 text-[9px] font-mono text-slate-400 bg-slate-800 border border-slate-700 rounded">Ctrl+K</kbd>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Quick Filter Chips: UI-Craft Ghost Pattern -->
+          <div class="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-800 text-xs">
+            <span class="text-slate-500 font-mono text-[10px] uppercase">Filtri rapidi:</span>
+            <button id="chipIT" onclick="applyFastFilter('category', 'IT')" class="chip-ghost"><span>💻</span> Informatica &amp; TLC</button>
+            <button id="chipPaper" onclick="applyFastFilter('category', 'CANCELLERIA')" class="chip-ghost"><span>📦</span> Cancelleria &amp; Carta</button>
+            <button id="chipDual" onclick="applyFastFilter('category', 'DUAL_IT_PAPER')" class="chip-ghost"><span>⭐</span> IT + Cancelleria</button>
+            <button id="chipExpiring" onclick="applyFastFilter('expiring_soon', true)" class="chip-ghost"><span>⏰</span> Scadenza in 7gg</button>
+            <button id="chipActive" onclick="applyFastFilter('status', 'SOLO_ATTIVE')" class="chip-ghost"><span>🟢</span> Solo non concluse</button>
+          </div>
+        </div>
+
+        <!-- TABLE VIEW: Sticky Header & Compact Layout -->
+        <div id="tableView" class="bg-slate-900/60 border border-slate-800/80 rounded-2xl overflow-hidden shadow-lg">
+          <div class="overflow-x-auto max-h-[640px] custom-scrollbar">
+            <table class="w-full text-left text-xs border-collapse">
+              <thead class="table-sticky-head">
+                <tr class="border-b border-slate-800 text-slate-400 font-medium font-sans">
+                  <th scope="col" class="py-2.5 px-3.5 whitespace-nowrap">CIG e fonte</th>
+                  <th scope="col" class="py-2.5 px-3.5 whitespace-nowrap">Area merceologica</th>
+                  <th scope="col" class="py-2.5 px-3.5">Stazione appaltante</th>
+                  <th scope="col" class="py-2.5 px-3.5">Oggetto della fornitura</th>
+                  <th scope="col" class="py-2.5 px-3.5 text-right whitespace-nowrap">Base d'asta (€)</th>
+                  <th scope="col" class="py-2.5 px-3.5 cursor-pointer select-none text-slate-300 hover:text-cyan-300 transition-colors whitespace-nowrap" onclick="toggleSortDeadline()" title="Clicca per invertire l'ordinamento per scadenza">
+                    Scadenza ⥯
+                  </th>
+                  <th scope="col" class="py-2.5 px-3.5 text-center whitespace-nowrap">Tempo residuo</th>
+                  <th scope="col" class="py-2.5 px-3.5 text-center whitespace-nowrap">Fase operativa</th>
+                  <th scope="col" class="py-2.5 px-3.5 whitespace-nowrap">Responsabile</th>
+                  <th scope="col" class="py-2.5 px-3.5 text-center whitespace-nowrap">Azioni</th>
+                </tr>
+              </thead>
+              <tbody id="tableBody" class="divide-y divide-slate-800/70 text-slate-300">
+                <!-- Dynamically populated from SQLite query -->
+              </tbody>
+            </table>
+          </div>
+
+          <!-- PAGINATION CONTROLS -->
+          <div id="paginationBar" class="p-3 sm:px-5 border-t border-slate-800 bg-slate-950/90 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+            <div class="flex items-center gap-2 text-slate-400 font-mono text-[11px]">
+              <span>Mostra</span>
+              <select id="selectPageSize" class="bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 text-slate-200 focus:outline-none focus:border-cyan-400 font-mono text-xs">
+                <option value="15" selected>15</option>
+                <option value="30">30</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+              </select>
+              <span>per pagina |</span>
+              <span id="paginationInfo" class="text-cyan-400 font-semibold">1 - 7 di 7 gare</span>
+            </div>
+            <div class="inline-flex items-center gap-1.5">
+              <button id="btnPageFirst" aria-label="Prima pagina" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 disabled:opacity-30 disabled:cursor-not-allowed transition font-mono text-xs" title="Prima Pagina">«</button>
+              <button id="btnPagePrev" aria-label="Pagina precedente" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 disabled:opacity-30 disabled:cursor-not-allowed transition font-mono text-xs" title="Precedente">‹ Prec</button>
+              <span id="pageCurrentDisplay" class="px-3 py-1 font-mono tabular-nums text-slate-300 text-xs font-semibold">Pagina 1 di 1</span>
+              <button id="btnPageNext" aria-label="Pagina successiva" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 disabled:opacity-30 disabled:cursor-not-allowed transition font-mono text-xs" title="Successiva">Succ ›</button>
+              <button id="btnPageLast" aria-label="Ultima pagina" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 disabled:opacity-30 disabled:cursor-not-allowed transition font-mono text-xs" title="Ultima Pagina">»</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- KANBAN VIEW (With Native HTML5 Drag & Drop) -->
+        <div id="kanbanView" class="hidden grid grid-cols-1 md:grid-cols-4 gap-4">
+          
+          <!-- Column 1: Da Valutare -->
+          <div class="bg-slate-950/70 border border-sky-500/30 rounded-2xl p-4 flex flex-col h-full min-h-[460px] transition" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event, 'Da Valutare')">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+              <div class="flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-sky-400"></span>
+                <span class="font-bold text-xs uppercase text-slate-200">1. Da Valutare</span>
+              </div>
+              <span id="badgeCount1" class="text-[11px] font-mono px-2 py-0.5 rounded-full bg-sky-500/10 text-sky-400 font-bold">0</span>
+            </div>
+            <div id="kanbanCol1" class="space-y-3 mt-3 flex-1 overflow-y-auto custom-scrollbar"></div>
+          </div>
+
+          <!-- Column 2: In Lavorazione -->
+          <div class="bg-slate-950/70 border border-amber-500/30 rounded-2xl p-4 flex flex-col h-full min-h-[460px] transition" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event, 'In Lavorazione')">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+              <div class="flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-amber-400"></span>
+                <span class="font-bold text-xs uppercase text-slate-200">2. In Lavorazione</span>
+              </div>
+              <span id="badgeCount2" class="text-[11px] font-mono px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 font-bold">0</span>
+            </div>
+            <div id="kanbanCol2" class="space-y-3 mt-3 flex-1 overflow-y-auto custom-scrollbar"></div>
+          </div>
+
+          <!-- Column 3: Inviata -->
+          <div class="bg-slate-950/70 border border-purple-500/30 rounded-2xl p-4 flex flex-col h-full min-h-[460px] transition" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event, 'Inviata')">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+              <div class="flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-purple-400"></span>
+                <span class="font-bold text-xs uppercase text-slate-200">3. Inviata</span>
+              </div>
+              <span id="badgeCount3" class="text-[11px] font-mono px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-400 font-bold">0</span>
+            </div>
+            <div id="kanbanCol3" class="space-y-3 mt-3 flex-1 overflow-y-auto custom-scrollbar"></div>
+          </div>
+
+          <!-- Column 4: Concluse -->
+          <div class="bg-slate-950/70 border border-emerald-500/30 rounded-2xl p-4 flex flex-col h-full min-h-[460px] transition" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event, 'Vinta')">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+              <div class="flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
+                <span class="font-bold text-xs uppercase text-slate-200">4. Concluse</span>
+              </div>
+              <span id="badgeCount4" class="text-[11px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 font-bold">0</span>
+            </div>
+            <div id="kanbanCol4" class="space-y-3 mt-3 flex-1 overflow-y-auto custom-scrollbar"></div>
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- SECTION: WIZARD DETERMINISTICO 4 FASI (Agent Ready & Dual Handoff) -->
+      <div id="view-wizard" class="section-view hidden space-y-6">
+        <!-- Dynamically rendered by js/views/wizard.js -->
+      </div>
+
+      <!-- SECTION: CATALOGHI BENI & SERVIZI (287k Articoli MePA) -->
+      <div id="view-cataloghi" class="section-view hidden space-y-6">
+        
+        <!-- Header & Stats Banner -->
+        <div class="bg-slate-900/70 border border-slate-800/90 rounded-3xl p-6 sm:p-8 shadow-xl">
+          <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-6 border-b border-slate-800">
+            <div class="space-y-1">
+              <div class="flex items-center gap-2">
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-pink-500/10 text-pink-400 border border-pink-500/20">
+                  DATABASE COMMERCIALE MEPA • 287.536 ARTICOLI A LISTINO
+                </span>
+                <span class="text-[10px] font-mono text-slate-400 bg-slate-950 px-2 py-0.5 rounded border border-slate-800">
+                  SQLite Format 3
+                </span>
+              </div>
+              <h2 class="text-xl sm:text-2xl font-extrabold text-white mt-2">
+                Esplora Cataloghi, Beni &amp; Servizi Consip
+              </h2>
+              <p class="text-xs text-slate-400 max-w-2xl leading-relaxed">
+                Consultazione istantanea di tutti gli articoli a catalogo offerti dai fornitori abilitati MePA. Cerca per nome prodotto, CPV o iniziativa con paginazione server-side ultra-veloce.
+              </p>
+            </div>
+
+            <!-- Quick Metrics -->
+            <div class="grid grid-cols-2 gap-3 min-w-[280px]">
+              <div class="bg-slate-950 p-3.5 rounded-2xl border border-slate-800">
+                <span class="text-[10px] uppercase font-mono text-slate-400 block">Articoli Indicizzati</span>
+                <div id="catalogTotalCount" class="text-2xl font-black text-pink-400 font-mono mt-0.5">287.536</div>
+                <div class="text-[10px] text-slate-500">Listini attivi su disco</div>
+              </div>
+              <div class="bg-slate-950 p-3.5 rounded-2xl border border-slate-800">
+                <span class="text-[10px] uppercase font-mono text-slate-400 block">Tempi Query</span>
+                <div class="text-2xl font-black text-emerald-400 font-mono mt-0.5">&lt; 15 ms</div>
+                <div class="text-[10px] text-emerald-500/80">Indici B-Tree SQLite</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Controls & Search Row -->
+          <div class="pt-6 space-y-4">
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-3">
+              <!-- Search Input -->
+              <div class="md:col-span-6 relative">
+                <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                </div>
+                <input id="catalogSearchInput" type="text" placeholder="Cerca prodotto, CPV, descrizione, dettaglio..." class="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-950 border border-slate-700/80 focus:border-pink-500 focus:ring-1 focus:ring-pink-500 text-xs text-white placeholder-slate-500 transition">
+              </div>
+
+              <!-- Category Dropdown -->
+              <div class="md:col-span-4">
+                <select id="catalogCategorySelect" class="w-full py-2.5 px-3 rounded-xl bg-slate-950 border border-slate-700/80 focus:border-pink-500 text-xs text-white transition">
+                  <option value="">Tutte le categorie merceologiche</option>
+                </select>
+              </div>
+
+              <!-- Reset Button -->
+              <div class="md:col-span-2">
+                <button id="catalogResetBtn" class="w-full py-2.5 px-3 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white font-semibold text-xs border border-slate-700 transition flex items-center justify-center gap-1.5">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                  <span>Reimposta</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Meta info bar -->
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between text-xs text-slate-400 gap-2 pt-2 border-t border-slate-800/60 font-mono">
+              <span id="catalogResultsInfo">Caricamento articoli...</span>
+              <div class="flex items-center gap-2">
+                <span>Righe per pagina:</span>
+                <select id="catalogPageSizeSelect" class="bg-slate-950 text-white rounded px-2 py-1 border border-slate-700 text-xs focus:outline-none">
+                  <option value="15">15</option>
+                  <option value="25" selected>25</option>
+                  <option value="50">50</option>
+                  <option value="100">100</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Table Container -->
+          <div class="overflow-x-auto rounded-2xl border border-slate-800/90 mt-4 bg-slate-950/60">
+            <table class="w-full text-left text-xs text-slate-300">
+              <thead class="bg-slate-950 text-[11px] uppercase font-mono text-slate-400 border-b border-slate-800">
+                <tr>
+                  <th scope="col" class="px-4 py-3.5 font-bold">Prodotto &amp; Dettaglio</th>
+                  <th scope="col" class="px-4 py-3.5 font-bold">Codice CPV</th>
+                  <th scope="col" class="px-4 py-3.5 font-bold">Categoria Merci</th>
+                  <th scope="col" class="px-4 py-3.5 font-bold">Iniziativa / Lotto</th>
+                  <th scope="col" class="px-4 py-3.5 font-bold text-center">Strumento</th>
+                  <th scope="col" class="px-4 py-3.5 font-bold text-center">Disponibilità</th>
+                </tr>
+              </thead>
+              <tbody id="catalogTableBody" class="divide-y divide-slate-800/60">
+                <tr>
+                  <td colspan="6" class="px-4 py-12 text-center text-slate-500 font-mono">
+                    Caricamento del catalogo in corso...
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Pagination Bar -->
+          <div class="p-3 sm:px-5 border-t border-slate-800 bg-slate-950/90 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs mt-4 rounded-xl border border-slate-800">
+            <div class="flex items-center gap-2 text-slate-400 font-mono text-[11px]">
+              <span id="catalogResultsInfo" class="text-cyan-400 font-semibold tabular-nums">Caricamento articoli...</span>
+            </div>
+            <div class="inline-flex items-center gap-1.5">
+              <button id="catalogFirstPageBtn" aria-label="Prima pagina" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 disabled:opacity-30 disabled:cursor-not-allowed transition font-mono text-xs" title="Prima Pagina">«</button>
+              <button id="catalogPrevPageBtn" aria-label="Pagina precedente" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 disabled:opacity-30 disabled:cursor-not-allowed transition font-mono text-xs" title="Precedente">‹ Prec</button>
+              <span id="catalogPaginationText" class="px-3 py-1 font-mono tabular-nums text-slate-300 text-xs font-semibold">Pagina 1 di 1</span>
+              <button id="catalogNextPageBtn" aria-label="Pagina successiva" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 disabled:opacity-30 disabled:cursor-not-allowed transition font-mono text-xs" title="Successiva">Succ ›</button>
+              <button id="catalogLastPageBtn" aria-label="Ultima pagina" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 disabled:opacity-30 disabled:cursor-not-allowed transition font-mono text-xs" title="Ultima Pagina">»</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- SECTION: AMMINISTRAZIONI PUBBLICHE (20k Enti PA) -->
+      <div id="view-amministrazioni" class="section-view hidden space-y-6">
+        
+        <!-- Header Banner -->
+        <div class="bg-slate-900/70 border border-slate-800/90 rounded-3xl p-6 sm:p-8 shadow-xl">
+          <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-6 border-b border-slate-800">
+            <div class="space-y-1">
+              <div class="flex items-center gap-2">
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-sky-500/10 text-sky-400 border border-sky-500/20">
+                  ANAGRAFICA CLIENTI PA • 20.776 STAZIONI APPALTANTI
+                </span>
+                <span class="text-[10px] font-mono text-slate-400 bg-slate-950 px-2 py-0.5 rounded border border-slate-800">
+                  Consip Open Data
+                </span>
+              </div>
+              <h2 class="text-xl sm:text-2xl font-extrabold text-white mt-2">
+                Elenco Amministrazioni Pubbliche Registrate
+              </h2>
+              <p class="text-xs text-slate-400 max-w-2xl leading-relaxed">
+                Mappatura completa di Comuni, ASL, Ospedali, Scuole e Ministeri abilitati agli acquisti sul MePA con Codice Fiscale, codice IPA e Punti Ordinanti attivi.
+              </p>
+            </div>
+
+            <!-- Quick Metrics -->
+            <div class="grid grid-cols-2 gap-3 min-w-[280px]">
+              <div class="bg-slate-950 p-3.5 rounded-2xl border border-slate-800">
+                <span class="text-[10px] uppercase font-mono text-slate-400 block">Stazioni Appaltanti</span>
+                <div id="ammTotalCount" class="text-2xl font-black text-sky-400 font-mono mt-0.5">20.776</div>
+                <div class="text-[10px] text-slate-500">Enti pubblici registrati</div>
+              </div>
+              <div class="bg-slate-950 p-3.5 rounded-2xl border border-slate-800">
+                <span class="text-[10px] uppercase font-mono text-slate-400 block">Copertura</span>
+                <div class="text-2xl font-black text-cyan-400 font-mono mt-0.5">20 Regioni</div>
+                <div class="text-[10px] text-cyan-500/80">100% Territorio IT</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Controls & Search Row -->
+          <div class="pt-6 space-y-4">
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-3">
+              <!-- Search Input -->
+              <div class="md:col-span-5 relative">
+                <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                </div>
+                <input id="ammSearchInput" type="text" placeholder="Cerca denominazione ente, Codice Fiscale, IPA, comune..." class="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-950 border border-slate-700/80 focus:border-sky-500 focus:ring-1 focus:ring-sky-500 text-xs text-white placeholder-slate-500 transition">
+              </div>
+
+              <!-- Region Filter -->
+              <div class="md:col-span-3">
+                <select id="ammRegionSelect" class="w-full py-2.5 px-3 rounded-xl bg-slate-950 border border-slate-700/80 focus:border-sky-500 text-xs text-white transition">
+                  <option value="">Tutte le Regioni</option>
+                </select>
+              </div>
+
+              <!-- Typology Filter -->
+              <div class="md:col-span-3">
+                <select id="ammTipologiaSelect" class="w-full py-2.5 px-3 rounded-xl bg-slate-950 border border-slate-700/80 focus:border-sky-500 text-xs text-white transition">
+                  <option value="">Tutte le Tipologie</option>
+                </select>
+              </div>
+
+              <!-- Reset Button -->
+              <div class="md:col-span-1">
+                <button id="ammResetBtn" class="w-full py-2.5 px-2 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white font-semibold text-xs border border-slate-700 transition flex items-center justify-center" title="Reimposta filtri">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                </button>
+              </div>
+            </div>
+
+            <!-- Meta info bar -->
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between text-xs text-slate-400 gap-2 pt-2 border-t border-slate-800/60 font-mono">
+              <span id="ammResultsInfo">Caricamento enti pubblici...</span>
+              <div class="flex items-center gap-2">
+                <span>Righe per pagina:</span>
+                <select id="ammPageSizeSelect" class="bg-slate-950 text-white rounded px-2 py-1 border border-slate-700 text-xs focus:outline-none">
+                  <option value="15">15</option>
+                  <option value="25" selected>25</option>
+                  <option value="50">50</option>
+                  <option value="100">100</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Table Container -->
+          <div class="overflow-x-auto rounded-2xl border border-slate-800/90 mt-4 bg-slate-950/60">
+            <table class="w-full text-left text-xs text-slate-300">
+              <thead class="bg-slate-950 text-[11px] uppercase font-mono text-slate-400 border-b border-slate-800">
+                <tr>
+                  <th scope="col" class="px-4 py-3.5 font-bold">Denominazione Ente PA</th>
+                  <th scope="col" class="px-4 py-3.5 font-bold">Codice Fiscale</th>
+                  <th scope="col" class="px-4 py-3.5 font-bold">Codice IPA</th>
+                  <th scope="col" class="px-4 py-3.5 font-bold">Tipologia Amministrazione</th>
+                  <th scope="col" class="px-4 py-3.5 font-bold">Regione &amp; Territorio</th>
+                  <th scope="col" class="px-4 py-3.5 font-bold text-center">Punti Ordinanti</th>
+                  <th scope="col" class="px-4 py-3.5 font-bold text-center">Azione</th>
+                </tr>
+              </thead>
+              <tbody id="ammTableBody" class="divide-y divide-slate-800/60">
+                <tr>
+                  <td colspan="7" class="px-4 py-12 text-center text-slate-500 font-mono">
+                    Caricamento amministrazioni in corso...
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Pagination Bar -->
+          <div class="p-3 sm:px-5 border-t border-slate-800 bg-slate-950/90 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs mt-4 rounded-xl border border-slate-800">
+            <div class="flex items-center gap-2 text-slate-400 font-mono text-[11px]">
+              <span id="ammResultsInfo" class="text-cyan-400 font-semibold tabular-nums">Caricamento enti pubblici...</span>
+            </div>
+            <div class="inline-flex items-center gap-1.5">
+              <button id="ammFirstPageBtn" aria-label="Prima pagina" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 disabled:opacity-30 disabled:cursor-not-allowed transition font-mono text-xs" title="Prima Pagina">«</button>
+              <button id="ammPrevPageBtn" aria-label="Pagina precedente" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 disabled:opacity-30 disabled:cursor-not-allowed transition font-mono text-xs" title="Precedente">‹ Prec</button>
+              <span id="ammPaginationText" class="px-3 py-1 font-mono tabular-nums text-slate-300 text-xs font-semibold">Pagina 1 di 1</span>
+              <button id="ammNextPageBtn" aria-label="Pagina successiva" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 disabled:opacity-30 disabled:cursor-not-allowed transition font-mono text-xs" title="Successiva">Succ ›</button>
+              <button id="ammLastPageBtn" aria-label="Ultima pagina" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 disabled:opacity-30 disabled:cursor-not-allowed transition font-mono text-xs" title="Ultima Pagina">»</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- SECTION: STATISTICHE & MERCATO (Analytics) -->
+      <div id="view-analytics" class="section-view hidden space-y-6">
+        
+        <!-- Header -->
+        <div class="bg-slate-900/70 border border-slate-800/90 rounded-3xl p-6 sm:p-8 shadow-xl space-y-6">
+          <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-6 border-b border-slate-800">
+            <div class="space-y-1">
+              <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-purple-500/10 text-purple-400 border border-purple-500/20">
+                ANALISI QUANTITATIVA &amp; INTELLIGENCE APPALTI
+              </span>
+              <h2 class="text-xl sm:text-2xl font-extrabold text-white mt-2">
+                Cruscotto Statistiche di Mercato MePA &amp; Consip
+              </h2>
+              <p class="text-xs text-slate-400 max-w-2xl leading-relaxed">
+                Metriche aggregate calcolate in tempo reale sulle 1.822 gare attive, sui 287.536 articoli a listino e sulle 20.776 amministrazioni registrate in SQLite.
+              </p>
+            </div>
+            
+            <button onclick="loadAnalytics()" class="px-4 py-2 rounded-xl bg-purple-600/30 hover:bg-purple-600/40 border border-purple-500/40 text-purple-200 text-xs font-bold font-mono transition flex items-center gap-2">
+              <svg class="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+              <span>Aggiorna Dati</span>
+            </button>
+          </div>
+
+          <!-- 4 Big KPI Cards -->
+          <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800">
+              <span class="text-[10px] uppercase font-mono text-cyan-400 font-bold block">Gare Monitorate</span>
+              <div id="anaTendersCount" class="text-3xl font-black text-white font-mono mt-1">--</div>
+              <div class="text-[11px] text-slate-500 mt-1">Convenzioni &amp; ASP</div>
+            </div>
+
+            <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800">
+              <span class="text-[10px] uppercase font-mono text-emerald-400 font-bold block">Massa Economica Gare</span>
+              <div id="anaTotalAmount" class="text-2xl font-black text-emerald-400 font-mono mt-1">--</div>
+              <div class="text-[11px] text-slate-500 mt-1">Basi d'asta complessive</div>
+            </div>
+
+            <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800">
+              <span class="text-[10px] uppercase font-mono text-pink-400 font-bold block">Articoli a Catalogo</span>
+              <div id="anaCatalogCount" class="text-3xl font-black text-pink-400 font-mono mt-1">--</div>
+              <div class="text-[11px] text-slate-500 mt-1">Listini fornitori abilitati</div>
+            </div>
+
+            <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800">
+              <span class="text-[10px] uppercase font-mono text-sky-400 font-bold block">Clienti Pubblici (PA)</span>
+              <div id="anaAmmCount" class="text-3xl font-black text-sky-400 font-mono mt-1">--</div>
+              <div class="text-[11px] text-slate-500 mt-1">Stazioni appaltanti abilitate</div>
+            </div>
+          </div>
+
+          <!-- Section: Detailed Distribution Breakdowns -->
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-2">
+            
+            <!-- Category Distribution -->
+            <div class="bg-slate-950 p-5 rounded-2xl border border-slate-800 space-y-4">
+              <h3 class="text-sm font-bold text-white flex items-center justify-between">
+                <span>Ripartizione Gare per Categoria Merceologica</span>
+                <span class="text-[10px] font-mono text-slate-400">Valore Economico</span>
+              </h3>
+              <div id="anaCategoryBars" class="space-y-3">
+                <div class="text-center text-slate-500 text-xs py-4">Caricamento dati...</div>
+              </div>
+            </div>
+
+            <!-- Top PA Regions -->
+            <div class="bg-slate-950 p-5 rounded-2xl border border-slate-800 space-y-4">
+              <h3 class="text-sm font-bold text-white flex items-center justify-between">
+                <span>Top Regioni per Presenza Stazioni Appaltanti</span>
+                <span class="text-[10px] font-mono text-slate-400">Numero Enti</span>
+              </h3>
+              <div id="anaRegionAmmBars" class="space-y-3">
+                <div class="text-center text-slate-500 text-xs py-4">Caricamento dati...</div>
+              </div>
+            </div>
+
+            <!-- Top Catalog Product Categories -->
+            <div class="bg-slate-950 p-5 rounded-2xl border border-slate-800 space-y-4">
+              <h3 class="text-sm font-bold text-white flex items-center justify-between">
+                <span>Settori Più Offerti a Catalogo MePA</span>
+                <span class="text-[10px] font-mono text-slate-400">N. Articoli a listino</span>
+              </h3>
+              <div id="anaCatalogCategoryBars" class="space-y-3">
+                <div class="text-center text-slate-500 text-xs py-4">Caricamento dati...</div>
+              </div>
+            </div>
+
+            <!-- Pipeline Status Breakdown -->
+            <div class="bg-slate-950 p-5 rounded-2xl border border-slate-800 space-y-4">
+              <h3 class="text-sm font-bold text-white flex items-center justify-between">
+                <span>Stato del Pipeline Gare (Workflow 4 Fasi)</span>
+                <span class="text-[10px] font-mono text-slate-400">Conteggio Gare</span>
+              </h3>
+              <div id="anaStatusBars" class="space-y-3">
+                <div class="text-center text-slate-500 text-xs py-4">Caricamento dati...</div>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- SECTION 2: OPEN DATA CONSIP HUB (With Reliable URLs & Fallbacks) -->
+      <div id="view-opendata" class="section-view hidden space-y-6">
+        
+        <div class="bg-slate-900/70 border border-slate-800/90 rounded-3xl p-6 sm:p-8 shadow-xl">
+          <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-6 border-b border-slate-800">
+            <div class="space-y-1">
+              <div class="flex flex-wrap items-center gap-2">
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
+                  FONTE UFFICIALE: DATI.CONSIP.IT • PORTALE CKAN
+                </span>
+                
+                <!-- Dynamic Year Selector -->
+                <div class="inline-flex items-center gap-1.5 bg-slate-950 px-3 py-1 rounded-xl border border-cyan-500/40 text-xs">
+                  <label for="selectDatasetYear" class="font-mono text-cyan-300 font-bold uppercase text-[10px]">Anno Dataset:</label>
+                  <select id="selectDatasetYear" class="bg-slate-900 text-white font-mono font-bold rounded px-2 py-0.5 border border-slate-700 focus:outline-none focus:border-cyan-400 cursor-pointer text-xs">
+                    <option value="2025">2025</option>
+                    <option value="2026" selected>2026 (In Corso)</option>
+                    <option value="2027">2027 (Predisposto)</option>
+                    <option value="2028">2028 (Futuro)</option>
+                  </select>
+                </div>
+              </div>
+
+              <h2 class="text-xl sm:text-2xl font-extrabold text-white mt-2">
+                Download Diretto Dataset Ufficiali Consip S.p.A.
+              </h2>
+              <p class="text-xs text-slate-400 max-w-2xl leading-relaxed">
+                I collegamenti puntano sia all'endpoint di download diretto sia alla scheda risorsa CKAN. Se il server Consip limita i download da finestre esterne per criteri di sicurezza, premi su <strong>"Apri Pagina CKAN"</strong> o usa la modale assistita.
+              </p>
+            </div>
+
+            <!-- Quick Info Badge -->
+            <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 text-xs space-y-1 min-w-[260px]">
+              <div class="text-slate-400 font-mono text-[10px] uppercase">Risoluzione Download:</div>
+              <div class="text-emerald-400 font-semibold flex items-center gap-1.5">
+                <span>✓</span> Link diretti CKAN verificati
+              </div>
+              <div class="text-cyan-400 font-semibold flex items-center gap-1.5">
+                <span>✓</span> Fallback pagina risorsa integrato
+              </div>
+              <div class="text-slate-300 font-mono text-[11px] mt-1">Caricamento asincrono senza freeze</div>
+            </div>
+          </div>
+
+          <!-- Notice for Big Data datasets like Cataloghi (~600MB) -->
+          <div class="mt-4 p-4 rounded-2xl bg-indigo-950/40 border border-indigo-500/30 flex items-start gap-3">
+            <svg class="w-5 h-5 text-indigo-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            <div class="text-xs text-indigo-200 leading-relaxed">
+              <strong class="text-white font-semibold">Gestione Dataset ad Alto Volume (Cataloghi ~600MB / 287.000+ articoli):</strong>
+              Il dataset 6 (<em class="text-pink-300 font-medium">Cataloghi Beni &amp; Servizi</em>) contiene l'intero listino merci del MePA. Per non bloccare il browser né sovraccaricare la memoria UI con centinaia di migliaia di prodotti, questo dataset viene importato nello storage dedicato <code class="bg-indigo-900/60 px-1 py-0.5 rounded text-cyan-300 font-mono">cataloghi</code> di SQLite 3 tramite lo streaming engine Python (<code class="bg-indigo-900/60 px-1 py-0.5 rounded text-cyan-300 font-mono">python consip_stream_ingestion.py</code>). I dati sono interrogabili ad alte prestazioni via REST API (<code class="bg-indigo-900/60 px-1 py-0.5 rounded text-cyan-300 font-mono">/api/cataloghi?q=...</code>).
+            </div>
+          </div>
+
+          <!-- Dynamic Cards Container (Rendered via JS) -->
+          <div id="datasetCardsContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-6"></div>
+        </div>
+
+      </div>
+
+      <!-- SECTION 3: GUIDA METODOLOGICA -->
+      <div id="view-guida" class="section-view hidden space-y-6">
+        
+        <div class="bg-slate-900/70 border border-slate-800/90 rounded-3xl p-6 sm:p-8 shadow-xl space-y-8">
+          
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800 pb-5">
+            <div class="space-y-1">
+              <span class="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                METODOLOGIA ZERO-COMPLICAZIONI
+              </span>
+              <h2 class="text-2xl sm:text-3xl font-extrabold text-white">
+                Come Gestire Bandi &amp; Gare in modo Semplice, Diretto e Immediato
+              </h2>
+              <p class="text-xs sm:text-sm text-slate-400 max-w-3xl leading-relaxed">
+                Il ciclo di vita completo di una gara pubblica in 4 passaggi sequenziali, memorizzato e velocizzato dal motore relazionale SQLite locale.
+              </p>
+            </div>
+            <div class="text-xs font-mono px-3 py-1.5 rounded-xl bg-slate-950 border border-slate-800 text-slate-300">
+              Tempo medio/gara: <strong class="text-cyan-400">~5-10 min</strong>
+            </div>
+          </div>
+
+          <!-- Flowchart Graphic -->
+          <div class="w-full overflow-x-auto pb-2">
+            <svg viewBox="0 0 1000 360" class="w-full min-w-[820px] h-auto select-none" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <linearGradient id="opStepBg" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#0f172a"/>
+                  <stop offset="100%" stop-color="#1e293b"/>
+                </linearGradient>
+                <marker id="opArrow" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                  <path d="M 0 1 L 8 5 L 0 9 z" fill="#38bdf8"/>
+                </marker>
+                <filter id="opShadow" x="-5%" y="-5%" width="110%" height="110%">
+                  <feDropShadow dx="0" dy="4" stdDeviation="5" flood-color="#000000" flood-opacity="0.35"/>
+                </filter>
+              </defs>
+
+              <line x1="120" y1="120" x2="880" y2="120" stroke="#334155" stroke-width="3" stroke-dasharray="6 5"/>
+
+              <!-- Step 1 -->
+              <g filter="url(#opShadow)">
+                <rect x="25" y="25" width="215" height="195" rx="14" fill="url(#opStepBg)" stroke="#38bdf8" stroke-width="2"/>
+                <circle cx="58" cy="55" r="16" fill="#0284c7" fill-opacity="0.25"/>
+                <text x="58" y="60" fill="#38bdf8" font-family="'JetBrains Mono', monospace" font-size="13" font-weight="bold" text-anchor="middle">1</text>
+                <text x="85" y="60" fill="#ffffff" font-family="'Plus Jakarta Sans', sans-serif" font-size="14" font-weight="700">Identificazione</text>
+                <g transform="translate(38, 85)">
+                  <text x="0" y="0" fill="#94a3b8" font-family="'Plus Jakarta Sans', sans-serif" font-size="11" font-weight="600">INPUT INIZIALE:</text>
+                  <text x="0" y="18" fill="#e2e8f0" font-family="'Plus Jakarta Sans', sans-serif" font-size="11">• Importa o inserisci CIG</text>
+                  <text x="0" y="34" fill="#e2e8f0" font-family="'Plus Jakarta Sans', sans-serif" font-size="11">• Rileva Ente, Oggetto, €</text>
+                  <text x="0" y="50" fill="#e2e8f0" font-family="'Plus Jakarta Sans', sans-serif" font-size="11">• Fissa Termine Scadenza</text>
+                  <rect x="0" y="65" width="185" height="28" rx="6" fill="#0b1329" stroke="#0284c7" stroke-width="1"/>
+                  <text x="92" y="83" fill="#38bdf8" font-family="'JetBrains Mono', monospace" font-size="10" font-weight="bold" text-anchor="middle">Stato: Da Valutare</text>
+                </g>
+              </g>
+
+              <line x1="243" y1="120" x2="270" y2="120" stroke="#38bdf8" stroke-width="2.5" marker-end="url(#opArrow)"/>
+
+              <!-- Step 2 -->
+              <g filter="url(#opShadow)">
+                <rect x="275" y="25" width="215" height="195" rx="14" fill="url(#opStepBg)" stroke="#f59e0b" stroke-width="2"/>
+                <circle cx="308" cy="55" r="16" fill="#d97706" fill-opacity="0.25"/>
+                <text x="308" y="60" fill="#fbbf24" font-family="'JetBrains Mono', monospace" font-size="13" font-weight="bold" text-anchor="middle">2</text>
+                <text x="335" y="60" fill="#ffffff" font-family="'Plus Jakarta Sans', sans-serif" font-size="14" font-weight="700">Valutazione</text>
+                <g transform="translate(288, 85)">
+                  <text x="0" y="0" fill="#94a3b8" font-family="'Plus Jakarta Sans', sans-serif" font-size="11" font-weight="600">ANALISI FATTIBILITÀ:</text>
+                  <text x="0" y="18" fill="#e2e8f0" font-family="'Plus Jakarta Sans', sans-serif" font-size="11">• Requisiti fatturato &amp; ISO</text>
+                  <text x="0" y="34" fill="#e2e8f0" font-family="'Plus Jakarta Sans', sans-serif" font-size="11">• Margine economico stimato</text>
+                  <text x="0" y="50" fill="#e2e8f0" font-family="'Plus Jakarta Sans', sans-serif" font-size="11">• Assegna Responsabile</text>
+                  <rect x="0" y="65" width="185" height="28" rx="6" fill="#0b1329" stroke="#d97706" stroke-width="1"/>
+                  <text x="92" y="83" fill="#fbbf24" font-family="'JetBrains Mono', monospace" font-size="10" font-weight="bold" text-anchor="middle">Stato: In Lavorazione</text>
+                </g>
+              </g>
+
+              <line x1="493" y1="120" x2="520" y2="120" stroke="#fbbf24" stroke-width="2.5" marker-end="url(#opArrow)"/>
+
+              <!-- Step 3 -->
+              <g filter="url(#opShadow)">
+                <rect x="525" y="25" width="215" height="195" rx="14" fill="url(#opStepBg)" stroke="#a855f7" stroke-width="2"/>
+                <circle cx="558" cy="55" r="16" fill="#7e22ce" fill-opacity="0.25"/>
+                <text x="558" y="60" fill="#c084fc" font-family="'JetBrains Mono', monospace" font-size="13" font-weight="bold" text-anchor="middle">3</text>
+                <text x="585" y="60" fill="#ffffff" font-family="'Plus Jakarta Sans', sans-serif" font-size="14" font-weight="700">Predisposizione</text>
+                <g transform="translate(538, 85)">
+                  <text x="0" y="0" fill="#94a3b8" font-family="'Plus Jakarta Sans', sans-serif" font-size="11" font-weight="600">LE 3 BUSTE TELEMATICHE:</text>
+                  <text x="0" y="18" fill="#e2e8f0" font-family="'Plus Jakarta Sans', sans-serif" font-size="11">• Busta A: DGUE &amp; Garanzia</text>
+                  <text x="0" y="34" fill="#e2e8f0" font-family="'Plus Jakarta Sans', sans-serif" font-size="11">• Busta B: Offerta Tecnica</text>
+                  <text x="0" y="50" fill="#e2e8f0" font-family="'Plus Jakarta Sans', sans-serif" font-size="11">• Busta C: Ribasso Prezzo</text>
+                  <rect x="0" y="65" width="185" height="28" rx="6" fill="#0b1329" stroke="#7e22ce" stroke-width="1"/>
+                  <text x="92" y="83" fill="#c084fc" font-family="'JetBrains Mono', monospace" font-size="10" font-weight="bold" text-anchor="middle">Stato: Inviata</text>
+                </g>
+              </g>
+
+              <line x1="743" y1="120" x2="770" y2="120" stroke="#c084fc" stroke-width="2.5" marker-end="url(#opArrow)"/>
+
+              <!-- Step 4 -->
+              <g filter="url(#opShadow)">
+                <rect x="775" y="25" width="200" height="195" rx="14" fill="url(#opStepBg)" stroke="#10b981" stroke-width="2"/>
+                <circle cx="808" cy="55" r="16" fill="#059669" fill-opacity="0.25"/>
+                <text x="808" y="60" fill="#34d399" font-family="'JetBrains Mono', monospace" font-size="13" font-weight="bold" text-anchor="middle">4</text>
+                <text x="835" y="60" fill="#ffffff" font-family="'Plus Jakarta Sans', sans-serif" font-size="14" font-weight="700">Esito Finale</text>
+                <g transform="translate(788, 85)">
+                  <text x="0" y="0" fill="#94a3b8" font-family="'Plus Jakarta Sans', sans-serif" font-size="11" font-weight="600">POST-GARA &amp; ARCHIVIO:</text>
+                  <text x="0" y="18" fill="#e2e8f0" font-family="'Plus Jakarta Sans', sans-serif" font-size="11">• Seduta pubblica &amp; graduatoria</text>
+                  <text x="0" y="34" fill="#e2e8f0" font-family="'Plus Jakarta Sans', sans-serif" font-size="11">• Svincolo Fideiussione</text>
+                  <text x="0" y="50" fill="#e2e8f0" font-family="'Plus Jakarta Sans', sans-serif" font-size="11">• Esporta e archivia storico</text>
+                  <rect x="0" y="65" width="170" height="28" rx="6" fill="#0b1329" stroke="#059669" stroke-width="1"/>
+                  <text x="85" y="83" fill="#34d399" font-family="'JetBrains Mono', monospace" font-size="10" font-weight="bold" text-anchor="middle">Vinta / Persa</text>
+                </g>
+              </g>
+
+              <!-- Bottom Semaphore Bar -->
+              <g transform="translate(25, 240)">
+                <rect width="950" height="100" rx="12" fill="#090e1d" stroke="#1e293b" stroke-width="1.5"/>
+                <text x="25" y="30" fill="#38bdf8" font-family="'JetBrains Mono', monospace" font-size="11" font-weight="700">SEMAFORO VISIVO SCADENZE (ATTIVO AUTOMATICAMENTE NELLA TABELLA):</text>
+                <g transform="translate(25, 45)">
+                  <rect width="280" height="42" rx="6" fill="#450a0a" stroke="#ef4444" stroke-width="1"/>
+                  <text x="12" y="26" fill="#fca5a5" font-family="'JetBrains Mono', monospace" font-size="11" font-weight="bold">🔴 Meno di 3 Giorni: Emergenza</text>
+                </g>
+                <g transform="translate(330, 45)">
+                  <rect width="280" height="42" rx="6" fill="#451a03" stroke="#f59e0b" stroke-width="1"/>
+                  <text x="12" y="26" fill="#fde68a" font-family="'JetBrains Mono', monospace" font-size="11" font-weight="bold">🟡 4 - 7 Giorni: In Lavorazione</text>
+                </g>
+                <g transform="translate(635, 45)">
+                  <rect width="310" height="42" rx="6" fill="#064e3b" stroke="#10b981" stroke-width="1"/>
+                  <text x="12" y="26" fill="#a7f3d0" font-family="'JetBrains Mono', monospace" font-size="11" font-weight="bold">🟢 Oltre 7 Giorni: Chiarimenti &amp; Q&amp;A</text>
+                </g>
+              </g>
+            </svg>
+          </div>
+
+          <!-- Explanation Grid -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+            
+            <div class="bg-slate-950 p-5 rounded-2xl border border-slate-800 space-y-2.5">
+              <span class="text-xs font-mono font-bold text-sky-400 bg-sky-500/10 px-2.5 py-0.5 rounded-full border border-sky-500/20">
+                FASE 1: Identificazione Rapida
+              </span>
+              <h3 class="text-sm font-bold text-white">Caricamento e Presa in Carico</h3>
+              <p class="text-xs text-slate-300 leading-relaxed">
+                Importa il file JSON/CSV da Consip o premi <strong>"Nuova Gara"</strong>. Il sistema associa automaticamente il <strong>CIG</strong>, la stazione appaltante, la regione e la categoria merceologica, memorizzandola nel database SQLite.
+              </p>
+            </div>
+
+            <div class="bg-slate-950 p-5 rounded-2xl border border-slate-800 space-y-2.5">
+              <span class="text-xs font-mono font-bold text-amber-400 bg-amber-500/10 px-2.5 py-0.5 rounded-full border border-amber-500/20">
+                FASE 2: Valutazione (Go / No-Go)
+              </span>
+              <h3 class="text-sm font-bold text-white">Filtrare senza Perdere Tempo</h3>
+              <p class="text-xs text-slate-300 leading-relaxed">
+                Usa la scorciatoia <strong>"Mie Categorie"</strong> per isolare Informatica e Cancelleria. Se mancano requisiti o i margini sono bassi, imposta lo stato su <code class="text-rose-400">Scartata</code>. Se idonea, imposta <code class="text-amber-400">In Lavorazione</code>.
+              </p>
+            </div>
+
+            <div class="bg-slate-950 p-5 rounded-2xl border border-slate-800 space-y-2.5">
+              <span class="text-xs font-mono font-bold text-purple-400 bg-purple-500/10 px-2.5 py-0.5 rounded-full border border-purple-500/20">
+                FASE 3: Predisposizione Buste &amp; Invio
+              </span>
+              <h3 class="text-sm font-bold text-white">Le 3 Buste Telematiche</h3>
+              <p class="text-xs text-slate-300 leading-relaxed">
+                Separa rigorosamente <strong>Busta A (Amministrativa)</strong>, <strong>Busta B (Tecnica)</strong> e <strong>Busta C (Economica)</strong>. Firma digitalmente in formato CAdES (<strong>.p7m</strong>) e trasmetti almeno 24 ore prima per evitare blocchi SPID.
+              </p>
+            </div>
+
+            <div class="bg-slate-950 p-5 rounded-2xl border border-slate-800 space-y-2.5">
+              <span class="text-xs font-mono font-bold text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded-full border border-emerald-500/20">
+                FASE 4: Esito, Aggiudicazione &amp; Storico
+              </span>
+              <h3 class="text-sm font-bold text-white">Chiusura e Svincolo Garanzie</h3>
+              <p class="text-xs text-slate-300 leading-relaxed">
+                Segna la gara come <code class="text-emerald-400">Vinta</code> o <code class="text-rose-400">Persa</code>. Richiedi subito la lettera di svincolo della cauzione provvisoria per liberare il castelletto bancario ed esporta il database SQLite 3 o CSV a fine mese per lo storico.
+              </p>
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- SECTION 4: MOTORE SQLITE 3 & STRUMENTI AVANZATI -->
+      <div id="view-sqlite" class="section-view hidden space-y-6">
+        
+        <div class="bg-slate-900/70 border border-slate-800/90 rounded-3xl p-6 sm:p-8 shadow-xl space-y-6">
+          <div class="border-b border-slate-800 pb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h2 class="text-xl sm:text-2xl font-extrabold text-white flex items-center gap-2">
+                <span>Database SQLite 3 Locale</span>
+                <span class="text-xs font-mono px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-400 border border-indigo-500/30">SQLite Format 3</span>
+              </h2>
+              <p class="text-xs text-slate-400 mt-1">
+                Le operazioni avvengono su un vero database relazionale SQLite compilato in WebAssembly, con indici e transazioni senza blocchi del browser.
+              </p>
+            </div>
+
+            <button id="btnExportSQLiteDb" class="px-4 py-2.5 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-400 hover:to-purple-500 text-white font-bold text-xs flex items-center gap-2 shadow-lg shadow-indigo-500/20 transition shrink-0">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+              <span>Scarica File gare_consip.db</span>
+            </button>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            
+            <!-- Ingestion box with Progress Bar -->
+            <div class="bg-slate-950 p-5 rounded-2xl border border-slate-800 space-y-4">
+              <div class="flex items-center gap-2 text-cyan-400 font-bold text-sm">
+                <span>📥</span>
+                <span>Importazione Dati Asincrona (Anti-Blocco)</span>
+              </div>
+              <p class="text-xs text-slate-400 leading-relaxed">
+                Carica file JSON grandi, archivi CSV o un database SQLite pre-esistente (.db). Il motore elabora i record a blocchi senza congelare l'interfaccia.
+              </p>
+              
+              <div class="space-y-2">
+                <label class="block text-xs text-slate-300 font-semibold">Modalità Deduplicazione:</label>
+                <select id="selectImportMode" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-slate-200 text-xs focus:outline-none focus:border-cyan-400">
+                  <option value="dedup" selected>Deduplica Intelligente (Unisce per CIG senza duplicati)</option>
+                  <option value="replace">Sostituisci Tutto (Svuota SQLite prima di importare)</option>
+                </select>
+              </div>
+
+              <div class="pt-2">
+                <label class="cursor-pointer inline-flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs border border-slate-700 transition">
+                  <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+                  Seleziona File JSON / CSV / .db dal Computer
+                  <input id="inputUploadFile2" type="file" accept=".json,.csv,.db,.sqlite,.sqlite3,.txt" class="hidden">
+                </label>
+              </div>
+            </div>
+
+            <!-- Export & Maintenance box -->
+            <div class="bg-slate-950 p-5 rounded-2xl border border-slate-800 space-y-4">
+              <div class="flex items-center gap-2 text-emerald-400 font-bold text-sm">
+                <span>📤</span>
+                <span>Esportazione &amp; Backup Universale</span>
+              </div>
+              <p class="text-xs text-slate-400 leading-relaxed">
+                Puoi esportare in qualsiasi momento il database SQLite attivo in file binario standard o nei formati aperti JSON e CSV.
+              </p>
+
+              <div class="grid grid-cols-2 gap-3 pt-1">
+                <button id="btnExportJSON" class="py-2 px-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-200 font-semibold text-xs border border-slate-700 flex items-center justify-center gap-2 transition">
+                  <svg class="w-3.5 h-3.5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                  Esporta JSON
+                </button>
+                <button id="btnExportCSV" class="py-2 px-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-200 font-semibold text-xs border border-slate-700 flex items-center justify-center gap-2 transition">
+                  <svg class="w-3.5 h-3.5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                  Esporta CSV
+                </button>
+              </div>
+
+              <div class="pt-3 border-t border-slate-800/80">
+                <button id="btnOpenClearConfirm" class="w-full py-2 px-3 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 font-semibold text-xs border border-rose-500/30 flex items-center justify-center gap-2 transition">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                  Svuota Tabella SQLite (Reset Dati)
+                </button>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Schema SQL Info Card -->
+          <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-2 text-xs">
+            <div class="font-mono text-indigo-400 font-bold uppercase text-[11px]">Schema DDL SQLite 3 della Tabella Principale:</div>
+            <pre class="bg-slate-900 p-3 rounded-xl border border-slate-800 text-[11px] font-mono text-slate-300 overflow-x-auto">CREATE TABLE IF NOT EXISTS gare (
+  id TEXT PRIMARY KEY,
+  cig TEXT UNIQUE,
+  category TEXT,
+  region TEXT,
+  source TEXT,
+  authority TEXT,
+  title TEXT,
+  amount REAL,
+  deadline TEXT,
+  status TEXT,
+  owner TEXT,
+  link TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_cig ON gare(cig);
+CREATE INDEX IF NOT EXISTS idx_category ON gare(category);
+CREATE INDEX IF NOT EXISTS idx_deadline ON gare(deadline);</pre>
+          </div>
+        </div>
+
+      </div>
+
+    </main>
+  </div>
+
+  <!-- PROGRESS MODAL: Asynchronous file processing without freeze -->
+  <div id="progressModal" role="status" aria-live="polite" aria-labelledby="progressTitle" class="fixed inset-0 bg-slate-950/85 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-slate-900 border border-cyan-500/40 rounded-3xl p-6 sm:p-7 max-w-md w-full shadow-2xl space-y-4">
+      <div class="flex items-center gap-3">
+        <div class="h-10 w-10 rounded-xl bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 flex items-center justify-center animate-spin">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+        </div>
+        <div>
+          <h3 id="progressTitle" class="text-sm font-bold text-white">Importazione nel Database SQLite</h3>
+          <p id="progressSubtitle" class="text-xs text-slate-400">Elaborazione asincrona record...</p>
+        </div>
+      </div>
+
+      <!-- Animated Progress Bar -->
+      <div class="space-y-1.5 pt-2">
+        <div class="flex justify-between text-xs font-mono">
+          <span id="progressRecordsCount" class="text-slate-300">0 / 0 record</span>
+          <span id="progressPercentage" class="text-cyan-400 font-bold">0%</span>
+        </div>
+        <div class="w-full bg-slate-950 h-3 rounded-full overflow-hidden border border-slate-800">
+          <div id="progressBarFill" class="bg-gradient-to-r from-cyan-500 to-indigo-500 h-full w-0 transition-all duration-150"></div>
+        </div>
+      </div>
+
+      <div class="bg-slate-950/70 p-3 rounded-xl border border-slate-800 text-[11px] text-slate-400">
+        💡 L'interfaccia resta sbloccata grazie all'elaborazione a blocchi di memoria.
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Inserisci / Modifica Gara -->
+  <div id="tenderModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-7 max-w-lg w-full shadow-2xl relative max-h-[90vh] overflow-y-auto custom-scrollbar">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+        <h3 id="modalTitle" class="text-base font-bold text-white">Nuova Gara nel Monitoraggio</h3>
+        <button id="btnCloseModal" aria-label="Chiudi finestra modale" class="text-slate-400 hover:text-white p-2 rounded-lg touch-target-action">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <form id="tenderForm" class="space-y-4 mt-4 text-xs">
+        <input type="hidden" id="formId">
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label for="formCIG" class="block text-slate-300 font-semibold mb-1">Codice CIG *</label>
+            <input type="text" id="formCIG" required aria-required="true" placeholder="Es. B104928FA3" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-slate-100 font-mono tabular-nums focus:border-cyan-500 focus:outline-none">
+          </div>
+          <div>
+            <label for="formAmount" class="block text-slate-300 font-semibold mb-1">Base d'Asta (€) *</label>
+            <input type="number" step="0.01" id="formAmount" required aria-required="true" placeholder="Es. 45000" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-slate-100 font-mono tabular-nums focus:border-cyan-500 focus:outline-none">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label for="formCategory" class="block text-slate-300 font-semibold mb-1">Area Merceologica</label>
+            <select id="formCategory" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-slate-100 focus:border-cyan-500 focus:outline-none">
+              <option value="IT">Informatica, Elettronica &amp; TLC</option>
+              <option value="CANCELLERIA">Cancelleria, Carta &amp; Ufficio</option>
+              <option value="ARREDI">Arredi &amp; Attrezzature</option>
+              <option value="SANITA">Sanità &amp; Dispositivi Medici</option>
+              <option value="ENERGIA">Energia &amp; Utilities</option>
+              <option value="ALTRO">Altro</option>
+            </select>
+          </div>
+          <div>
+            <label for="formRegion" class="block text-slate-300 font-semibold mb-1">Regione Ente</label>
+            <input type="text" id="formRegion" placeholder="Es. Lombardia, Lazio, Nazionale..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-slate-100 focus:border-cyan-500 focus:outline-none">
+          </div>
+        </div>
+
+        <div>
+          <label for="formAuthority" class="block text-slate-300 font-semibold mb-1">Stazione Appaltante (Ente PA) *</label>
+          <input type="text" id="formAuthority" required aria-required="true" placeholder="Es. Comune di Milano - Settore ICT" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-slate-100 focus:border-cyan-500 focus:outline-none">
+        </div>
+
+        <div>
+          <label for="formTitle" class="block text-slate-300 font-semibold mb-1">Oggetto della Gara / RdO *</label>
+          <textarea id="formTitle" rows="2" required aria-required="true" placeholder="Descrizione sintetica della fornitura o servizio..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-slate-100 focus:border-cyan-500 focus:outline-none"></textarea>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label for="formDeadline" class="block text-slate-300 font-semibold mb-1">Data &amp; Ora Scadenza *</label>
+            <input type="datetime-local" id="formDeadline" required aria-required="true" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-slate-100 font-mono tabular-nums focus:border-cyan-500 focus:outline-none">
+          </div>
+          <div>
+            <label for="formStatus" class="block text-slate-300 font-semibold mb-1">Fase Ciclo di Vita</label>
+            <select id="formStatus" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-slate-100 focus:border-cyan-500 focus:outline-none">
+              <option value="Da Valutare">1. Da Valutare</option>
+              <option value="In Lavorazione">2. In Lavorazione</option>
+              <option value="Inviata">3. Inviata</option>
+              <option value="Vinta">4. Vinta</option>
+              <option value="Persa">4. Persa</option>
+              <option value="Scartata">Scartata</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label for="formOwner" class="block text-slate-300 font-semibold mb-1">Responsabile Interno</label>
+            <input type="text" id="formOwner" placeholder="Es. Mario Rossi" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-slate-100 focus:border-cyan-500 focus:outline-none">
+          </div>
+          <div>
+            <label for="formLink" class="block text-slate-300 font-semibold mb-1">Link Procedura Portale</label>
+            <input type="url" id="formLink" placeholder="https://..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-slate-100 font-mono focus:border-cyan-500 focus:outline-none">
+          </div>
+        </div>
+
+        <div class="pt-3 border-t border-slate-800 flex items-center justify-end gap-3">
+          <button type="button" id="btnCancelModal" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold transition">Annulla</button>
+          <button type="submit" class="px-5 py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-bold transition shadow-lg shadow-cyan-500/20">Salva in SQLite</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: Conferma Reset Completo -->
+  <div id="clearConfirmModal" role="dialog" aria-modal="true" aria-labelledby="clearConfirmTitle" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-slate-900 border border-rose-500/40 rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4">
+      <div class="flex items-center gap-3 text-rose-400">
+        <div class="p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/20">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+        </div>
+        <div>
+          <h3 id="clearConfirmTitle" class="text-base font-bold text-white">Svuotare il database SQLite?</h3>
+          <p class="text-xs text-slate-400">Questa operazione cancellerà tutte le gare registrate.</p>
+        </div>
+      </div>
+      <p class="text-xs text-slate-300 leading-relaxed bg-slate-950/60 p-3 rounded-xl border border-slate-800">
+        Puoi svuotare per ripartire da zero e re-importare un file JSON/CSV pulito o un file .db di backup.
+      </p>
+      <div class="flex items-center justify-end gap-2 pt-2">
+        <button id="btnCancelClear" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition">Annulla</button>
+        <button id="btnConfirmClear" class="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold shadow-lg shadow-rose-600/30 transition">Sì, Svuota Database</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Assistente Download Diretto Consip CKAN -->
+  <div id="downloadHelperModal" role="dialog" aria-modal="true" aria-labelledby="helperModalTitle" class="fixed inset-0 bg-slate-950/85 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-7 max-w-lg w-full shadow-2xl space-y-4">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+        <div class="flex items-center gap-2.5">
+          <div class="h-8 w-8 rounded-lg bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 flex items-center justify-center font-bold">
+            ⬇
+          </div>
+          <div>
+            <h3 id="helperModalTitle" class="text-sm font-bold text-white">Download Dataset Consip</h3>
+            <p id="helperModalSub" class="text-[11px] text-slate-400 font-mono">Collegamento ufficiale dati.consip.it</p>
+          </div>
+        </div>
+        <button id="btnCloseHelperModal" aria-label="Chiudi finestra" class="text-slate-400 hover:text-white text-sm p-2 rounded touch-target-action">✕</button>
+      </div>
+
+      <div class="bg-slate-950 p-3.5 rounded-xl border border-slate-800 text-xs space-y-2">
+        <div class="text-slate-400">URL del file selezionato:</div>
+        <div id="helperFileUrl" class="font-mono text-[11px] text-cyan-300 break-all select-all bg-slate-900 p-2 rounded border border-slate-800">
+          https://dati.consip.it/...
+        </div>
+      </div>
+
+      <p class="text-xs text-slate-300 leading-relaxed">
+        Nota tecnica: I browser bloccano le chiamate programmatiche verso <em>dati.consip.it</em> se il server non abilita le intestazioni CORS. Clicca su <strong>"Apri Pagina CKAN"</strong> per raggiungere direttamente la risorsa sul portale ufficiale, oppure clicca su <strong>"Download Diretto"</strong>.
+      </p>
+
+      <div class="flex flex-wrap items-center justify-end gap-2 pt-2">
+        <button id="btnCopyDownloadUrl" class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold border border-slate-700 transition">
+          Copia Link
+        </button>
+        <a id="btnOpenCkanPage" href="#" target="_blank" rel="noopener noreferrer" class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-cyan-400 text-xs font-semibold border border-slate-700 transition inline-flex items-center gap-1">
+          <span>Apri Pagina CKAN ↗</span>
+        </a>
+        <a id="btnDirectFileDownload" href="#" target="_blank" rel="noopener noreferrer" class="px-4 py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 text-xs font-bold shadow-lg shadow-cyan-500/20 transition">
+          Download Diretto
+        </a>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Moduli Applicativi JavaScript (Zero-Build Vanilla Architecture) -->
+  <script defer src="js/utils.js"></script>
+  <script defer src="js/config.js"></script>
+  <script defer src="js/api.js"></script>
+  <script defer src="js/db-engine.js"></script>
+  <script defer src="js/importer.js"></script>
+  <script defer src="js/views/cruscotto.js"></script>
+  <script defer src="js/views/wizard.js"></script>
+  <script defer src="js/views/cataloghi.js"></script>
+  <script defer src="js/views/amministrazioni.js"></script>
+  <script defer src="js/views/analytics.js"></script>
+  <script defer src="js/app.js"></script>
+</body>
+</html>

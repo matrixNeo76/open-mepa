@@ -1,0 +1,40 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# SQLite 3 Databases & temporary locks (generated dynamically by scripts)
+*.db
+*.db-journal
+*.db-wal
+*.sqlite
+*.sqlite3
+gare_consip.db
+
+# Large Open Data dumps (Consip CKAN > 100MB)
+/json/*.json
+/json/*.csv
+/*.csv
+!json/README.md
+
+# Backups & temporary files
+*.bak
+*.bak.*
+*.tmp
+
+# Operating System Files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editors & IDEs
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+
+# Logs and runtime artifacts
+*.log
+.env
+.venv/
+env/

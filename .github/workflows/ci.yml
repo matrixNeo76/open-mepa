@@ -1,0 +1,65 @@
+name: Open-MePA CI
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  test:
+    name: Backend & Integration Tests
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ ubuntu-latest, windows-latest ]
+        python-version: [ '3.11', '3.12' ]
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Verify Python Syntax
+        run: |
+          python -m py_compile script_generatore_database_sqlite_3.py
+          python -m py_compile consip_stream_ingestion.py
+          python -m py_compile test_integration.py
+
+      - name: Bootstrap Database
+        run: |
+          python script_generatore_database_sqlite_3.py --build-only
+
+      - name: Run Integration Tests
+        run: |
+          python test_integration.py
+
+      - name: Verify Web Assets Integrity
+        run: |
+          python -c "
+          import os
+          files = [
+              'index.html',
+              'gestionale_bandi_mepa_open_data_consip.html',
+              'css/styles.css',
+              'js/utils.js',
+              'js/config.js',
+              'js/api.js',
+              'js/db-engine.js',
+              'js/importer.js',
+              'js/app.js',
+              'js/views/cruscotto.js',
+              'js/views/wizard.js',
+              'js/views/cataloghi.js',
+              'js/views/amministrazioni.js',
+              'js/views/analytics.js'
+          ]
+          for f in files:
+              assert os.path.exists(f), f'Missing required asset: {f}'
+              assert os.path.getsize(f) > 0, f'Empty file: {f}'
+          print('All web assets verified successfully.')
+          "
