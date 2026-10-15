@@ -231,7 +231,7 @@ function renderApp() {
             <td class="py-2.5 px-3.5 text-slate-400 font-mono text-xs whitespace-nowrap">${escapeHtml(t.owner || '-')}</td>
             <td class="py-2.5 px-3.5 text-center whitespace-nowrap">
               <div class="inline-flex items-center gap-1 opacity-80 group-hover:opacity-100 transition-opacity">
-                <button onclick="window.openTenderWizard('${escapeHtml(t.id)}')" aria-label="Apri Wizard 4 Fasi Gara CIG ${escapeHtml(t.cig || '')}" class="touch-target-action px-2 py-1.5 rounded-lg bg-cyan-950/60 hover:bg-cyan-900 text-cyan-300 font-mono text-[11px] font-bold border border-cyan-500/40 transition flex items-center gap-1 shadow-sm" title="Avvia Wizard Guidato 4 Fasi (MePA/Consip)">
+                <button onclick="window.openTenderWizard('${escapeHtml(t.id)}', 1)" aria-label="Apri Wizard 4 Fasi Gara CIG ${escapeHtml(t.cig || '')}" class="touch-target-action px-2 py-1.5 rounded-lg bg-cyan-950/60 hover:bg-cyan-900 text-cyan-300 font-mono text-[11px] font-bold border border-cyan-500/40 transition flex items-center gap-1 shadow-sm" title="Avvia Wizard Guidato 4 Fasi (MePA/Consip)">
                   <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
                   <span>Wizard</span>
                 </button>

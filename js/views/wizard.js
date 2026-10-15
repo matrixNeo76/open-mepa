@@ -384,24 +384,36 @@ window.showWizardHelpModal = function(key) {
 
 /**
  * Avvia o apre il Wizard per una specifica gara (o la prima attiva se null)
+ * Di default apre sempre la Fase 1 per guidare l'operatore dall'inizio.
  */
-window.openTenderWizard = async function(garaId = null) {
+window.openTenderWizard = async function(garaId = null, forcedStep = 1) {
   const all = getAllTendersFromSQLite();
   if (all.length === 0) {
     showNotification("Nessuna gara presente. Carica dati demo o una gara per usare il Wizard.", false);
     return;
   }
 
-  const tender = garaId ? all.find(t => t.id === garaId || t.cig === garaId) : all[0];
+  let tender = null;
+  if (garaId) {
+    tender = all.find(t => t.id === garaId || t.cig === garaId);
+  }
   if (!tender) {
-    showNotification("Gara selezionata non trovata.", false);
-    return;
+    // Preferisci una gara attiva (con scadenza futura) o la demo T1, altrimenti la prima disponibile
+    tender = all.find(t => t.id === 'T1') || all.find(t => new Date(t.deadline) > new Date()) || all[0];
   }
 
   currentWizardGaraId = tender.id;
   window.switchView("wizard");
 
   await loadWizardData(currentWizardGaraId, tender);
+
+  // Garantisce che il Wizard parta sempre dalla Fase 1 (o dal passo richiesto)
+  if (forcedStep !== null && forcedStep !== undefined) {
+    currentWizardStep = forcedStep;
+  } else {
+    currentWizardStep = currentWizardData.current_step || 1;
+  }
+
   renderWizardView(tender);
 };
 
