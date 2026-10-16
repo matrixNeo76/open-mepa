@@ -18,6 +18,8 @@ async function refreshOpenDataStats() {
   let gareCount = 0;
   let catCount = 0;
   let ammCount = 0;
+  let operCount = 0;
+  let contrCount = 0;
   let storageEngine = "SQLite 3 Wasm";
 
   if (liveBackendConnected) {
@@ -26,6 +28,8 @@ async function refreshOpenDataStats() {
       gareCount = resp.total_tenders || 0;
       catCount = resp.total_cataloghi || 0;
       ammCount = resp.total_amministrazioni || 0;
+      operCount = resp.total_operatori || 0;
+      contrCount = resp.total_contratti || 0;
       storageEngine = "SQLite 3 Live Server (Porta " + (window.location.port || "8050") + ")";
     } catch (e) {
       console.warn("Fallback su cache locale per statistiche Open Data:", e);
@@ -48,7 +52,14 @@ async function refreshOpenDataStats() {
   if (elAmm) elAmm.textContent = Number(ammCount).toLocaleString("it-IT");
   if (elStorage) elStorage.textContent = storageEngine;
 
-  window._opendataStats = { gare: gareCount, cat: catCount, amm: ammCount, storage: storageEngine };
+  window._opendataStats = { 
+    gare: gareCount, 
+    cat: catCount, 
+    amm: ammCount, 
+    oper: operCount, 
+    contr: contrCount, 
+    storage: storageEngine 
+  };
 }
 
 // Renderizza le 6 card dei dataset ufficiali arricchite con tracciato record e stato sincro
@@ -58,7 +69,7 @@ function renderOpenDataCards() {
   if (!cardsContainer) return;
 
   const year = selectYear ? selectYear.value : "2026";
-  const stats = window._opendataStats || { gare: 1822, cat: 287536, amm: 20776 };
+  const stats = window._opendataStats || { gare: 1822, cat: 287536, amm: 20776, oper: 0, contr: 0 };
 
   cardsContainer.innerHTML = consipDatasets.map(ds => {
     const ckanPage = ds.ckanUrl;
@@ -84,6 +95,30 @@ function renderOpenDataCards() {
         <span class="w-1.5 h-1.5 rounded-full bg-pink-400"></span> Listini caricati (${Number(stats.cat).toLocaleString("it-IT")} articoli)
       </span>`;
       syncDetail = `Storage stream ad alta efficienza <code class="text-pink-300 font-mono text-[11px]">cataloghi</code> (~600MB).`;
+    } else if (ds.id === "operatorieconomici") {
+      if (stats.oper > 0) {
+        syncBadge = `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-purple-500/10 text-purple-400 border border-purple-500/20">
+          <span class="w-1.5 h-1.5 rounded-full bg-purple-400"></span> Attivo nel DB (${Number(stats.oper).toLocaleString("it-IT")} imprese)
+        </span>`;
+        syncDetail = `Albo fornitori memorizzato nella tabella <code class="text-purple-300 font-mono text-[11px]">operatori_economici</code>.`;
+      } else {
+        syncBadge = `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-mono text-purple-300 bg-purple-950/40 border border-purple-500/30">
+          Disponibile &bull; Sincronizza 1-Click
+        </span>`;
+        syncDetail = `Pronto per l'ingestion in tabella <code class="text-purple-300 font-mono text-[11px]">operatori_economici</code>.`;
+      }
+    } else if (ds.id === "acquisti") {
+      if (stats.contr > 0) {
+        syncBadge = `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Attivo nel DB (${Number(stats.contr).toLocaleString("it-IT")} contratti)
+        </span>`;
+        syncDetail = `Storico aggiudicazioni nella tabella <code class="text-emerald-300 font-mono text-[11px]">contratti_stipulati</code>.`;
+      } else {
+        syncBadge = `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-mono text-emerald-300 bg-emerald-950/40 border border-emerald-500/30">
+          Disponibile &bull; Sincronizza 1-Click
+        </span>`;
+        syncDetail = `Pronto per l'ingestion in tabella <code class="text-emerald-300 font-mono text-[11px]">contratti_stipulati</code>.`;
+      }
     } else {
       syncBadge = `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-mono text-slate-400 bg-slate-900 border border-slate-800">
         Dataset Aperto &bull; Disponibile per Import
@@ -307,9 +342,15 @@ window.syncConsipDatasetFromUrl = async function(datasetId, year) {
     await refreshOpenDataStats();
     renderOpenDataCards();
     showNotification(res.message || `Sincronizzazione completata: ${res.processed} record inseriti in SQLite!`);
-    if (ds.tableName === "cataloghi") switchView("cataloghi");
-    else if (ds.tableName === "amministrazioni") switchView("amministrazioni");
-    else switchView("cruscotto");
+    if (ds.tableName === "cataloghi") {
+      switchView("cataloghi");
+    } else if (ds.tableName === "amministrazioni") {
+      switchView("amministrazioni");
+    } else if (ds.tableName === "operatori" || ds.tableName === "acquisti") {
+      // Rimani sulla schermata Open Data Hub per mostrare il badge di attivazione immediato
+    } else {
+      switchView("cruscotto");
+    }
   } catch (err) {
     hideProgress();
     console.error("Errore sincronizzazione 1-Click:", err);

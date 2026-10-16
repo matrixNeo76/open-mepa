@@ -206,6 +206,90 @@ def init_database(force_recreate=False):
     """)
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_allegati_gara_id ON allegati_gare(gara_id);")
 
+    # Tabella Cataloghi Beni & Servizi MePA
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS cataloghi (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        iniziativa TEXT,
+        lotto_cig TEXT,
+        lotto_nome TEXT,
+        categoria TEXT,
+        cpv TEXT,
+        cpv_desc TEXT,
+        prodotto TEXT,
+        dettaglio TEXT,
+        strumento TEXT,
+        disponibile TEXT
+    );
+    """)
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_cat_cpv ON cataloghi(cpv);")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_cat_iniz ON cataloghi(iniziativa);")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_cat_prod ON cataloghi(prodotto);")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_cat_lotto ON cataloghi(lotto_cig);")
+
+    # Tabella Anagrafica Amministrazioni Pubbliche
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS amministrazioni (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        ipa TEXT UNIQUE,
+        codice_fiscale TEXT,
+        denominazione TEXT,
+        tipologia TEXT,
+        regione TEXT,
+        provincia TEXT,
+        comune TEXT,
+        po_attivi INTEGER
+    );
+    """)
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_amm_ipa ON amministrazioni(ipa);")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_amm_cf ON amministrazioni(codice_fiscale);")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_amm_reg ON amministrazioni(regione);")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_amm_den ON amministrazioni(denominazione);")
+
+    # Tabella Albo Operatori Economici & Fornitori MePA
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS operatori_economici (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        partita_iva TEXT UNIQUE,
+        ragione_sociale TEXT,
+        forma_societaria TEXT,
+        nazione TEXT DEFAULT 'ITALIA',
+        regione TEXT,
+        provincia TEXT,
+        comune TEXT,
+        indirizzo TEXT,
+        numero_aggiudicazioni INTEGER DEFAULT 0,
+        numero_abilitazioni INTEGER DEFAULT 0,
+        numero_transazioni INTEGER DEFAULT 0,
+        contratti_attivi INTEGER DEFAULT 0
+    );
+    """)
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_oe_piva ON operatori_economici(partita_iva);")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_oe_ragione ON operatori_economici(ragione_sociale);")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_oe_regione ON operatori_economici(regione);")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_oe_provincia ON operatori_economici(provincia);")
+
+    # Tabella Contratti e Spesa Reale
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS contratti_stipulati (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        anno INTEGER,
+        tipologia_amministrazione TEXT,
+        regione_fornitore TEXT,
+        regione_pa TEXT,
+        provincia_pa TEXT,
+        tipo_negoziazione TEXT,
+        n_negoziazioni INTEGER DEFAULT 0,
+        n_contratti INTEGER DEFAULT 0,
+        valore_base_asta REAL DEFAULT 0,
+        valore_stipulato REAL DEFAULT 0,
+        durata_media REAL DEFAULT 0
+    );
+    """)
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_cs_anno ON contratti_stipulati(anno);")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_cs_reg_pa ON contratti_stipulati(regione_pa);")
+
+
     # Controlla se ci sono già record
     cursor.execute("SELECT COUNT(*) FROM gare")
     count = cursor.fetchone()[0]
@@ -402,6 +486,10 @@ def stream_process_file_data(file_path, original_filename, target="gare", mode="
             target = "cataloghi"
         elif "amministraz" in fn_lower:
             target = "amministrazioni"
+        elif "operator" in fn_lower:
+            target = "operatori"
+        elif "acquist" in fn_lower or "contratt" in fn_lower or "stipulate" in fn_lower:
+            target = "acquisti"
         else:
             target = "gare"
 
@@ -445,6 +533,47 @@ def stream_process_file_data(file_path, original_filename, target="gare", mode="
     cur.execute("CREATE INDEX IF NOT EXISTS idx_amm_cf ON amministrazioni(codice_fiscale);")
     cur.execute("CREATE INDEX IF NOT EXISTS idx_amm_reg ON amministrazioni(regione);")
     cur.execute("CREATE INDEX IF NOT EXISTS idx_amm_den ON amministrazioni(denominazione);")
+
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS operatori_economici (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        partita_iva TEXT UNIQUE,
+        ragione_sociale TEXT,
+        forma_societaria TEXT,
+        nazione TEXT DEFAULT 'ITALIA',
+        regione TEXT,
+        provincia TEXT,
+        comune TEXT,
+        indirizzo TEXT,
+        numero_aggiudicazioni INTEGER DEFAULT 0,
+        numero_abilitazioni INTEGER DEFAULT 0,
+        numero_transazioni INTEGER DEFAULT 0,
+        contratti_attivi INTEGER DEFAULT 0
+    );
+    """)
+    cur.execute("CREATE INDEX IF NOT EXISTS idx_oe_piva ON operatori_economici(partita_iva);")
+    cur.execute("CREATE INDEX IF NOT EXISTS idx_oe_ragione ON operatori_economici(ragione_sociale);")
+    cur.execute("CREATE INDEX IF NOT EXISTS idx_oe_regione ON operatori_economici(regione);")
+    cur.execute("CREATE INDEX IF NOT EXISTS idx_oe_provincia ON operatori_economici(provincia);")
+
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS contratti_stipulati (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        anno INTEGER,
+        tipologia_amministrazione TEXT,
+        regione_fornitore TEXT,
+        regione_pa TEXT,
+        provincia_pa TEXT,
+        tipo_negoziazione TEXT,
+        n_negoziazioni INTEGER DEFAULT 0,
+        n_contratti INTEGER DEFAULT 0,
+        valore_base_asta REAL DEFAULT 0,
+        valore_stipulato REAL DEFAULT 0,
+        durata_media REAL DEFAULT 0
+    );
+    """)
+    cur.execute("CREATE INDEX IF NOT EXISTS idx_cs_anno ON contratti_stipulati(anno);")
+    cur.execute("CREATE INDEX IF NOT EXISTS idx_cs_reg_pa ON contratti_stipulati(regione_pa);")
 
     processed = 0
 
@@ -635,6 +764,70 @@ def stream_process_file_data(file_path, original_filename, target="gare", mode="
                     cur.execute("BEGIN TRANSACTION;")
                     batch_count = 0
 
+        elif target == "operatori":
+            for row in reader:
+                if not row or len(row) < 2:
+                    continue
+                piva = row[0].strip().replace('"', '').replace("'", "")
+                if not piva or piva.startswith("#"):
+                    continue
+                ragione = row[1].strip() if len(row) > 1 else ""
+                forma = row[2].strip() if len(row) > 2 else ""
+                nazione = row[3].strip() if len(row) > 3 else "ITALIA"
+                regione = row[4].strip() if len(row) > 4 else ""
+                provincia = row[5].strip() if len(row) > 5 else ""
+                comune = row[6].strip() if len(row) > 6 else ""
+                indirizzo = row[7].strip() if len(row) > 7 else ""
+                n_aggiud = int(clean_amount(row[10])) if len(row) > 10 else 0
+                n_abilit = int(clean_amount(row[11])) if len(row) > 11 else 0
+                n_trans = int(clean_amount(row[12])) if len(row) > 12 else 0
+                n_contr = int(clean_amount(row[13])) if len(row) > 13 else 0
+
+                cur.execute("""
+                INSERT INTO operatori_economici (partita_iva, ragione_sociale, forma_societaria, nazione, regione, provincia, comune, indirizzo, numero_aggiudicazioni, numero_abilitazioni, numero_transazioni, contratti_attivi)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(partita_iva) DO UPDATE SET
+                    ragione_sociale = excluded.ragione_sociale,
+                    regione = excluded.regione,
+                    numero_abilitazioni = excluded.numero_abilitazioni,
+                    contratti_attivi = excluded.contratti_attivi
+                """, (piva, ragione, forma, nazione, regione, provincia, comune, indirizzo, n_aggiud, n_abilit, n_trans, n_contr))
+
+                processed += 1
+                batch_count += 1
+                if batch_count >= BATCH_SIZE:
+                    conn.commit()
+                    cur.execute("BEGIN TRANSACTION;")
+                    batch_count = 0
+
+        elif target == "acquisti":
+            for row in reader:
+                if not row or len(row) < 3 or (row[0].startswith("#")):
+                    continue
+                anno = int(clean_amount(row[0])) if len(row) > 0 else 2026
+                tipologia = row[1].strip() if len(row) > 1 else ""
+                reg_forn = row[2].strip() if len(row) > 2 else ""
+                reg_pa = row[3].strip() if len(row) > 3 else ""
+                prov_pa = row[4].strip() if len(row) > 4 else ""
+                tipo_neg = row[6].strip() if len(row) > 6 else "RdO"
+                n_neg = int(clean_amount(row[7])) if len(row) > 7 else 0
+                n_contr = int(clean_amount(row[8])) if len(row) > 8 else 0
+                v_base = clean_amount(row[9]) if len(row) > 9 else 0.0
+                v_stip = clean_amount(row[11]) if len(row) > 11 else 0.0
+                durata = clean_amount(row[16]) if len(row) > 16 else 0.0
+
+                cur.execute("""
+                INSERT INTO contratti_stipulati (anno, tipologia_amministrazione, regione_fornitore, regione_pa, provincia_pa, tipo_negoziazione, n_negoziazioni, n_contratti, valore_base_asta, valore_stipulato, durata_media)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """, (anno, tipologia, reg_forn, reg_pa, prov_pa, tipo_neg, n_neg, n_contr, v_base, v_stip, durata))
+
+                processed += 1
+                batch_count += 1
+                if batch_count >= BATCH_SIZE:
+                    conn.commit()
+                    cur.execute("BEGIN TRANSACTION;")
+                    batch_count = 0
+
         conn.commit()
 
     conn.close()
@@ -714,6 +907,18 @@ class MePAHandler(SimpleHTTPRequestHandler):
                     cur.execute("SELECT COUNT(*) FROM amministrazioni")
                     total_amm = cur.fetchone()[0]
 
+                cur.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='operatori_economici'")
+                total_oe = 0
+                if cur.fetchone():
+                    cur.execute("SELECT COUNT(*) FROM operatori_economici")
+                    total_oe = cur.fetchone()[0]
+
+                cur.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='contratti_stipulati'")
+                total_cs = 0
+                if cur.fetchone():
+                    cur.execute("SELECT COUNT(*) FROM contratti_stipulati")
+                    total_cs = cur.fetchone()[0]
+
                 conn.close()
                 self.send_json_response({
                     "status": "connected",
@@ -722,6 +927,8 @@ class MePAHandler(SimpleHTTPRequestHandler):
                     "total_tenders": total_gare,
                     "total_cataloghi": total_cat,
                     "total_amministrazioni": total_amm,
+                    "total_operatori": total_oe,
+                    "total_contratti": total_cs,
                     "backend_version": "1.1.0"
                 })
             except Exception as e:
