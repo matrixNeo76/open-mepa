@@ -61,7 +61,15 @@ function getFilteredAndSortedTenders() {
         if (t.region !== reg && t.region !== "Nazionale") return false;
       }
     }
-    if (src !== "ALL" && t.source !== src) return false;
+    if (src !== "ALL") {
+      if (src === "Bandi e Gare") {
+        if (t.source !== "Bandi e Gare" && t.source !== "Convenzione" && t.source !== "Accordo Quadro") return false;
+      } else if (src === "RdO MePA" || src === "MePA") {
+        if (t.source !== "RdO MePA" && t.source !== "MePA") return false;
+      } else {
+        if (t.source !== src) return false;
+      }
+    }
 
     if (st === "SOLO_ATTIVE") {
       if (!isTenderActive(t)) return false;

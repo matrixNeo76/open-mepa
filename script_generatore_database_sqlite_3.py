@@ -14,6 +14,8 @@ import os
 import sqlite3
 import json
 import datetime
+import socket
+import ipaddress
 from datetime import datetime as dt, timedelta, timezone
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 from urllib.parse import urlparse, parse_qs
@@ -21,7 +23,7 @@ from urllib.parse import urlparse, parse_qs
 DB_NAME = "gare_consip.db"
 HTML_FILE = "index.html" if os.path.exists("index.html") else "gestionale_bandi_mepa_open_data_consip.html"
 DEFAULT_PORT = 8050
-DEFAULT_HOST = "127.0.0.1"
+DEFAULT_HOST = "0.0.0.0"
 VALID_STATUSES = ("Da Valutare", "In Lavorazione", "Inviata", "Vinta", "Persa", "Scartata")
 
 SAMPLE_RECORDS = [
@@ -218,9 +220,11 @@ def init_database(force_recreate=False):
     return count
 
 def get_db_connection():
-    conn = sqlite3.connect(DB_NAME)
+    conn = sqlite3.connect(DB_NAME, timeout=30.0)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys = ON")
+    conn.execute("PRAGMA journal_mode = WAL")
+    conn.execute("PRAGMA busy_timeout = 30000")
     return conn
 
 
@@ -278,14 +282,22 @@ def generate_ics_content(tenders):
     return "\r\n".join(lines) + "\r\n"
 
 def is_local_origin(origin):
-    """True se l'header Origin proviene da una pagina servita da localhost/127.0.0.1."""
+    """True se l'header Origin proviene da localhost o da un IP privato di rete LAN (RFC 1918)."""
     if not origin:
-        return False
+        return True
     try:
         host = urlparse(origin).hostname
-    except ValueError:
+        if not host:
+            return False
+        if host in ("127.0.0.1", "localhost", "::1"):
+            return True
+        try:
+            ip = ipaddress.ip_address(host)
+            return ip.is_private or ip.is_loopback
+        except ValueError:
+            return False
+    except Exception:
         return False
-    return host in ("127.0.0.1", "localhost", "::1")
 
 class MePAHandler(SimpleHTTPRequestHandler):
     """Gestore HTTP con supporto per servire l'app web e le API REST SQLite 3."""
@@ -1015,12 +1027,29 @@ class MePAHandler(SimpleHTTPRequestHandler):
 
         self.send_json_response({"error": "ID gara non fornito per la cancellazione"}, 400)
 
+def get_lan_ip():
+    """Tenta di rilevare l'indirizzo IP locale della scheda di rete per la LAN."""
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.settimeout(0.5)
+        # Non invia traffico reale: individua l'interfaccia usata verso il gateway
+        s.connect(("8.8.8.8", 80))
+        ip = s.getsockname()[0]
+        s.close()
+        return ip
+    except Exception:
+        return "127.0.0.1"
+
 def run_server(port=DEFAULT_PORT, host=DEFAULT_HOST):
     server_address = (host, port)
     httpd = HTTPServer(server_address, MePAHandler)
+    lan_ip = get_lan_ip()
     print("================================================================")
     print("   MEPA & CONSIP DESK PRO - BACKEND SQLITE 3 SERVER ATTIVO      ")
-    print(f"   URL Applicativo:  http://{host}:{port}/                   ")
+    print(f"   Accesso Locale:   http://127.0.0.1:{port}/                   ")
+    if lan_ip != "127.0.0.1":
+        print(f"   Accesso Rete LAN: http://{lan_ip}:{port}/                    ")
+    print(f"   Binding Host:     {host}:{port}                              ")
     print(f"   Database File:    {os.path.abspath(DB_NAME)}                 ")
     print("   Premi Ctrl + C per arrestare il server                       ")
     print("================================================================")
