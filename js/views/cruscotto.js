@@ -704,3 +704,31 @@ function initCruscotto() {
     });
   }
 }
+
+/**
+ * Esporta le scadenze di tutte le gare attive in formato standard iCalendar (.ics)
+ * Compatibile con Microsoft Outlook, Google Calendar, Apple Calendar e smartphone
+ */
+window.exportAllActiveTendersIcs = function() {
+  const all = getAllTendersFromSQLite();
+  const activeTenders = all.filter(t => !["Vinta", "Persa", "Scartata"].includes(t.status) && t.deadline);
+  if (activeTenders.length === 0) {
+    if (typeof showInfoDialog === "function") {
+      showInfoDialog({
+        title: "Nessuna Scadenza Attiva",
+        message: "Non vi sono gare attive con data di scadenza definita nel database da esportare in calendario."
+      });
+    } else {
+      showNotification("Nessuna gara attiva con data di scadenza da esportare.", false);
+    }
+    return;
+  }
+
+  if (typeof LegalTemplates !== "undefined" && LegalTemplates.downloadIcsFile) {
+    LegalTemplates.downloadIcsFile(activeTenders, "scadenze_gare_mepa_attive.ics");
+    showNotification(`Calendario .ics esportato con successo (${activeTenders.length} gare attive)!`);
+  } else if (typeof Api !== "undefined") {
+    window.open(Api.getIcsExportUrl(), "_blank");
+  }
+};
+

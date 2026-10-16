@@ -14,6 +14,7 @@ import os
 import sqlite3
 import json
 import datetime
+from datetime import datetime as dt, timedelta, timezone
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 from urllib.parse import urlparse, parse_qs
 
@@ -167,6 +168,37 @@ def init_database(force_recreate=False):
     );
     """)
 
+    # Tabella Note e Diario di Bordo per singola gara (Milestone 4)
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS note_gare (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        gara_id TEXT NOT NULL,
+        author TEXT DEFAULT 'Operatore Gare',
+        category TEXT DEFAULT 'GENERALE',
+        content TEXT NOT NULL,
+        created_at TEXT DEFAULT (datetime('now')),
+        FOREIGN KEY (gara_id) REFERENCES gare(id) ON DELETE CASCADE
+    );
+    """)
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_note_gara_id ON note_gare(gara_id);")
+
+    # Tabella Tracciamento Allegati CAdES e Ricevute di Gara (Milestone 4)
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS allegati_gare (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        gara_id TEXT NOT NULL,
+        busta TEXT NOT NULL,
+        filename TEXT NOT NULL,
+        file_type TEXT DEFAULT 'PDF_P7M',
+        signed_cades BOOLEAN DEFAULT 1,
+        timestamp_verified BOOLEAN DEFAULT 0,
+        note TEXT,
+        created_at TEXT DEFAULT (datetime('now')),
+        FOREIGN KEY (gara_id) REFERENCES gare(id) ON DELETE CASCADE
+    );
+    """)
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_allegati_gara_id ON allegati_gare(gara_id);")
+
     # Controlla se ci sono già record
     cursor.execute("SELECT COUNT(*) FROM gare")
     count = cursor.fetchone()[0]
@@ -190,6 +222,60 @@ def get_db_connection():
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys = ON")
     return conn
+
+
+def generate_ics_content(tenders):
+    """Genera stringa conforme a RFC 5545 iCalendar per scadenze gare."""
+    lines = [
+        "BEGIN:VCALENDAR",
+        "VERSION:2.0",
+        "PRODID:-//MePA and Consip Desk Pro//Scadenziario Gare//IT",
+        "CALSCALE:GREGORIAN",
+        "METHOD:PUBLISH"
+    ]
+    now_str = dt.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    for t in tenders:
+        cig = t.get("cig") or t.get("id") or "GARA"
+        title = (t.get("title") or "Procedura MePA").replace("\n", " ").replace(";", r"\;").replace(",", r"\,")
+        authority = (t.get("authority") or "Stazione Appaltante").replace("\n", " ").replace(";", r"\;").replace(",", r"\,")
+        deadline_str = t.get("deadline") or ""
+        dt_obj = None
+        for fmt in ("%Y-%m-%dT%H:%M:%S", "%Y-%m-%dT%H:%M", "%Y-%m-%d"):
+            try:
+                dt_obj = dt.strptime(deadline_str[:19], fmt)
+                break
+            except Exception:
+                pass
+        if not dt_obj:
+            continue
+        dtstart = dt_obj.strftime("%Y%m%dT%H%M%S")
+        dtend = (dt_obj + timedelta(hours=1)).strftime("%Y%m%dT%H%M%S")
+        amount_fmt = f"{float(t.get('amount') or 0):,.2f} EUR"
+        link = t.get("link") or "https://www.acquistinretepa.it"
+
+        lines.extend([
+            "BEGIN:VEVENT",
+            f"UID:mepa-{cig}-{dtstart}@mepadesk.local",
+            f"DTSTAMP:{now_str}",
+            f"DTSTART:{dtstart}",
+            f"DTEND:{dtend}",
+            f"SUMMARY:[MePA Scadenza] {cig} - {title[:50]}",
+            f"DESCRIPTION:CIG: {cig}\nEnte: {authority}\nImporto: {amount_fmt}\nPortale: {link}\nNote: Verificare firma digitale CAdES (.p7m) delle 3 buste.",
+            "LOCATION:www.acquistinretepa.it",
+            "BEGIN:VALARM",
+            "ACTION:DISPLAY",
+            f"DESCRIPTION:Promemoria Scadenza MePA CIG {cig}",
+            "TRIGGER:-P1D",
+            "END:VALARM",
+            "BEGIN:VALARM",
+            "ACTION:DISPLAY",
+            f"DESCRIPTION:URGENTE Scadenza Offerta MePA CIG {cig}",
+            "TRIGGER:-PT3H",
+            "END:VALARM",
+            "END:VEVENT"
+        ])
+    lines.append("END:VCALENDAR")
+    return "\r\n".join(lines) + "\r\n"
 
 def is_local_origin(origin):
     """True se l'header Origin proviene da una pagina servita da localhost/127.0.0.1."""
@@ -319,6 +405,69 @@ class MePAHandler(SimpleHTTPRequestHandler):
                 rows = [dict(row) for row in cur.fetchall()]
                 conn.close()
                 self.send_json_response(rows)
+            except Exception as e:
+                self.send_json_response({"error": str(e)}, 500)
+            return
+
+        # API: Note e diario di bordo gara (Milestone 4)
+        if path.startswith("/api/note"):
+            try:
+                qs = parse_qs(parsed.query)
+                gara_id = qs.get("gara_id", [None])[0]
+                conn = get_db_connection()
+                cur = conn.cursor()
+                if gara_id:
+                    cur.execute("SELECT * FROM note_gare WHERE gara_id = ? ORDER BY created_at DESC", (gara_id,))
+                else:
+                    cur.execute("SELECT * FROM note_gare ORDER BY created_at DESC LIMIT 100")
+                rows = [dict(r) for r in cur.fetchall()]
+                conn.close()
+                self.send_json_response(rows)
+            except Exception as e:
+                self.send_json_response({"error": str(e)}, 500)
+            return
+
+        # API: Allegati e tracciamento file firmati CAdES (.p7m) (Milestone 4)
+        if path.startswith("/api/allegati"):
+            try:
+                qs = parse_qs(parsed.query)
+                gara_id = qs.get("gara_id", [None])[0]
+                conn = get_db_connection()
+                cur = conn.cursor()
+                if gara_id:
+                    cur.execute("SELECT * FROM allegati_gare WHERE gara_id = ? ORDER BY busta ASC, filename ASC", (gara_id,))
+                else:
+                    cur.execute("SELECT * FROM allegati_gare ORDER BY created_at DESC LIMIT 100")
+                rows = [dict(r) for r in cur.fetchall()]
+                conn.close()
+                self.send_json_response(rows)
+            except Exception as e:
+                self.send_json_response({"error": str(e)}, 500)
+            return
+
+        # API: Esportazione calendario iCalendar (.ics) per scadenze gare (Milestone 4)
+        if path.startswith("/api/export/ics"):
+            try:
+                qs = parse_qs(parsed.query)
+                gara_id = qs.get("gara_id", [None])[0]
+                conn = get_db_connection()
+                cur = conn.cursor()
+                if gara_id:
+                    cur.execute("SELECT * FROM gare WHERE id = ? OR cig = ?", (gara_id, gara_id))
+                else:
+                    # Tutte le gare attive con scadenza futura o non concluse
+                    cur.execute("SELECT * FROM gare WHERE status NOT IN ('Vinta', 'Persa', 'Scartata') ORDER BY deadline ASC")
+                rows = [dict(r) for r in cur.fetchall()]
+                conn.close()
+
+                ics_body = generate_ics_content(rows).encode("utf-8")
+                filename = f"scadenza_{gara_id}.ics" if gara_id else "calendario_gare_mepa.ics"
+                self.send_response(200)
+                self.send_header('Content-Type', 'text/calendar; charset=utf-8')
+                self.send_header('Content-Disposition', f'attachment; filename="{filename}"')
+                self.send_header('Content-Length', str(len(ics_body)))
+                self.end_headers()
+                self.wfile.write(ics_body)
             except Exception as e:
                 self.send_json_response({"error": str(e)}, 500)
             return
@@ -553,6 +702,18 @@ class MePAHandler(SimpleHTTPRequestHandler):
                 self.send_json_response({"error": "Database file non trovato"}, 404)
             return
 
+        # API: Ispezione versioni Open Data CKAN dati.consip.it (senza download pesanti)
+        if path == "/api/ckan/check":
+            try:
+                import check_consip_ckan
+                report = check_consip_ckan.inspect_all_ckan_datasets()
+                if "status" not in report:
+                    report["status"] = "success"
+                self.send_json_response(report)
+            except Exception as e:
+                self.send_json_response({"status": "error", "error": str(e)}, 500)
+            return
+
         # Altri file statici
         super().do_GET()
 
@@ -606,6 +767,62 @@ class MePAHandler(SimpleHTTPRequestHandler):
                 self.send_json_response({"status": "success", "id": gara_id, "cig": cig})
             except Exception as e:
                 self.send_json_response({"status": "error", "message": str(e)}, 400)
+            return
+
+        # API: Inserimento nuova Nota / Decisione interna (Milestone 4)
+        if path == "/api/note":
+            try:
+                data = json.loads(post_body.decode('utf-8'))
+                gara_id = data.get("gara_id")
+                content = (data.get("content") or data.get("testo") or "").strip()
+                if not gara_id or not content:
+                    self.send_json_response({"status": "error", "message": "Campi gara_id e content obbligatori"}, 400)
+                    return
+                author = data.get("author") or data.get("autore") or "Operatore Gare"
+                category = data.get("category") or data.get("fase") or "GENERALE"
+                conn = get_db_connection()
+                cur = conn.cursor()
+                cur.execute("""
+                    INSERT INTO note_gare (gara_id, author, category, content, created_at)
+                    VALUES (?, ?, ?, ?, datetime('now'))
+                """, (gara_id, author, category, content))
+                note_id = cur.lastrowid
+                conn.commit()
+                conn.close()
+                self.send_json_response({"status": "success", "id": note_id, "gara_id": gara_id})
+            except Exception as e:
+                self.send_json_response({"status": "error", "message": str(e)}, 500)
+            return
+
+        # API: Registrazione / Tracciamento Allegato di Gara (Milestone 4)
+        if path == "/api/allegati":
+            try:
+                data = json.loads(post_body.decode('utf-8'))
+                gara_id = data.get("gara_id")
+                filename = (data.get("filename") or data.get("nome_file") or "").strip()
+                raw_busta = (data.get("busta") or "A").upper().replace("BUSTA", "").strip()
+                busta = raw_busta if raw_busta in ("A", "B", "C") else "A"
+                if not gara_id or not filename:
+                    self.send_json_response({"status": "error", "message": "Campi gara_id e filename obbligatori"}, 400)
+                    return
+                file_type = data.get("file_type") or data.get("tipo_documento") or ("PDF_P7M" if filename.endswith(".p7m") else "PDF")
+                signed_val = data.get("signed_cades") if data.get("signed_cades") is not None else data.get("cades_firmato", True)
+                signed_cades = 1 if signed_val else 0
+                timestamp_val = data.get("timestamp_verified") if data.get("timestamp_verified") is not None else data.get("marca_temporale", False)
+                timestamp_verified = 1 if timestamp_val else 0
+                note = data.get("note") or ""
+                conn = get_db_connection()
+                cur = conn.cursor()
+                cur.execute("""
+                    INSERT INTO allegati_gare (gara_id, busta, filename, file_type, signed_cades, timestamp_verified, note, created_at)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'))
+                """, (gara_id, busta, filename, file_type, signed_cades, timestamp_verified, note))
+                att_id = cur.lastrowid
+                conn.commit()
+                conn.close()
+                self.send_json_response({"status": "success", "id": att_id, "gara_id": gara_id})
+            except Exception as e:
+                self.send_json_response({"status": "error", "message": str(e)}, 500)
             return
 
         # API: Aggiornamento stato workflow / wizard di una gara
@@ -755,6 +972,34 @@ class MePAHandler(SimpleHTTPRequestHandler):
             gara_id = path[len("/api/gare/"):]
         elif "id" in qs:
             gara_id = qs["id"][0]
+
+        # Cancellazione singola nota (Milestone 4)
+        if path.startswith("/api/note/"):
+            note_id = path[len("/api/note/"):]
+            try:
+                conn = get_db_connection()
+                cur = conn.cursor()
+                cur.execute("DELETE FROM note_gare WHERE id = ?", (note_id,))
+                conn.commit()
+                conn.close()
+                self.send_json_response({"status": "success", "deleted_note_id": note_id})
+            except Exception as e:
+                self.send_json_response({"status": "error", "message": str(e)}, 500)
+            return
+
+        # Cancellazione singolo allegato tracciato (Milestone 4)
+        if path.startswith("/api/allegati/"):
+            att_id = path[len("/api/allegati/"):]
+            try:
+                conn = get_db_connection()
+                cur = conn.cursor()
+                cur.execute("DELETE FROM allegati_gare WHERE id = ?", (att_id,))
+                conn.commit()
+                conn.close()
+                self.send_json_response({"status": "success", "deleted_allegato_id": att_id})
+            except Exception as e:
+                self.send_json_response({"status": "error", "message": str(e)}, 500)
+            return
 
         if gara_id:
             try:

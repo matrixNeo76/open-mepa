@@ -28,6 +28,7 @@ jobs:
         run: |
           python -m py_compile script_generatore_database_sqlite_3.py
           python -m py_compile consip_stream_ingestion.py
+          python -m py_compile check_consip_ckan.py
           python -m py_compile test_integration.py
 
       - name: Bootstrap Database
@@ -53,6 +54,7 @@ jobs:
               'js/importer.js',
               'js/app.js',
               'js/wizard-rules.js',
+              'js/legal-templates.js',
               'js/views/cruscotto.js',
               'js/views/wizard.js',
               'js/views/cataloghi.js',
@@ -73,6 +75,8 @@ jobs:
       - name: Run Wizard Unit Tests & Syntax Checks
         run: |
           node --check js/wizard-rules.js
+          node --check js/legal-templates.js
           node --check js/views/wizard.js
           node test_wizard_rules.js
+          node test_legal_templates.js
 

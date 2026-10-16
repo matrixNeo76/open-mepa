@@ -137,5 +137,76 @@ except urllib.error.HTTPError as e:
     print('Reset blocked missing header:', e.code)
     assert e.code == 403
 
-print('\n*** TUTTI I TEST SONO PASSATI CON SUCCESSO! ***')
+# Test 11: Note gara (Milestone 4 - Diario di bordo)
+note_payload = {
+    'gara_id': sample_id,
+    'autore': 'Responsabile Gare',
+    'fase': 'Fase 1',
+    'testo': 'Quesito inviato a RUP chiarimento requisiti fatturato'
+}
+note_data = json.dumps(note_payload).encode('utf-8')
+note_req = urllib.request.Request(f'{base}/api/note', data=note_data, headers={'Content-Type': 'application/json'}, method='POST')
+note_res = json.loads(urllib.request.urlopen(note_req).read().decode())
+print('POST /api/note result:', note_res)
+assert note_res['status'] == 'success'
+note_id = note_res['id']
 
+notes_get_req = urllib.request.urlopen(f'{base}/api/note?gara_id={sample_id}')
+notes_list = json.loads(notes_get_req.read().decode())
+print(f'GET /api/note count: {len(notes_list)}')
+assert any(n['id'] == note_id and n['category'] == 'Fase 1' for n in notes_list)
+
+del_note_req = urllib.request.Request(f'{base}/api/note/{note_id}', method='DELETE')
+del_note_res = json.loads(urllib.request.urlopen(del_note_req).read().decode())
+assert del_note_res['status'] == 'success'
+
+# Test 12: Allegati gara (Milestone 4 - Tracciamento CAdES / Buste)
+allegato_payload = {
+    'gara_id': sample_id,
+    'nome_file': 'Offerta_Tecnica_firmata.pdf.p7m',
+    'busta': 'Busta B',
+    'tipo_documento': 'Offerta Tecnica',
+    'cades_firmato': 1,
+    'note': 'Verificato con firma digitale valida'
+}
+allegato_data = json.dumps(allegato_payload).encode('utf-8')
+allegato_req = urllib.request.Request(f'{base}/api/allegati', data=allegato_data, headers={'Content-Type': 'application/json'}, method='POST')
+allegato_res = json.loads(urllib.request.urlopen(allegato_req).read().decode())
+print('POST /api/allegati result:', allegato_res)
+assert allegato_res['status'] == 'success'
+allegato_id = allegato_res['id']
+
+allegati_get_req = urllib.request.urlopen(f'{base}/api/allegati?gara_id={sample_id}')
+allegati_list = json.loads(allegati_get_req.read().decode())
+print(f'GET /api/allegati count: {len(allegati_list)}')
+assert any(a['id'] == allegato_id and a['busta'] == 'B' and a['signed_cades'] == 1 for a in allegati_list)
+
+del_allegato_req = urllib.request.Request(f'{base}/api/allegati/{allegato_id}', method='DELETE')
+del_allegato_res = json.loads(urllib.request.urlopen(del_allegato_req).read().decode())
+assert del_allegato_res['status'] == 'success'
+
+# Test 13: Export iCalendar ICS (RFC 5545)
+ics_single_req = urllib.request.urlopen(f'{base}/api/export/ics?gara_id={sample_id}')
+ics_single_data = ics_single_req.read().decode('utf-8')
+assert 'BEGIN:VCALENDAR' in ics_single_data
+assert 'BEGIN:VEVENT' in ics_single_data
+assert sample_cig in ics_single_data
+assert 'END:VCALENDAR' in ics_single_data
+assert 'text/calendar' in ics_single_req.headers.get('Content-Type', '')
+print('ICS single tender test passed!')
+
+ics_all_req = urllib.request.urlopen(f'{base}/api/export/ics')
+ics_all_data = ics_all_req.read().decode('utf-8')
+assert 'BEGIN:VCALENDAR' in ics_all_data
+assert 'PRODID:-//MePA and Consip Desk Pro//Scadenziario Gare//IT' in ics_all_data
+print('ICS all tenders test passed!')
+
+# Test 14: Ispezione passiva CKAN (Milestone 5)
+ckan_req = urllib.request.urlopen(f'{base}/api/ckan/check')
+ckan_res = json.loads(ckan_req.read().decode())
+print('CKAN check result:', ckan_res)
+assert 'status' in ckan_res
+assert 'datasets' in ckan_res or 'error' in ckan_res
+print('CKAN passive inspection test passed!')
+
+print('\n*** TUTTI I 14 TEST INTEGRATI SONO PASSATI CON SUCCESSO! ***')

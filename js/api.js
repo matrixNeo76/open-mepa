@@ -96,6 +96,61 @@ const Api = {
     });
     if (!resp.ok) throw new Error("Errore salvataggio workflow gara");
     return await resp.json();
+  },
+
+  // --- Milestone 4: Note, Allegati & Calendario ICS ---
+  async getNotes(garaId) {
+    const url = garaId ? `${this.getBaseUrl()}/api/note?gara_id=${encodeURIComponent(garaId)}` : `${this.getBaseUrl()}/api/note`;
+    const resp = await fetch(url);
+    if (!resp.ok) throw new Error("Errore recupero note gara");
+    return await resp.json();
+  },
+
+  async addNote(noteData) {
+    const resp = await fetch(`${this.getBaseUrl()}/api/note`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(noteData)
+    });
+    if (!resp.ok) throw new Error("Errore inserimento nota");
+    return await resp.json();
+  },
+
+  async deleteNote(noteId) {
+    const resp = await fetch(`${this.getBaseUrl()}/api/note/${encodeURIComponent(noteId)}`, {
+      method: "DELETE"
+    });
+    if (!resp.ok) throw new Error("Errore eliminazione nota");
+    return await resp.json();
+  },
+
+  async getAllegati(garaId) {
+    const url = garaId ? `${this.getBaseUrl()}/api/allegati?gara_id=${encodeURIComponent(garaId)}` : `${this.getBaseUrl()}/api/allegati`;
+    const resp = await fetch(url);
+    if (!resp.ok) throw new Error("Errore recupero allegati gara");
+    return await resp.json();
+  },
+
+  async addAllegato(allegatoData) {
+    const resp = await fetch(`${this.getBaseUrl()}/api/allegati`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(allegatoData)
+    });
+    if (!resp.ok) throw new Error("Errore registrazione allegato");
+    return await resp.json();
+  },
+
+  async deleteAllegato(allegatoId) {
+    const resp = await fetch(`${this.getBaseUrl()}/api/allegati/${encodeURIComponent(allegatoId)}`, {
+      method: "DELETE"
+    });
+    if (!resp.ok) throw new Error("Errore eliminazione allegato");
+    return await resp.json();
+  },
+
+  getIcsExportUrl(garaId = null) {
+    return garaId ? `${this.getBaseUrl()}/api/export/ics?gara_id=${encodeURIComponent(garaId)}` : `${this.getBaseUrl()}/api/export/ics`;
   }
 };
 

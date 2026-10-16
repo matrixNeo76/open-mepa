@@ -285,6 +285,30 @@ const WIZARD_HELP_GUIDE = {
     what_to_do: "Se la gara non e' stata vinta o sono trascorsi i termini di validita' dell'offerta, invia una PEC al RUP richiedendo lo svincolo formale della garanzia per ripristinare il castelletto assicurativo.",
     legal_tip: "Ai sensi dell'art. 106 c. 10, la garanzia cessa automaticamente con l'aggiudicazione definitiva, ma gli istituti bancari esigono la quietanza scritta o PEC del RUP."
   },
+  qa_facsimile: {
+    category: "FASE 1: CHIARIMENTI Q&A",
+    title: "Generatore Fac-Simile Quesito Q&A (art. 92 c.2)",
+    what: "Modulo per redigere formalmente una richiesta di chiarimenti da inviare alla Stazione Appaltante e al RUP tramite la sezione Comunicazioni del MePA o via PEC.",
+    portal_location: "Portale www.acquistinretepa.it -> Sezione RdO -> Comunicazioni / Chiarimenti.",
+    what_to_do: "Digita il quesito puntuale, copia il testo formale o scarica il file .txt e salvalo nel Diario di Bordo della gara per mantenere la traccia documentale.",
+    legal_tip: "Ai sensi dell'art. 92 c.2 D.Lgs. 36/2023, la PA deve pubblicare i chiarimenti almeno 6 giorni prima della scadenza delle offerte; le risposte integrano la lex specialis."
+  },
+  svincolo_facsimile: {
+    category: "FASE 4: SVINCOLO POLIZZE",
+    title: "Generatore Istanza Svincolo Provvisoria (art. 106 c.10)",
+    what: "Atto formale da trasmettere via PEC al RUP per ottenere l'attestazione liberatoria o il nulla osta allo svincolo della fideiussione bancaria o assicurativa.",
+    portal_location: "Da inviare all'indirizzo PEC ufficiale della Stazione Appaltante indicato nel Disciplinare.",
+    what_to_do: "Inserisci il numero di polizza e la compagnia garante; il sistema compila la PEC citando l'art. 106 c.10 sull'estinzione automatica del vincolo.",
+    legal_tip: "Anche se per legge la garanzia dei non aggiudicatari cessa con l'aggiudicazione definitiva, gli istituti fideiussori esigono la quietanza formale del RUP."
+  },
+  notes_log: {
+    category: "GESTIONE AZIENDALE GARE",
+    title: "Diario di Bordo & Note Cronologiche (SQLite 3)",
+    what: "Registro temporale delle decisioni, risposte del RUP, preventivi dei fornitori, accordi RTI e verbali di gara associati a questo CIG.",
+    portal_location: "Archivio interno gestionale (tabella relazionale note_gare).",
+    what_to_do: "Aggiungi note su ogni evento significativo: telefonate con il RUP, risposte ai quesiti, delibere di ribasso e annotazioni post-gara.",
+    legal_tip: "Costituisce il fascicolo probatorio interno fondamentale in caso di contenzioso o richieste di soccorso istruttorio."
+  },
   fase4_notes: {
     category: "FASE 4: ESITO & POST-GARA",
     title: "Verbale di Gara e Graduatoria",
@@ -515,6 +539,16 @@ async function loadWizardData(garaId, tender) {
     }
   };
 
+  currentWizardData.notes = [];
+  if (liveBackendConnected && typeof Api !== "undefined" && Api.getNotes) {
+    try {
+      const notes = await Api.getNotes(garaId);
+      if (Array.isArray(notes)) currentWizardData.notes = notes;
+    } catch (e) {
+      console.warn("Impossibile caricare note dal backend:", e);
+    }
+  }
+
   if (liveBackendConnected && typeof Api !== "undefined" && Api.getWorkflow) {
     try {
       const remote = await Api.getWorkflow(garaId);
@@ -662,7 +696,13 @@ function renderWizardView(tender) {
             </select>
           </div>
 
-          <button onclick="window.saveCurrentWizardState()" class="px-4 py-2 rounded-2xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs transition flex items-center gap-1.5 shadow-md shadow-cyan-500/20">
+          <!-- Bottone Esporta Calendario .ics (Milestone 4) -->
+          <button onclick="window.exportCurrentTenderIcs()" class="px-3.5 py-2 rounded-2xl bg-slate-800 hover:bg-slate-700 text-cyan-300 font-bold text-xs transition flex items-center gap-1.5 border border-slate-700 shadow-sm cursor-pointer" title="Scarica evento .ics per Microsoft Outlook o Google Calendar">
+            <svg class="w-3.5 h-3.5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+            <span>Calendario (.ics)</span>
+          </button>
+
+          <button onclick="window.saveCurrentWizardState()" class="px-4 py-2 rounded-2xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs transition flex items-center gap-1.5 shadow-md shadow-cyan-500/20 cursor-pointer">
             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg>
             <span>Salva Avanzamento</span>
           </button>
@@ -751,6 +791,48 @@ function renderWizardView(tender) {
       <!-- WORK AREA DELLO STEP CORRENTE CON GUIDA OPERATIVA INTEGRATA -->
       <div id="wizardStepContent" class="space-y-6">
         ${renderCurrentStepContent(tender)}
+      </div>
+
+      <!-- SEZIONE NOTE & DIARIO DI BORDO GARA (MILESTONE 4) -->
+      <div class="bg-slate-900/90 border border-slate-800 rounded-3xl p-5 sm:p-6 shadow-xl space-y-4">
+        <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+          <div class="flex items-center gap-2.5">
+            <span class="w-8 h-8 rounded-xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 flex items-center justify-center font-bold text-sm">📋</span>
+            <div>
+              <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                <span>Diario di Bordo &amp; Note Interne Ufficio Gare</span>
+                <span id="notesCountBadge" class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-slate-800 text-cyan-300 font-bold border border-slate-700">${(currentWizardData.notes || []).length} note</span>
+              </h3>
+              <p class="text-[11px] text-slate-400 font-mono">Annotazioni strategiche, chiarimenti inviati, verbali e delibere (SQLite 3)</p>
+            </div>
+          </div>
+          ${renderHelpBtn('notes_log')}
+        </div>
+
+        <!-- Form Inserimento Rapido Nota -->
+        <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-3">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div class="flex items-center gap-2">
+              <label class="text-[11px] font-mono text-slate-400">Categoria:</label>
+              <select id="newNoteCategory" class="bg-slate-900 border border-slate-800 rounded-xl px-2.5 py-1 text-xs text-slate-200 focus:border-cyan-400">
+                <option value="GENERALE">📌 Generale</option>
+                <option value="Q&A">❓ Chiarimenti Q&amp;A</option>
+                <option value="GO_NOGO">⚖️ Delibera Go/No-Go</option>
+                <option value="BUSTE">📁 Predisposizione Buste</option>
+                <option value="ESITO">🏆 Esito / Svincolo Polizza</option>
+              </select>
+            </div>
+            <button type="button" onclick="window.addNewGaraNote()" class="px-4 py-1.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs transition flex items-center gap-1.5 self-end sm:self-auto cursor-pointer">
+              <span>+ Aggiungi al Diario</span>
+            </button>
+          </div>
+          <textarea id="newNoteContent" rows="2" placeholder="Scrivi un'annotazione, risposta a quesito, decisione o appunto di gara..." class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-slate-200 text-xs focus:border-cyan-400 leading-relaxed"></textarea>
+        </div>
+
+        <!-- Elenco Note Cronologiche -->
+        <div id="garaNotesListContainer" class="space-y-2.5 max-h-64 overflow-y-auto custom-scrollbar pr-1">
+          ${renderGaraNotesListHtml(currentWizardData.notes || [])}
+        </div>
       </div>
 
       <!-- DOCK AZIONI RAPIDE INFERIORE (NAVIGAZIONE & DUAL HAND-OFF) -->
@@ -881,6 +963,9 @@ function renderCurrentStepContent(tender) {
             </div>
             <input id="w_qa_deadline" type="date" value="${escapeHtml(d.step1_data.qa_deadline)}" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-amber-300 font-mono text-xs focus:border-cyan-400">
             <span class="text-[10px] text-slate-500 font-mono">Art. 92 c.2: risposte PA almeno 6gg prima</span>
+            <button type="button" onclick="window.openQaFacsimileModal()" class="mt-2 w-full px-3 py-1.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 text-xs font-semibold border border-amber-500/30 flex items-center justify-center gap-1.5 transition cursor-pointer" title="Genera testo formale per quesito da inviare su MePA o via PEC">
+              <span>📝 Genera Fac-Simile Quesito Q&A</span>
+            </button>
           </div>
 
           <!-- Scadenza Presentazione -->
@@ -1502,6 +1587,9 @@ function renderCurrentStepContent(tender) {
                 <span class="text-[11px] text-slate-400 block mt-0.5">Richiesta formale inviata al RUP per liberare il massimale fideiussorio.</span>
               </div>
             </label>
+            <button type="button" onclick="window.openSvincoloFacsimileModal()" class="mt-2 w-full px-3 py-1.5 rounded-xl bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-300 text-xs font-semibold border border-cyan-500/30 flex items-center justify-center gap-1.5 transition cursor-pointer" title="Genera testo PEC formale per richiesta liberatoria fideiussione al RUP">
+              <span>🏛️ Genera Istanza Svincolo Provvisoria (PEC)</span>
+            </button>
           </div>
         </div>
 
@@ -1882,4 +1970,359 @@ window.openAgentExportModal = function() {
     </div>
   `;
   modal.classList.remove("hidden");
+};
+
+/**
+ * Renderizza l'elenco HTML delle note associate alla gara
+ */
+function renderGaraNotesListHtml(notes) {
+  if (!notes || notes.length === 0) {
+    return `
+      <div class="p-4 rounded-2xl bg-slate-950/60 border border-slate-800 text-center text-slate-500 text-xs font-mono">
+        Nessuna annotazione presente. Usa il form sopra per registrare decisioni, chiarimenti o verbali.
+      </div>
+    `;
+  }
+
+  const categoryBadges = {
+    "GENERALE": "bg-slate-800 text-slate-300 border-slate-700",
+    "Q&A": "bg-amber-500/10 text-amber-300 border-amber-500/30",
+    "GO_NOGO": "bg-emerald-500/10 text-emerald-300 border-emerald-500/30",
+    "BUSTE": "bg-purple-500/10 text-purple-300 border-purple-500/30",
+    "ESITO": "bg-cyan-500/10 text-cyan-300 border-cyan-500/30"
+  };
+
+  return notes.map(n => `
+    <div class="p-3.5 rounded-2xl bg-slate-950 border border-slate-800 flex items-start justify-between gap-3 hover:border-slate-700 transition">
+      <div class="space-y-1 min-w-0 flex-1">
+        <div class="flex items-center gap-2 flex-wrap">
+          <span class="text-[10px] font-mono px-2 py-0.5 rounded-md border ${categoryBadges[n.category] || categoryBadges['GENERALE']} font-bold">
+            ${escapeHtml(n.category || 'GENERALE')}
+          </span>
+          <span class="text-[11px] font-mono text-slate-400">${escapeHtml(n.author || 'Operatore')}</span>
+          <span class="text-[10px] font-mono text-slate-500">&bull; ${(n.created_at || '').substring(0, 16).replace('T', ' ')}</span>
+        </div>
+        <p class="text-xs text-slate-200 leading-relaxed whitespace-pre-wrap">${escapeHtml(n.content)}</p>
+      </div>
+      <button type="button" onclick="window.deleteGaraNote(${n.id})" class="text-slate-500 hover:text-rose-400 p-1 rounded-lg hover:bg-slate-900 transition text-xs shrink-0 cursor-pointer" title="Elimina questa nota">✕</button>
+    </div>
+  `).join('');
+}
+
+/**
+ * Inserisce una nuova nota nella gara corrente (memorizzata su SQLite 3)
+ */
+window.addNewGaraNote = async function(categoryParam = null, contentParam = null) {
+  const catEl = document.getElementById("newNoteCategory");
+  const textEl = document.getElementById("newNoteContent");
+
+  const category = categoryParam || (catEl ? catEl.value : "GENERALE");
+  const content = contentParam || (textEl ? textEl.value.trim() : "");
+
+  if (!content) {
+    showNotification("Inserisci il testo della nota prima di aggiungerla.", false);
+    return;
+  }
+
+  const newNote = {
+    gara_id: currentWizardGaraId,
+    author: "Ufficio Gare",
+    category,
+    content,
+    created_at: new Date().toISOString()
+  };
+
+  if (liveBackendConnected && typeof Api !== "undefined" && Api.addNote) {
+    try {
+      const res = await Api.addNote(newNote);
+      if (res && res.id) newNote.id = res.id;
+    } catch (e) {
+      console.error("Errore salvataggio nota su SQLite:", e);
+    }
+  }
+
+  if (!currentWizardData.notes) currentWizardData.notes = [];
+  currentWizardData.notes.unshift(newNote);
+
+  if (textEl && !contentParam) textEl.value = "";
+
+  const container = document.getElementById("garaNotesListContainer");
+  const badge = document.getElementById("notesCountBadge");
+  if (container) container.innerHTML = renderGaraNotesListHtml(currentWizardData.notes);
+  if (badge) badge.textContent = `${currentWizardData.notes.length} note`;
+
+  showNotification("Nota registrata nel Diario di Bordo della gara!");
+};
+
+/**
+ * Elimina una nota
+ */
+window.deleteGaraNote = async function(noteId) {
+  if (liveBackendConnected && typeof Api !== "undefined" && Api.deleteNote && noteId) {
+    try {
+      await Api.deleteNote(noteId);
+    } catch (e) {
+      console.error("Errore cancellazione nota:", e);
+    }
+  }
+
+  currentWizardData.notes = (currentWizardData.notes || []).filter(n => n.id !== noteId);
+  const container = document.getElementById("garaNotesListContainer");
+  const badge = document.getElementById("notesCountBadge");
+  if (container) container.innerHTML = renderGaraNotesListHtml(currentWizardData.notes);
+  if (badge) badge.textContent = `${currentWizardData.notes.length} note`;
+
+  showNotification("Nota eliminata.");
+};
+
+/**
+ * Esporta la scadenza della gara corrente in formato iCalendar (.ics)
+ */
+window.exportCurrentTenderIcs = function() {
+  const tender = getAllTendersFromSQLite().find(t => t.id === currentWizardGaraId) || {};
+  if (!tender.deadline) {
+    showNotification("Questa gara non ha una scadenza valorizzata.", false);
+    return;
+  }
+  if (typeof LegalTemplates !== "undefined" && LegalTemplates.downloadIcsFile) {
+    LegalTemplates.downloadIcsFile(tender, `scadenza_${tender.cig || tender.id}.ics`);
+    showNotification("Evento iCalendar (.ics) scaricato!");
+  } else if (typeof Api !== "undefined") {
+    window.open(Api.getIcsExportUrl(tender.id), "_blank");
+  }
+};
+
+/**
+ * Helper per scaricare un testo generato come file .txt
+ */
+window.downloadTextFile = function(filename, text) {
+  const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+};
+
+/**
+ * Apre la modale per la redazione del fac-simile di richiesta chiarimenti (Q&A)
+ */
+window.openQaFacsimileModal = function() {
+  readInputsFromWizardDOM();
+  const d = currentWizardData;
+  const s1 = d.step1_data || {};
+
+  let modal = document.getElementById("qaFacsimileModal");
+  if (!modal) {
+    modal = document.createElement("div");
+    modal.id = "qaFacsimileModal";
+    modal.className = "fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4 transition-all";
+    document.body.appendChild(modal);
+  }
+
+  const renderModalContent = (qText) => {
+    const fullText = typeof LegalTemplates !== "undefined"
+      ? LegalTemplates.generateQaRequestText({
+          cig: s1.cig,
+          authority: s1.authority,
+          rup: s1.rup_name,
+          title: s1.title,
+          question: qText,
+          deadline: s1.deadline,
+          qa_deadline: s1.qa_deadline
+        })
+      : `QUESITO GARA CIG ${s1.cig}\n${qText}`;
+
+    modal.innerHTML = `
+      <div class="bg-slate-900 border border-amber-500/40 rounded-3xl p-6 max-w-2xl w-full shadow-2xl space-y-4 max-h-[90vh] flex flex-col animate-in fade-in zoom-in-95 duration-150">
+        <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+          <div class="flex items-center gap-2.5">
+            <span class="w-8 h-8 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20 flex items-center justify-center font-bold text-sm">📝</span>
+            <div>
+              <h3 class="text-sm font-bold text-white">Generatore Fac-Simile Chiarimenti Q&amp;A</h3>
+              <p class="text-[11px] text-amber-300/80 font-mono">Conforme art. 92, comma 2, D.Lgs. 36/2023 (risposte PA almeno 6gg prima)</p>
+            </div>
+          </div>
+          <button onclick="document.getElementById('qaFacsimileModal').classList.add('hidden')" class="text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-800 text-sm">✕</button>
+        </div>
+
+        <div class="space-y-1.5">
+          <label class="text-[11px] font-mono text-slate-300 font-semibold block">Formula il quesito specifico da inoltrare al RUP:</label>
+          <textarea id="inputQaQuestion" rows="3" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-slate-200 text-xs focus:border-amber-400 leading-relaxed">${escapeHtml(qText)}</textarea>
+        </div>
+
+        <div class="flex-1 overflow-y-auto custom-scrollbar space-y-1.5">
+          <label class="text-[11px] font-mono text-slate-400 block">Anteprima Istanza Formale (pronta per invio MePA / PEC):</label>
+          <pre id="previewQaText" class="bg-slate-950 p-4 rounded-xl border border-slate-800 text-amber-200/90 font-mono text-[11px] select-all leading-relaxed whitespace-pre-wrap">${escapeHtml(fullText)}</pre>
+        </div>
+
+        <div class="pt-3 border-t border-slate-800 flex flex-wrap items-center justify-between gap-3 text-xs">
+          <span class="text-slate-400 font-mono text-[11px]">CIG: ${escapeHtml(s1.cig || 'N/D')}</span>
+          <div class="flex items-center gap-2">
+            <button type="button" onclick="window.saveCurrentQaToDiary()" class="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-300 font-mono text-xs transition cursor-pointer">
+              Salva nel Diario
+            </button>
+            <button type="button" onclick="navigator.clipboard.writeText(document.getElementById('previewQaText').innerText); showNotification('Quesito copiato negli appunti!');" class="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-mono text-xs transition cursor-pointer">
+              Copia Testo
+            </button>
+            <button type="button" onclick="window.downloadTextFile('richiesta_chiarimenti_${s1.cig || 'gara'}.txt', document.getElementById('previewQaText').innerText)" class="px-4 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs transition cursor-pointer">
+              Scarica .txt
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+
+    document.getElementById("inputQaQuestion")?.addEventListener("input", (e) => {
+      const updated = typeof LegalTemplates !== "undefined"
+        ? LegalTemplates.generateQaRequestText({
+            cig: s1.cig,
+            authority: s1.authority,
+            rup: s1.rup_name,
+            title: s1.title,
+            question: e.target.value,
+            deadline: s1.deadline,
+            qa_deadline: s1.qa_deadline
+          })
+        : e.target.value;
+      const prev = document.getElementById("previewQaText");
+      if (prev) prev.textContent = updated;
+    });
+  };
+
+  renderModalContent("Si richiede cortese chiarimento in merito all'applicazione della clausola...");
+  modal.classList.remove("hidden");
+};
+
+/**
+ * Salva il quesito formale nel Diario di Bordo
+ */
+window.saveCurrentQaToDiary = function() {
+  const textEl = document.getElementById("previewQaText");
+  if (!textEl) return;
+  window.addNewGaraNote("Q&A", textEl.innerText);
+  document.getElementById("qaFacsimileModal")?.classList.add("hidden");
+};
+
+/**
+ * Apre la modale per la redazione del fac-simile per svincolo fideiussione provvisoria
+ */
+window.openSvincoloFacsimileModal = function() {
+  readInputsFromWizardDOM();
+  const d = currentWizardData;
+  const s1 = d.step1_data || {};
+  const s3 = d.step3_data || {};
+  const s4 = d.step4_data || {};
+
+  let modal = document.getElementById("svincoloFacsimileModal");
+  if (!modal) {
+    modal = document.createElement("div");
+    modal.id = "svincoloFacsimileModal";
+    modal.className = "fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4 transition-all";
+    document.body.appendChild(modal);
+  }
+
+  let policyNum = s4.policy_number || "POL-2026-FIDEIUSSIONE";
+  let guarantorName = s4.guarantor_name || "Compagnia Assicuratrice / Banca";
+
+  const renderModalContent = () => {
+    const fullText = typeof LegalTemplates !== "undefined"
+      ? LegalTemplates.generateGuaranteeReleaseRequestText({
+          cig: s1.cig,
+          authority: s1.authority,
+          rup: s1.rup_name,
+          title: s1.title,
+          policyNumber: policyNum,
+          guarantor: guarantorName,
+          amount: s3.busta_a_fideiussione_importo || 0,
+          outcome: s4.outcome || "conclusa"
+        })
+      : `RICHIESTA SVINCOLO CIG ${s1.cig}`;
+
+    modal.innerHTML = `
+      <div class="bg-slate-900 border border-cyan-500/40 rounded-3xl p-6 max-w-2xl w-full shadow-2xl space-y-4 max-h-[90vh] flex flex-col animate-in fade-in zoom-in-95 duration-150">
+        <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+          <div class="flex items-center gap-2.5">
+            <span class="w-8 h-8 rounded-xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 flex items-center justify-center font-bold text-sm">🏛️</span>
+            <div>
+              <h3 class="text-sm font-bold text-white">Istanza Svincolo Cauzione Provvisoria PEC</h3>
+              <p class="text-[11px] text-cyan-300 font-mono">Art. 106 c. 10 D.Lgs. 36/2023 (liberatoria per garante bancario/assicurativo)</p>
+            </div>
+          </div>
+          <button onclick="document.getElementById('svincoloFacsimileModal').classList.add('hidden')" class="text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-800 text-sm">✕</button>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+          <div>
+            <label class="text-[11px] font-mono text-slate-400 block mb-1">Numero Polizza Fideiussoria:</label>
+            <input id="inputPolicyNumber" type="text" value="${escapeHtml(policyNum)}" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-cyan-300 font-mono text-xs focus:border-cyan-400">
+          </div>
+          <div>
+            <label class="text-[11px] font-mono text-slate-400 block mb-1">Istituto Bancario / Compagnia Garante:</label>
+            <input id="inputGuarantor" type="text" value="${escapeHtml(guarantorName)}" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-slate-200 text-xs focus:border-cyan-400">
+          </div>
+        </div>
+
+        <div class="flex-1 overflow-y-auto custom-scrollbar space-y-1.5">
+          <label class="text-[11px] font-mono text-slate-400 block">Testo PEC Conforme pronto per la trasmissione:</label>
+          <pre id="previewSvincoloText" class="bg-slate-950 p-4 rounded-xl border border-slate-800 text-cyan-200/90 font-mono text-[11px] select-all leading-relaxed whitespace-pre-wrap">${escapeHtml(fullText)}</pre>
+        </div>
+
+        <div class="pt-3 border-t border-slate-800 flex flex-wrap items-center justify-between gap-3 text-xs">
+          <span class="text-slate-400 font-mono text-[11px]">CIG: ${escapeHtml(s1.cig || 'N/D')}</span>
+          <div class="flex items-center gap-2">
+            <button type="button" onclick="window.saveCurrentSvincoloToDiary()" class="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-cyan-300 font-mono text-xs transition cursor-pointer">
+              Salva nel Diario
+            </button>
+            <button type="button" onclick="navigator.clipboard.writeText(document.getElementById('previewSvincoloText').innerText); showNotification('Testo PEC copiato negli appunti!');" class="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-mono text-xs transition cursor-pointer">
+              Copia per PEC
+            </button>
+            <button type="button" onclick="window.downloadTextFile('istanza_svincolo_fideiussione_${s1.cig || 'gara'}.txt', document.getElementById('previewSvincoloText').innerText)" class="px-4 py-1.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs transition cursor-pointer">
+              Scarica .txt
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+
+    const updatePreview = () => {
+      policyNum = document.getElementById("inputPolicyNumber")?.value || "";
+      guarantorName = document.getElementById("inputGuarantor")?.value || "";
+      s4.policy_number = policyNum;
+      s4.guarantor_name = guarantorName;
+      const updated = typeof LegalTemplates !== "undefined"
+        ? LegalTemplates.generateGuaranteeReleaseRequestText({
+            cig: s1.cig,
+            authority: s1.authority,
+            rup: s1.rup_name,
+            title: s1.title,
+            policyNumber: policyNum,
+            guarantor: guarantorName,
+            amount: s3.busta_a_fideiussione_importo || 0,
+            outcome: s4.outcome || "conclusa"
+          })
+        : "RICHIESTA SVINCOLO";
+      const prev = document.getElementById("previewSvincoloText");
+      if (prev) prev.textContent = updated;
+    };
+
+    document.getElementById("inputPolicyNumber")?.addEventListener("input", updatePreview);
+    document.getElementById("inputGuarantor")?.addEventListener("input", updatePreview);
+  };
+
+  renderModalContent();
+  modal.classList.remove("hidden");
+};
+
+/**
+ * Salva l'istanza di svincolo nel Diario di Bordo
+ */
+window.saveCurrentSvincoloToDiary = function() {
+  const textEl = document.getElementById("previewSvincoloText");
+  if (!textEl) return;
+  window.addNewGaraNote("ESITO", textEl.innerText);
+  document.getElementById("svincoloFacsimileModal")?.classList.add("hidden");
 };
