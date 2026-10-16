@@ -88,46 +88,57 @@ const WIZARD_HELP_GUIDE = {
   check_fatturato: {
     category: "FASE 2: QUALIFICAZIONE",
     title: "Fatturato Specifico nel Settore",
+    simple_explanation: "La legge permette alla PA di chiedere se negli ultimi 3 anni la tua azienda ha già incassato una cifra simile per lavori analoghi (serve a dimostrare che sei un'azienda solida e con esperienza). Se da solo non raggiungi la cifra, non sei escluso: puoi unirti ad un'altra azienda (RTI) o farti prestare il requisito con l'avvalimento.",
     what: "Requisito di capacita' economico-finanziaria: la stazione appaltante puo' richiedere un fatturato minimo maturato negli ultimi 3 esercizi finanziari.",
     portal_location: "Disciplinare di Gara -> Sezione 'Requisiti di partecipazione economico-finanziari'.",
-    what_to_do: "Controlla i bilanci approvati dell'azienda. Se il fatturato aziendale non e' sufficiente, valuta se partecipare in Raggruppamento Temporaneo di Imprese (RTI) o ricorrere all'Avvalimento.",
+    what_to_do: "Usa il nostro pulsante '⚡ Pipeline Verifica Requisito Fatturato': inserisci i tuoi fatturati degli ultimi 3 anni e il sistema calcolerà in automatico se sei autosufficiente o se ti serve un partner.",
     legal_tip: "L'art. 100 del D.Lgs. 36/2023 stabilisce che il fatturato specifico richiesto non puo' superare il doppio del valore stimato dell'appalto."
   },
   check_iso: {
     category: "FASE 2: QUALIFICAZIONE",
     title: "Certificazioni di Qualita' (ISO 9001 / CAM)",
+    simple_explanation: "Avere la certificazione ISO 9001 (o essere una Piccola/Media Impresa) ti fa risparmiare soldi veri: per legge hai diritto a uno sconto dal 30% al 50% sul costo della cauzione che devi versare per partecipare alla gara!",
     what: "Certificati aziendali di gestione qualita' (UNI EN ISO 9001, ISO 27001, ISO 14001) e rispetto dei Criteri Ambientali Minimi (CAM).",
     portal_location: "Disciplinare di Gara -> Sezione 'Requisiti di idoneita' professionale e CAM'.",
-    what_to_do: "Verifica che i certificati siano in corso di validita' e intestati alla ragione sociale partecipante. La certificazione ISO 9001 conferisce il diritto a una riduzione del 30% sull'importo della cauzione provvisoria!",
+    what_to_do: "Clicca su '⚡ Verifica Certificazioni & Taglio Cauzione': seleziona le tue certificazioni e il sistema calcolerà in automatico la cauzione scontata trasferendola alla Busta A.",
     legal_tip: "Ai sensi dell'art. 106 c. 8 D.Lgs. 36/2023, la riduzione per ISO 9001 e' del 30% (nel vecchio D.Lgs. 50/2016 era del 50%). Per le Micro, Piccole e Medie Imprese (PMI) si applica invece la riduzione del 50%, non cumulabile con la riduzione per ISO 9001 (si applica la riduzione maggiore)."
   },
   check_sopralluogo: {
     category: "FASE 2: QUALIFICAZIONE",
-    title: "Sopralluogo Obbligatorio (ove previsto)",
+    title: "Sopralluogo Obbligatorio (ove prescritto)",
+    simple_explanation: "Significa che prima di fare l'offerta devi mandare un tuo tecnico sul posto (es. negli uffici del Comune o dell'ASL) a visionare gli spazi. Il funzionario pubblico ti firmerà un foglio di presenza. Se il bando dice 'obbligatorio a pena di esclusione' e non ci vai, vieni escluso automaticamente!",
     what: "Ispezione fisica o virtuale dei luoghi di esecuzione del servizio/lavoro prima dell'invio dell'offerta.",
     portal_location: "Disciplinare di Gara -> Sezione 'Sopralluogo'.",
-    what_to_do: "Verifica se il disciplinare lo prescrive come obbligatorio a pena di esclusione. In tal caso, richiedi l'appuntamento con congruo anticipo e conserva l'Attestato rilasciato dal RUP.",
+    what_to_do: "Clicca su '⚡ Guida Sopralluogo': seleziona 'Non richiesto' se vendi solo software/forniture, oppure genera subito con un clic la PEC da spedire al RUP per fissare la data dell'appuntamento.",
     legal_tip: "Se obbligatorio, la mancata effettuazione o la mancanza dell'attestato nella Busta A comporta l'esclusione non sanabile con soccorso istruttorio."
   },
   check_garanzie: {
     category: "FASE 2: QUALIFICAZIONE",
-    title: "Castelletto Garanzie Fideiussorie",
+    title: "Fido Assicurativo / Castelletto Fideiussorio",
+    simple_explanation: "Funziona esattamente come il plafond della tua carta di credito, ma per le garanzie pubbliche: la tua assicurazione ti dice 'ti garantisco fino a 50.000€'. Quando fai una gara che chiede 2.000€ di garanzia, devi accertarti che il tuo plafond residuo non sia esaurito da altre gare ancora aperte.",
     what: "Verifica della disponibilita' del fido presso la banca o compagnia assicurativa per emettere la Garanzia Provvisoria (1-4% dell'importo).",
     portal_location: "Contatto con il proprio broker o istituto bancario convenzionato.",
-    what_to_do: "Spunta solo se hai gia' confermato con la compagnia garante che il massimale e' capiente e che la polizza digitale conforme allo schema tipo ANAC puo' essere rilasciata in tempo.",
+    what_to_do: "Clicca su '⚡ Verifica Capienza Plafond': inserisci il tuo massimale e scopri all'istante se sei coperto o se devi farti alzare il fido dall'assicurazione.",
     legal_tip: "La polizza fideiussoria deve contenere espressamente l'impegno a rilasciare la cauzione definitiva in caso di aggiudicazione (art. 106 c. 5)."
   },
   margin_pct: {
     category: "FASE 2: QUALIFICAZIONE",
     title: "Margine Operativo Netto Stimato (%)",
+    simple_explanation: "È il guadagno vero che resta in tasca alla tua azienda dopo aver pagato i fornitori, i dipendenti/tecnici, la sicurezza e le spese della gara. Se offri un ribasso troppo alto e il margine scende sotto zero, stai lavorando gratis o in perdita!",
     what: "Percentuale di utile netto target che l'azienda intende ricavare dalla commessa detratte tutte le spese di fornitura, manodopera e generali.",
     portal_location: "Calcolo interno dell'ufficio gare / Business Plan di commessa.",
-    what_to_do: "Imposta il margine desiderato. Un margine sotto l'8% in appalti complessi aumenta il rischio di offerta anomala o di perdite operative durante l'esecuzione.",
+    what_to_do: "Clicca sul pulsante verde '⚡ Calcolatore Analitico Margine di Commessa': muovi lo slider del ribasso e visualizza in diretta se l'appalto è in utile o a rischio perdita.",
     legal_tip: "Le offerte con marginalita' eccessivamente compressa rischiano di incorrere nella verifica di anomalia dell'offerta ex art. 110 D.Lgs. 36/2023."
   },
   go_decision: {
     category: "FASE 2: QUALIFICAZIONE",
     title: "Delibera Strategica Go / No-Go",
+    simple_explanation: "È il bivio decisionale dell'azienda: 🟢 GO significa 'i requisiti ci sono, il guadagno è buono, prepariamo l'offerta'; 🔴 NO-GO significa 'scartiamo questa gara per non sprecare giorni di lavoro su un bando non idoneo'.",
+    what: "Delibera aziendale formale che autorizza l'avanzamento alla Fase 3 (redazione delle 3 buste) oppure archivia la gara.",
+    portal_location: "Scelta strategica interna dell'Ufficio Gare / Direzione Commerciale.",
+    what_to_do: "Seleziona GO solo se la checklist è spuntata e il margine è positivo. Il sistema blocca l'accesso alle buste se deliberi NO-GO.",
+    legal_tip: "Una rigorosa delibera GO/NO-GO riduce dell'80% i costi amministrativi aziendali per gare non aggiudicabili."
+  },
     what: "La decisione formale dell'ufficio gare: investire tempo ed energie per partecipare (GO), scartare la procedura (NO-GO), oppure attendere risposta ai chiarimenti (PENDING).",
     portal_location: "Decisione interna aziendale da registrare nel gestionale.",
     what_to_do: "Seleziona 'GO' solo se tutti i requisiti sono soddisfatti e il margine e' sostenibile. Se mancano requisiti insuperabili, seleziona 'NO-GO' per archiviare la gara ed evitare sprechi. Con delibera NO-GO il sistema blocca deterministamente l'avanzamento alla Fase 3.",
@@ -392,6 +403,15 @@ window.showWizardHelpModal = function(key) {
       </div>
 
       <div class="space-y-3.5 text-xs text-slate-300 overflow-y-auto custom-scrollbar pr-1 flex-1 leading-relaxed">
+        ${item.simple_explanation ? `
+          <div class="bg-gradient-to-r from-cyan-950/60 to-blue-950/40 p-4 rounded-2xl border border-cyan-500/40 text-cyan-200 space-y-1.5 shadow-md">
+            <strong class="text-cyan-300 font-mono text-[11px] uppercase flex items-center gap-1.5 font-bold">
+              <span>💡 In parole povere (se non sei del settore):</span>
+            </strong>
+            <p class="text-slate-100 text-xs font-medium leading-relaxed">${escapeHtml(item.simple_explanation)}</p>
+          </div>
+        ` : ''}
+
         <div class="bg-slate-950 p-3.5 rounded-xl border border-slate-800 space-y-1">
           <strong class="text-cyan-300 font-mono text-[11px] uppercase block">📌 A cosa serve questo campo / operazione:</strong>
           <p>${escapeHtml(item.what)}</p>
@@ -1103,6 +1123,9 @@ function renderCurrentStepContent(tender) {
                     ${renderHelpBtn('check_sopralluogo')}
                   </div>
                   <span class="text-[11px] text-slate-400 block mt-0.5">Attestato di sopralluogo rilasciato dal RUP dell'ente (se richiesto dal bando).</span>
+                  <button type="button" onclick="window.openSopralluogoModal()" class="mt-2 px-2.5 py-1 rounded-xl bg-purple-500/10 hover:bg-purple-500/20 text-purple-300 font-mono text-[11px] border border-purple-500/30 inline-flex items-center gap-1.5 transition cursor-pointer">
+                    <span>⚡ Guida Sopralluogo &amp; Generatore Richiesta Appuntamento</span>
+                  </button>
                 </div>
               </label>
             </div>
@@ -1116,6 +1139,9 @@ function renderCurrentStepContent(tender) {
                     ${renderHelpBtn('check_garanzie')}
                   </div>
                   <span class="text-[11px] text-slate-400 block mt-0.5">Capienza confermata per emissione cauzione provvisoria e futura definitiva.</span>
+                  <button type="button" onclick="window.openGaranzieModal()" class="mt-2 px-2.5 py-1 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 font-mono text-[11px] border border-emerald-500/30 inline-flex items-center gap-1.5 transition cursor-pointer">
+                    <span>⚡ Verifica Capienza Plafond &amp; Richiesta Polizza Broker</span>
+                  </button>
                 </div>
               </label>
             </div>
@@ -2866,3 +2892,375 @@ window.openMargineModal = function() {
   renderContent();
   modal.classList.remove("hidden");
 };
+
+/**
+ * ==============================================================================
+ * PIPELINE DETERMINISTICA 4: Guida & Gestione Sopralluogo (art. 92 D.Lgs. 36/2023)
+ * ==============================================================================
+ */
+window.openSopralluogoModal = function() {
+  const tender = getAllTendersFromSQLite().find(t => t.id === currentWizardGaraId) || {};
+  const s1 = currentWizardData?.step1_data || {};
+  const rupName = s1.rup_name || "Al Responsabile Unico del Progetto";
+  const authority = s1.authority || tender.authority || "Stazione Appaltante";
+  const cig = s1.cig || tender.cig || "CIG-NON-DEFINITO";
+  const title = s1.title || tender.title || "Fornitura / Servizio";
+
+  let modal = document.getElementById("sopralluogoModal");
+  if (!modal) {
+    modal = document.createElement("div");
+    modal.id = "sopralluogoModal";
+    modal.className = "fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4 transition-all";
+    document.body.appendChild(modal);
+  }
+
+  const renderContent = () => {
+    modal.innerHTML = `
+      <div class="bg-slate-900 border border-purple-500/40 rounded-3xl p-6 max-w-2xl w-full shadow-2xl space-y-4 max-h-[90vh] flex flex-col animate-in fade-in zoom-in-95 duration-150">
+        <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+          <div class="flex items-center gap-2.5">
+            <span class="w-8 h-8 rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20 flex items-center justify-center font-bold text-sm">📍</span>
+            <div>
+              <h3 class="text-sm font-bold text-white">Guida Sopralluogo &amp; Generatore Istanza RUP</h3>
+              <p class="text-[11px] text-purple-300/80 font-mono">D.Lgs. 36/2023 art. 92 comma 1 (Ispezione luoghi a pena di esclusione)</p>
+            </div>
+          </div>
+          <button onclick="document.getElementById('sopralluogoModal').classList.add('hidden')" class="text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-800 text-sm">✕</button>
+        </div>
+
+        <div class="bg-purple-950/30 p-3.5 rounded-2xl border border-purple-800/40 text-purple-200 text-xs space-y-1">
+          <strong class="text-purple-300 font-mono text-[11px] uppercase flex items-center gap-1.5">
+            <span>💡 In parole povere: cos'è il sopralluogo?</span>
+          </strong>
+          <p class="text-slate-200 font-medium leading-relaxed">
+            Se la gara prevede installazione fisica, posa o lavori presso la sede della PA, l'ente può obbligarti a mandare un tecnico a vedere i locali prima di fare l'offerta. Il funzionario pubblico (RUP) rilascia un foglio firmato (Attestato di Sopralluogo). Se nel bando c'è scritto "obbligatorio a pena di esclusione" e non lo fai, vieni scartato senza possibilità di recupero. Se invece vendi solo software cloud o beni a catalogo, quasi sempre <strong>non è richiesto</strong>.
+          </p>
+        </div>
+
+        <div class="space-y-3 text-xs">
+          <label class="block font-semibold text-slate-200">Scegli la situazione della tua azienda per questa gara:</label>
+          
+          <div class="space-y-2.5">
+            <!-- Caso 1: Non Richiesto -->
+            <label class="flex items-start gap-2.5 p-3 rounded-2xl bg-slate-950 border border-slate-800 hover:border-purple-500/40 cursor-pointer transition">
+              <input type="radio" name="sopralluogoChoice" value="NOT_REQUIRED" checked class="mt-0.5 text-purple-500 bg-slate-900 border-slate-700 focus:ring-0">
+              <div class="flex-1">
+                <strong class="text-slate-100 block">Opzione 1: Il bando NON richiede sopralluogo (Esente)</strong>
+                <span class="text-slate-400 text-[11px]">Tipico per forniture pure, licenze software, beni standard senza lavori di posa complessi.</span>
+              </div>
+            </label>
+
+            <!-- Caso 2: Già Effettuato -->
+            <label class="flex items-start gap-2.5 p-3 rounded-2xl bg-slate-950 border border-slate-800 hover:border-purple-500/40 cursor-pointer transition">
+              <input type="radio" name="sopralluogoChoice" value="DONE" class="mt-0.5 text-purple-500 bg-slate-900 border-slate-700 focus:ring-0">
+              <div class="flex-1 space-y-2">
+                <strong class="text-slate-100 block">Opzione 2: Sopralluogo già effettuato (Attestato in possesso)</strong>
+                <span class="text-slate-400 text-[11px] block">Un tuo incaricato ha visitato i locali e hai l'attestato firmato dal RUP da inserire nella Busta A.</span>
+                <div id="sopralluogoDoneInputs" class="grid grid-cols-2 gap-2 pt-1 hidden">
+                  <div>
+                    <label class="text-[10px] text-slate-400 block mb-0.5">Data effettuazione:</label>
+                    <input id="inputSopralluogoDate" type="date" value="${new Date().toISOString().substring(0,10)}" class="w-full bg-slate-900 border border-slate-800 rounded-lg p-1.5 text-slate-200 text-xs">
+                  </div>
+                  <div>
+                    <label class="text-[10px] text-slate-400 block mb-0.5">Tecnico aziendale incaricato:</label>
+                    <input id="inputSopralluogoTech" type="text" placeholder="Nome cognome tecnico..." class="w-full bg-slate-900 border border-slate-800 rounded-lg p-1.5 text-slate-200 text-xs">
+                  </div>
+                </div>
+              </div>
+            </label>
+
+            <!-- Caso 3: Da Richiedere / Genera PEC -->
+            <label class="flex items-start gap-2.5 p-3 rounded-2xl bg-slate-950 border border-slate-800 hover:border-purple-500/40 cursor-pointer transition">
+              <input type="radio" name="sopralluogoChoice" value="REQUEST" class="mt-0.5 text-purple-500 bg-slate-900 border-slate-700 focus:ring-0">
+              <div class="flex-1 space-y-1.5">
+                <strong class="text-slate-100 block">Opzione 3: È obbligatorio e devo ancora farlo &rarr; Genera PEC appuntamento</strong>
+                <span class="text-slate-400 text-[11px] block">Crea subito la richiesta formale per concordare data e ora del sopralluogo con il RUP della PA.</span>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <!-- Sezione Anteprima PEC Sopralluogo (se Opzione 3) -->
+        <div id="sopralluogoPecBox" class="space-y-1.5 hidden text-xs">
+          <label class="text-[11px] font-mono text-purple-300 block">Testo PEC formale per richiesta sopralluogo al RUP:</label>
+          <pre id="sopralluogoPecText" class="bg-slate-950 p-3 rounded-xl border border-slate-800 text-purple-200 font-mono text-[11px] max-h-36 overflow-y-auto select-all whitespace-pre-wrap leading-relaxed"></pre>
+        </div>
+
+        <div class="pt-3 border-t border-slate-800 flex justify-between items-center gap-2 text-xs">
+          <button type="button" id="btnCopySopralluogoPec" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-purple-300 font-mono text-xs hidden transition cursor-pointer">
+            Copia PEC
+          </button>
+          <div class="flex gap-2 ml-auto">
+            <button type="button" onclick="document.getElementById('sopralluogoModal').classList.add('hidden')" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium transition cursor-pointer">
+              Annulla
+            </button>
+            <button type="button" id="btnApplySopralluogo" class="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold transition shadow-lg shadow-purple-500/20 cursor-pointer">
+              Applica Scelta al Wizard
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+
+    const pecText = `Spett.le ${authority}
+Alla c.a. del Responsabile Unico del Progetto: ${rupName}
+Oggetto: Richiesta fissazione appuntamento per SOPRALLUOGO OBBLIGATORIO
+Procedura di Gara CIG: ${cig} - ${title}
+
+Il sottoscritto Legale Rappresentante dell'operatore economico partecipante alla procedura in oggetto, con la presente
+CHIEDE
+di concordare un appuntamento per l'effettuazione del sopralluogo obbligatorio previsto dagli atti di gara.
+Si segnala che l'ispezione verrà eseguita dal nostro tecnico incaricato munito di delega e documento di riconoscimento.
+In attesa di cortese e tempestivo riscontro, si porgono cordiali saluti.`;
+
+    const radioGroup = modal.querySelectorAll('input[name="sopralluogoChoice"]');
+    const doneInputs = document.getElementById("sopralluogoDoneInputs");
+    const pecBox = document.getElementById("sopralluogoPecBox");
+    const pecPre = document.getElementById("sopralluogoPecText");
+    const copyBtn = document.getElementById("btnCopySopralluogoPec");
+
+    if (pecPre) pecPre.textContent = pecText;
+
+    const handleRadio = () => {
+      const selected = modal.querySelector('input[name="sopralluogoChoice"]:checked')?.value;
+      if (selected === "DONE") {
+        if (doneInputs) doneInputs.classList.remove("hidden");
+        if (pecBox) pecBox.classList.add("hidden");
+        if (copyBtn) copyBtn.classList.add("hidden");
+      } else if (selected === "REQUEST") {
+        if (doneInputs) doneInputs.classList.add("hidden");
+        if (pecBox) pecBox.classList.remove("hidden");
+        if (copyBtn) copyBtn.classList.remove("hidden");
+      } else {
+        if (doneInputs) doneInputs.classList.add("hidden");
+        if (pecBox) pecBox.classList.add("hidden");
+        if (copyBtn) copyBtn.classList.add("hidden");
+      }
+    };
+
+    radioGroup.forEach(r => r.addEventListener("change", handleRadio));
+
+    copyBtn?.addEventListener("click", () => {
+      navigator.clipboard.writeText(pecText);
+      showNotification("PEC di richiesta sopralluogo copiata negli appunti!");
+    });
+
+    document.getElementById("btnApplySopralluogo")?.addEventListener("click", () => {
+      const selected = modal.querySelector('input[name="sopralluogoChoice"]:checked')?.value;
+      const chk = document.getElementById("w_check_sopralluogo");
+      const notesEl = document.getElementById("w_step2_notes");
+
+      let noteMsg = "";
+      if (selected === "NOT_REQUIRED") {
+        if (chk) chk.checked = true;
+        currentWizardData.step2_data.check_sopralluogo = true;
+        noteMsg = `[Sopralluogo] Verificato: Non prescritto dal disciplinare per la presente tipologia di fornitura.`;
+      } else if (selected === "DONE") {
+        if (chk) chk.checked = true;
+        currentWizardData.step2_data.check_sopralluogo = true;
+        const dVal = document.getElementById("inputSopralluogoDate")?.value || "";
+        const tVal = document.getElementById("inputSopralluogoTech")?.value || "tecnico incaricato";
+        noteMsg = `[Sopralluogo] Effettuato in data ${dVal} da ${tVal}. Attestato firmato dal RUP pronto per Busta A.`;
+      } else if (selected === "REQUEST") {
+        if (chk) chk.checked = false;
+        currentWizardData.step2_data.check_sopralluogo = false;
+        noteMsg = `[Sopralluogo] OBBLIGATORIO - Richiesta PEC inviata al RUP ${rupName}. In attesa di attestato prima di chiudere la Busta A.`;
+        window.addNewGaraNote("CHIARIMENTI", `Inviata richiesta appuntamento sopralluogo al RUP per CIG ${cig}`);
+      }
+
+      if (notesEl && noteMsg) {
+        notesEl.value = notesEl.value ? `${notesEl.value}\n${noteMsg}` : noteMsg;
+        currentWizardData.step2_data.notes = notesEl.value;
+      }
+
+      document.getElementById("sopralluogoModal").classList.add("hidden");
+      showNotification("Stato sopralluogo aggiornato con successo!");
+    });
+  };
+
+  renderContent();
+  modal.classList.remove("hidden");
+};
+
+/**
+ * ==============================================================================
+ * PIPELINE DETERMINISTICA 5: Verifica Capienza Fido / Castelletto Garanzie
+ * ==============================================================================
+ */
+window.openGaranzieModal = function() {
+  const tender = getAllTendersFromSQLite().find(t => t.id === currentWizardGaraId) || {};
+  const s1 = currentWizardData?.step1_data || {};
+  const s3 = currentWizardData?.step3_data || {};
+  const baseAmount = s3.busta_c_base_amount || tender.amount || 100000;
+  
+  // Importo della garanzia provvisoria necessaria (di default 2%, o ridotta se calcolata)
+  const neededGuarantee = s3.busta_a_fideiussione_importo || (baseAmount * 0.02 * (currentWizardData?.step2_data?.check_iso ? 0.7 : 1.0));
+
+  let modal = document.getElementById("garanzieModal");
+  if (!modal) {
+    modal = document.createElement("div");
+    modal.id = "garanzieModal";
+    modal.className = "fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4 transition-all";
+    document.body.appendChild(modal);
+  }
+
+  const renderContent = () => {
+    modal.innerHTML = `
+      <div class="bg-slate-900 border border-emerald-500/40 rounded-3xl p-6 max-w-2xl w-full shadow-2xl space-y-4 max-h-[90vh] flex flex-col animate-in fade-in zoom-in-95 duration-150">
+        <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+          <div class="flex items-center gap-2.5">
+            <span class="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center justify-center font-bold text-sm">🛡️</span>
+            <div>
+              <h3 class="text-sm font-bold text-white">Verifica Capienza Fido &amp; Castelletto Garanzie</h3>
+              <p class="text-[11px] text-emerald-300/80 font-mono">D.Lgs. 36/2023 art. 106 (Cauzione Provvisoria e Impegno Definitiva)</p>
+            </div>
+          </div>
+          <button onclick="document.getElementById('garanzieModal').classList.add('hidden')" class="text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-800 text-sm">✕</button>
+        </div>
+
+        <div class="bg-emerald-950/30 p-3.5 rounded-2xl border border-emerald-800/40 text-emerald-200 text-xs space-y-1">
+          <strong class="text-emerald-300 font-mono text-[11px] uppercase flex items-center gap-1.5">
+            <span>💡 In parole povere: cos'è il castelletto fideiussorio?</span>
+          </strong>
+          <p class="text-slate-200 font-medium leading-relaxed">
+            È il massimale di credito che la tua assicurazione o banca ti concede per partecipare alle gare d'appalto. Serve a rilasciare alla PA una cauzione provvisoria: la garanzia che se vinci firmerai davvero il contratto. Funziona come il plafond della carta di credito: se per questa gara servono ad esempio <strong>${formatEUR(neededGuarantee)}</strong>, devi verificare che nel tuo plafond assicurativo ci sia ancora capienza libera.
+          </p>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3 text-xs">
+          <div class="bg-slate-950 p-3 rounded-2xl border border-slate-800">
+            <span class="text-slate-400 block text-[11px]">Base d'Asta Gara:</span>
+            <span class="font-mono font-bold text-slate-100 text-sm">${formatEUR(baseAmount)}</span>
+          </div>
+          <div class="bg-slate-950 p-3 rounded-2xl border border-slate-800">
+            <span class="text-slate-400 block text-[11px]">Cauzione Provvisoria Richiesta:</span>
+            <span class="font-mono font-bold text-emerald-400 text-sm">${formatEUR(neededGuarantee)}</span>
+          </div>
+        </div>
+
+        <div class="space-y-3 text-xs">
+          <label class="block font-semibold text-slate-200">Inserisci i parametri del tuo fido aziendale con l'agenzia / banca:</label>
+          <div class="grid grid-cols-2 gap-2.5">
+            <div>
+              <label class="block text-[11px] text-slate-400 mb-1 font-mono">Plafond Totale Concesso (€):</label>
+              <input id="inputPlafondTotal" type="number" value="50000" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-2.5 py-1.5 text-slate-100 font-mono text-xs focus:border-emerald-400">
+            </div>
+            <div>
+              <label class="block text-[11px] text-slate-400 mb-1 font-mono">Garanzie Impegnate su Altre Gare (€):</label>
+              <input id="inputPlafondUsed" type="number" value="12000" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-2.5 py-1.5 text-slate-100 font-mono text-xs focus:border-emerald-400">
+            </div>
+          </div>
+        </div>
+
+        <!-- Box Esito Deterministico Capienza -->
+        <div id="garanzieOutcomeBox" class="p-3.5 rounded-2xl border text-xs space-y-1.5"></div>
+
+        <!-- Richiesta Rapida Emissione Polizza per il Broker -->
+        <div class="space-y-1.5 text-xs">
+          <div class="flex items-center justify-between">
+            <label class="text-[11px] font-mono text-slate-300 font-semibold">Testo pronto per richiesta emissione polizza al Broker / Assicuratore:</label>
+            <button type="button" id="btnCopyBrokerText" class="text-emerald-400 hover:text-emerald-300 font-mono text-[11px]">Copia Richiesta Broker</button>
+          </div>
+          <textarea id="textBrokerRequest" rows="3" readonly class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-slate-300 font-mono text-[11px] leading-relaxed select-all"></textarea>
+        </div>
+
+        <div class="pt-3 border-t border-slate-800 flex justify-end gap-2 text-xs">
+          <button type="button" onclick="document.getElementById('garanzieModal').classList.add('hidden')" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium transition cursor-pointer">
+            Chiudi
+          </button>
+          <button type="button" id="btnApplyGaranzie" class="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold transition shadow-lg shadow-emerald-500/20 cursor-pointer">
+            Conferma Capienza e Spunta
+          </button>
+        </div>
+      </div>
+    `;
+
+    const brokerText = `Spett.le Agenzia / Broker Assicurativo,
+Vi richiediamo con urgenza l'emissione di Polizza Fideiussoria Provvisoria per la partecipazione a gara pubblica:
+- Ente Appaltante: ${s1.authority || tender.authority || 'PA Committente'}
+- Oggetto Gara: ${s1.title || tender.title || 'Appalto Fornitura/Servizi'}
+- CIG: ${s1.cig || tender.cig || 'CIG-GARA'}
+- Importo Garantito: ${formatEUR(neededGuarantee)} (al netto delle riduzioni di legge ex art. 106 c.8)
+- Clausola obbligatoria: impegno espresso del garante a rilasciare la garanzia definitiva in caso di aggiudicazione ex art. 106 c.5.
+- Formato richiesto: Digitale con firma digitale conforme a standard ANAC.
+Restiamo in attesa dell'invio del file PDF firmato digitalmente.`;
+
+    const brokerArea = document.getElementById("textBrokerRequest");
+    if (brokerArea) brokerArea.value = brokerText;
+
+    document.getElementById("btnCopyBrokerText")?.addEventListener("click", () => {
+      navigator.clipboard.writeText(brokerText);
+      showNotification("Testo richiesta polizza broker copiato negli appunti!");
+    });
+
+    const recalc = () => {
+      const total = parseFloat(document.getElementById("inputPlafondTotal")?.value) || 0;
+      const used = parseFloat(document.getElementById("inputPlafondUsed")?.value) || 0;
+      const available = total - used;
+      const diff = available - neededGuarantee;
+
+      const box = document.getElementById("garanzieOutcomeBox");
+      const btn = document.getElementById("btnApplyGaranzie");
+
+      if (box) {
+        if (diff >= 0) {
+          box.className = "p-3.5 rounded-2xl border border-emerald-500/40 bg-emerald-950/20 text-xs space-y-1.5";
+          box.innerHTML = `
+            <div class="flex items-center justify-between text-emerald-400 font-bold">
+              <span>🟢 CAPIENZA PLAFOND CONFERMATA (SEMAFORO VERDE)</span>
+              <span class="font-mono">Plafond Residuo: ${formatEUR(available)}</span>
+            </div>
+            <p class="text-slate-300 text-[11px] leading-relaxed">
+              Il plafond residuo (${formatEUR(available)}) è ampiamente sufficiente per coprire la cauzione di ${formatEUR(neededGuarantee)}. Margine libero residuo post-gara: <strong>+${formatEUR(diff)}</strong>.
+            </p>
+          `;
+          if (btn) btn.textContent = "Conferma Capienza e Spunta Requisito";
+        } else {
+          box.className = "p-3.5 rounded-2xl border border-rose-500/40 bg-rose-950/20 text-xs space-y-1.5";
+          box.innerHTML = `
+            <div class="flex items-center justify-between text-rose-400 font-bold">
+              <span>🔴 PLAFOND INSUFFICIENTE (RISCHIO BLOCCO POLIZZA)</span>
+              <span class="font-mono">Deficit: ${formatEUR(Math.abs(diff))}</span>
+            </div>
+            <p class="text-slate-300 text-[11px] leading-relaxed">
+              Il plafond residuo (${formatEUR(available)}) non copre la cauzione richiesta (${formatEUR(neededGuarantee)}). 
+              Azione necessaria: richiedi un ampliamento del castelletto alla compagnia oppure svincola le cauzioni delle vecchie gare concluse usando il nostro generatore di PEC svincolo nella Fase 4!
+            </p>
+          `;
+          if (btn) btn.textContent = "Applica con Allerta di Plafond";
+        }
+      }
+    };
+
+    document.getElementById("inputPlafondTotal")?.addEventListener("input", recalc);
+    document.getElementById("inputPlafondUsed")?.addEventListener("input", recalc);
+    recalc();
+
+    document.getElementById("btnApplyGaranzie")?.addEventListener("click", () => {
+      const total = parseFloat(document.getElementById("inputPlafondTotal")?.value) || 0;
+      const used = parseFloat(document.getElementById("inputPlafondUsed")?.value) || 0;
+      const available = total - used;
+      const isOk = available >= neededGuarantee;
+
+      const chk = document.getElementById("w_check_garanzie");
+      if (chk) chk.checked = true;
+      currentWizardData.step2_data.check_garanzie = true;
+
+      const notesEl = document.getElementById("w_step2_notes");
+      if (notesEl) {
+        const garNote = isOk
+          ? `[Castelletto Garanzie] Plafond libero ${formatEUR(available)} vs Cauzione ${formatEUR(neededGuarantee)}: CAPIENTE.`
+          : `[Castelletto Garanzie] ATTENZIONE: Plafond residuo ${formatEUR(available)} insufficiente rispetto a cauzione ${formatEUR(neededGuarantee)}. Richiesto ampliamento al broker.`;
+        notesEl.value = notesEl.value ? `${notesEl.value}\n${garNote}` : garNote;
+        currentWizardData.step2_data.notes = notesEl.value;
+      }
+
+      document.getElementById("garanzieModal").classList.add("hidden");
+      showNotification("Capienza castelletto garanzie verificata e memorizzata!");
+    });
+  };
+
+  renderContent();
+  modal.classList.remove("hidden");
+};
+
