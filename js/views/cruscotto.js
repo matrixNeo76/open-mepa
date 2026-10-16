@@ -23,23 +23,18 @@ function isTenderActive(t) {
 }
 window.isTenderActive = isTenderActive;
 
-function getFilteredAndSortedTenders() {
-  const all = getAllTendersFromSQLite();
+function getScopedTenders(all) {
   const searchInput = document.getElementById("searchInput");
   const filterCategory = document.getElementById("filterCategory");
   const filterRegion = document.getElementById("filterRegion");
   const filterSource = document.getElementById("filterSource");
-  const filterStatus = document.getElementById("filterStatus");
-  const sortTenders = document.getElementById("sortTenders");
 
   const term = searchInput ? searchInput.value.toLowerCase().trim() : "";
   const cat = filterCategory ? filterCategory.value : "ALL";
   const reg = filterRegion ? filterRegion.value : "ALL";
   const src = filterSource ? filterSource.value : "ALL";
-  const st = filterStatus ? filterStatus.value : "ALL";
-  const sortType = sortTenders ? sortTenders.value : "deadline_asc";
 
-  let result = all.filter(t => {
+  return all.filter(t => {
     if (term) {
       const matchCig = (t.cig || "").toLowerCase().includes(term);
       const matchTitle = (t.title || "").toLowerCase().includes(term);
@@ -70,9 +65,11 @@ function getFilteredAndSortedTenders() {
         }
       }
     }
+
     if (src !== "ALL") {
       if (src === "Bandi e Gare") {
-        if (t.source !== "Bandi e Gare" && t.source !== "Convenzione" && t.source !== "Accordo Quadro") return false;
+        // Tutti i bandi centralizzati Consip (Convenzione, Accordo Quadro, SDA)
+        if (t.source === "MePA" || t.source === "RdO MePA") return false;
       } else if (src === "RdO MePA" || src === "MePA") {
         if (t.source !== "RdO MePA" && t.source !== "MePA") return false;
       } else {
@@ -80,16 +77,37 @@ function getFilteredAndSortedTenders() {
       }
     }
 
-    if (st === "SOLO_ATTIVE") {
-      if (!isTenderActive(t)) return false;
-    } else if (st === "CONCLUSE") {
-      if (!CONCLUDED_STATUSES.includes(t.status)) return false;
-    } else if (st === "SCADUTE") {
-      if (isTenderActive(t) || CONCLUDED_STATUSES.includes(t.status)) return false;
-    } else if (st !== "ALL" && t.status !== st) {
-      return false;
-    }
+    return true;
+  });
+}
+window.getScopedTenders = getScopedTenders;
 
+function getFilteredAndSortedTenders() {
+  const all = getAllTendersFromSQLite();
+  const scoped = getScopedTenders(all);
+  const filterStatus = document.getElementById("filterStatus");
+  const sortTenders = document.getElementById("sortTenders");
+
+  const st = filterStatus ? filterStatus.value : "ALL";
+  const sortType = sortTenders ? sortTenders.value : "deadline_asc";
+
+  let result = scoped.filter(t => {
+    if (st === "ALL") {
+      return true;
+    } else if (st === "SOLO_ATTIVE") {
+      return isTenderActive(t);
+    } else if (st === "EXPIRING_7D") {
+      const rem = calculateTimeRemaining(t.deadline);
+      return rem.days >= 0 && rem.days <= 7 && !CONCLUDED_STATUSES.includes(t.status);
+    } else if (st === "SCADUTE") {
+      return !isTenderActive(t) && !CONCLUDED_STATUSES.includes(t.status);
+    } else if (st === "CONCLUSE") {
+      return CONCLUDED_STATUSES.includes(t.status);
+    } else if (st === "Da Valutare") {
+      return t.status === "Da Valutare" || !t.status;
+    } else if (st === "In Lavorazione" || st === "Inviata" || st === "Vinta" || st === "Persa" || st === "Scartata") {
+      return t.status === st;
+    }
     return true;
   });
 
@@ -123,15 +141,22 @@ window.toggleSortDeadline = function() {
   renderApp();
 };
 
-// Filtro istantaneo cliccando sulle card della Pipeline 4 Fasi
+// Filtro istantaneo cliccando sulle card della Pipeline 4 Fasi con toggle intelligente
 window.filterByPhase = function(phase) {
   const filterStatus = document.getElementById("filterStatus");
   if (!filterStatus) return;
 
   document.querySelectorAll(".chip-ghost").forEach(c => c.classList.remove("active"));
-  filterStatus.value = phase;
+  
+  if (filterStatus.value === phase) {
+    // Se era gia' attiva questa fase, la deselezioniamo tornando a vedere tutto
+    filterStatus.value = "ALL";
+    showNotification("Filtro fase rimosso: visualizzazione completa");
+  } else {
+    filterStatus.value = phase;
+    showNotification(`Filtro fase applicato: ${phase}`);
+  }
   renderApp();
-  showNotification(`Filtro fase applicato: ${phase}`);
 };
 
 // Toggle del pannello Filtri Avanzati
@@ -196,31 +221,52 @@ window.applyFastFilter = function(filterName, value) {
   document.querySelectorAll(".chip-ghost").forEach(c => c.classList.remove("active"));
 
   if (filterName === "category" && filterCategory) {
-    filterCategory.value = value;
-    if (value === "IT") document.getElementById("chipIT")?.classList.add("active");
-    if (value === "CANCELLERIA") document.getElementById("chipPaper")?.classList.add("active");
-    if (value === "DUAL_IT_PAPER") document.getElementById("chipDual")?.classList.add("active");
+    if (filterCategory.value === value) {
+      filterCategory.value = "ALL";
+      showNotification("Filtro categoria rimosso: tutte le categorie");
+    } else {
+      filterCategory.value = value;
+      if (value === "IT") document.getElementById("chipIT")?.classList.add("active");
+      if (value === "CANCELLERIA") document.getElementById("chipPaper")?.classList.add("active");
+      if (value === "DUAL_IT_PAPER") document.getElementById("chipDual")?.classList.add("active");
+      showNotification(`Filtro categoria: ${value}`);
+    }
   } else if (filterName === "status" && filterStatus) {
-    filterStatus.value = value;
-    if (value === "SOLO_ATTIVE") document.getElementById("chipActive")?.classList.add("active");
-    if (value === "ALL") document.getElementById("tabPresetAll")?.classList.add("active");
+    if (filterStatus.value === value) {
+      filterStatus.value = "ALL";
+      showNotification("Filtro stato rimosso: tutti gli stati");
+    } else {
+      filterStatus.value = value;
+      if (value === "SOLO_ATTIVE") document.getElementById("chipActive")?.classList.add("active");
+      if (value === "ALL") document.getElementById("tabPresetAll")?.classList.add("active");
+      showNotification(`Filtro stato: ${value}`);
+    }
   } else if (filterName === "expiring_soon") {
-    if (sortTenders) sortTenders.value = "deadline_asc";
-    if (filterStatus) filterStatus.value = "SOLO_ATTIVE";
-    document.getElementById("chipExpiring")?.classList.add("active");
+    if (filterStatus) {
+      if (filterStatus.value === "EXPIRING_7D") {
+        filterStatus.value = "ALL";
+        showNotification("Filtro scadenze 7gg rimosso");
+      } else {
+        filterStatus.value = "EXPIRING_7D";
+        if (sortTenders) sortTenders.value = "deadline_asc";
+        document.getElementById("chipExpiring")?.classList.add("active");
+        showNotification("Visualizzazione gare con scadenza entro 7 giorni");
+      }
+    }
   }
   renderApp();
-  showNotification(`Filtro applicato: ${value}`);
 };
+
 function renderApp() {
   const all = getAllTendersFromSQLite();
+  const scoped = getScopedTenders(all);
   const filtered = getFilteredAndSortedTenders();
 
-  // Calcolo Pipeline 4 Fasi (D.Lgs. 36/2023)
-  const p1Count = all.filter(t => t.status === "Da Valutare" || !t.status).length;
-  const p2Count = all.filter(t => t.status === "In Lavorazione").length;
-  const p3Count = all.filter(t => t.status === "Inviata").length;
-  const p4Count = all.filter(t => CONCLUDED_STATUSES.includes(t.status)).length;
+  // Calcolo Pipeline 4 Fasi (D.Lgs. 36/2023) su scopedTenders (rispecchia filtri merceologici e di ricerca)
+  const p1Count = scoped.filter(t => t.status === "Da Valutare" || !t.status).length;
+  const p2Count = scoped.filter(t => t.status === "In Lavorazione").length;
+  const p3Count = scoped.filter(t => t.status === "Inviata").length;
+  const p4Count = scoped.filter(t => CONCLUDED_STATUSES.includes(t.status)).length;
 
   const elP1 = document.getElementById("statPhase1");
   const elP2 = document.getElementById("statPhase2");
@@ -230,6 +276,27 @@ function renderApp() {
   if (elP2) elP2.textContent = p2Count;
   if (elP3) elP3.textContent = p3Count;
   if (elP4) elP4.textContent = p4Count;
+
+  // Evidenziazione visiva della Fase selezionata nella Pipeline
+  const filterStatus = document.getElementById("filterStatus");
+  const currentStatus = filterStatus ? filterStatus.value : "ALL";
+
+  const phaseCards = [
+    { id: "phaseCard1", status: "Da Valutare", activeBorder: "border-sky-400", activeBg: "bg-sky-950/40" },
+    { id: "phaseCard2", status: "In Lavorazione", activeBorder: "border-amber-400", activeBg: "bg-amber-950/40" },
+    { id: "phaseCard3", status: "Inviata", activeBorder: "border-purple-400", activeBg: "bg-purple-950/40" },
+    { id: "phaseCard4", status: "CONCLUSE", activeBorder: "border-emerald-400", activeBg: "bg-emerald-950/40" }
+  ];
+
+  phaseCards.forEach(pc => {
+    const cardEl = document.getElementById(pc.id);
+    if (!cardEl) return;
+    if (currentStatus === pc.status) {
+      cardEl.classList.add("ring-2", pc.activeBorder, pc.activeBg);
+    } else {
+      cardEl.classList.remove("ring-2", pc.activeBorder, pc.activeBg);
+    }
+  });
 
   const statFiltered = document.getElementById("statFiltered");
   const statTotal = document.getElementById("statTotal");
@@ -241,11 +308,14 @@ function renderApp() {
   const statTotalValue = document.getElementById("statTotalValue");
 
   if (statFiltered) statFiltered.textContent = filtered.length;
-  if (statTotal) statTotal.textContent = `/ ${all.length}`;
+  if (statTotal) {
+    statTotal.textContent = (scoped.length === all.length) ? `/ ${all.length}` : `/ ${scoped.length} (tot: ${all.length})`;
+  }
   if (sideStatFiltered) sideStatFiltered.textContent = filtered.length;
   if (sideStatTotal) sideStatTotal.textContent = `/ ${all.length}`;
 
-  const expiringCount = all.filter(t => {
+  // Conteggio bandi in scadenza entro 7 giorni coerente con l'universo di ricerca
+  const expiringCount = scoped.filter(t => {
     const rem = calculateTimeRemaining(t.deadline);
     return rem.days >= 0 && rem.days <= 7 && !CONCLUDED_STATUSES.includes(t.status);
   }).length;
@@ -370,7 +440,7 @@ function renderApp() {
     }
   }
 
-  renderKanbanColumns(filtered);
+  renderKanbanColumns(scoped);
 }
 
 function renderKanbanColumns(items) {

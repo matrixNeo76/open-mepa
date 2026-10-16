@@ -224,7 +224,7 @@
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
           
           <!-- Fase 1: Da Valutare -->
-          <button type="button" onclick="filterByPhase('Da Valutare')" class="text-left rounded-2xl p-4 bg-slate-900/80 border border-sky-500/30 hover:border-sky-400/80 hover:bg-sky-950/20 transition-all shadow-md group relative overflow-hidden" title="Clicca per visualizzare solo le gare in Fase 1 (Da Valutare)">
+          <button id="phaseCard1" type="button" onclick="filterByPhase('Da Valutare')" class="text-left rounded-2xl p-4 bg-slate-900/80 border border-sky-500/30 hover:border-sky-400/80 hover:bg-sky-950/20 transition-all shadow-md group relative overflow-hidden" title="Clicca per visualizzare solo le gare in Fase 1 (Da Valutare) o riclicca per tutte">
             <div class="flex items-center justify-between text-xs font-semibold text-slate-400">
               <span class="flex items-center gap-1.5 text-sky-300">
                 <span class="w-2 h-2 rounded-full bg-sky-400 animate-pulse"></span>
@@ -240,7 +240,7 @@
           </button>
 
           <!-- Fase 2: In Lavorazione -->
-          <button type="button" onclick="filterByPhase('In Lavorazione')" class="text-left rounded-2xl p-4 bg-slate-900/80 border border-amber-500/30 hover:border-amber-400/80 hover:bg-amber-950/20 transition-all shadow-md group relative overflow-hidden" title="Clicca per visualizzare solo le gare in Fase 2 (In Lavorazione)">
+          <button id="phaseCard2" type="button" onclick="filterByPhase('In Lavorazione')" class="text-left rounded-2xl p-4 bg-slate-900/80 border border-amber-500/30 hover:border-amber-400/80 hover:bg-amber-950/20 transition-all shadow-md group relative overflow-hidden" title="Clicca per visualizzare solo le gare in Fase 2 (In Lavorazione) o riclicca per tutte">
             <div class="flex items-center justify-between text-xs font-semibold text-slate-400">
               <span class="flex items-center gap-1.5 text-amber-300">
                 <span class="w-2 h-2 rounded-full bg-amber-400"></span>
@@ -256,7 +256,7 @@
           </button>
 
           <!-- Fase 3: Inviata -->
-          <button type="button" onclick="filterByPhase('Inviata')" class="text-left rounded-2xl p-4 bg-slate-900/80 border border-purple-500/30 hover:border-purple-400/80 hover:bg-purple-950/20 transition-all shadow-md group relative overflow-hidden" title="Clicca per visualizzare solo le gare in Fase 3 (Inviate)">
+          <button id="phaseCard3" type="button" onclick="filterByPhase('Inviata')" class="text-left rounded-2xl p-4 bg-slate-900/80 border border-purple-500/30 hover:border-purple-400/80 hover:bg-purple-950/20 transition-all shadow-md group relative overflow-hidden" title="Clicca per visualizzare solo le gare in Fase 3 (Inviate) o riclicca per tutte">
             <div class="flex items-center justify-between text-xs font-semibold text-slate-400">
               <span class="flex items-center gap-1.5 text-purple-300">
                 <span class="w-2 h-2 rounded-full bg-purple-400"></span>
@@ -272,7 +272,7 @@
           </button>
 
           <!-- Fase 4: Concluse -->
-          <button type="button" onclick="filterByPhase('CONCLUSE')" class="text-left rounded-2xl p-4 bg-slate-900/80 border border-emerald-500/30 hover:border-emerald-400/80 hover:bg-emerald-950/20 transition-all shadow-md group relative overflow-hidden" title="Clicca per visualizzare tutte le gare Concluse (Vinte / Perse / Scartate)">
+          <button id="phaseCard4" type="button" onclick="filterByPhase('CONCLUSE')" class="text-left rounded-2xl p-4 bg-slate-900/80 border border-emerald-500/30 hover:border-emerald-400/80 hover:bg-emerald-950/20 transition-all shadow-md group relative overflow-hidden" title="Clicca per visualizzare tutte le gare Concluse (Vinte / Perse / Scartate) o riclicca per tutte">
             <div class="flex items-center justify-between text-xs font-semibold text-slate-400">
               <span class="flex items-center gap-1.5 text-emerald-300">
                 <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
@@ -428,12 +428,12 @@
               <div>
                 <label class="block text-slate-400 font-semibold mb-1 text-[11px]">Tipologia Gara:</label>
                 <select id="filterSource" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-2.5 py-1.5 text-slate-200 focus:outline-none focus:border-cyan-400 text-xs font-medium">
-                  <option value="ALL">Tutte le Tipologie</option>
-                  <option value="MePA">MePA (RdO &amp; Trattative)</option>
-                  <option value="Bandi e Gare">Bandi Centralizzati Consip</option>
-                  <option value="Accordo Quadro">Accordo Quadro</option>
-                  <option value="Convenzione">Convenzione</option>
-                  <option value="SDA">SDA (Sistema Dinamico)</option>
+                  <option value="ALL">Tutte le Tipologie (1.822)</option>
+                  <option value="MePA">MePA (RdO &amp; Trattative - 392)</option>
+                  <option value="Convenzione">Convenzione Consip (592)</option>
+                  <option value="Accordo Quadro">Accordo Quadro Consip (716)</option>
+                  <option value="SDA">SDA Sistema Dinamico (122)</option>
+                  <option value="Bandi e Gare">Tutti i Bandi Centralizzati (1.430)</option>
                   <option value="Manuale">Inserite Manualmente</option>
                 </select>
               </div>
@@ -442,13 +442,14 @@
               <div>
                 <label class="block text-slate-400 font-semibold mb-1 text-[11px]">Fase Operativa:</label>
                 <select id="filterStatus" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-2.5 py-1.5 text-slate-200 focus:outline-none focus:border-cyan-400 text-xs font-medium">
-                  <option value="ALL">Tutti gli Stati</option>
-                  <option value="SOLO_ATTIVE" selected>Solo Attive (in corso)</option>
-                  <option value="CONCLUSE">Concluse (Storico)</option>
-                  <option value="SCADUTE">Scadute non Inviate</option>
-                  <option value="Da Valutare">1. Da Valutare</option>
-                  <option value="In Lavorazione">2. In Lavorazione</option>
-                  <option value="Inviata">3. Inviata</option>
+                  <option value="ALL" selected>Tutti gli Stati (Visualizza Tutto)</option>
+                  <option value="SOLO_ATTIVE">Solo Attive (in corso / con scadenza futura)</option>
+                  <option value="EXPIRING_7D">In scadenza (&le; 7 giorni)</option>
+                  <option value="SCADUTE">Scadute non Inviate (Termine superato)</option>
+                  <option value="CONCLUSE">Concluse (Vinte / Perse / Scartate)</option>
+                  <option value="Da Valutare">1. Da Valutare (Triage)</option>
+                  <option value="In Lavorazione">2. In Lavorazione (Buste)</option>
+                  <option value="Inviata">3. Inviata (In attesa esito)</option>
                   <option value="Vinta">4. Vinta (Aggiudicata)</option>
                   <option value="Persa">4. Persa</option>
                   <option value="Scartata">Scartata</option>
@@ -2177,20 +2178,20 @@ CREATE INDEX IF NOT EXISTS idx_deadline ON gare(deadline);</pre>
 
 
   <!-- Moduli Applicativi JavaScript (Zero-Build Vanilla Architecture) -->
-  <script defer src="js/utils.js?v=20261016_22"></script>
-  <script defer src="js/config.js?v=20261016_22"></script>
-  <script defer src="js/api.js?v=20261016_22"></script>
-  <script defer src="js/db-engine.js?v=20261016_22"></script>
-  <script defer src="js/importer.js?v=20261016_22"></script>
-  <script defer src="js/views/cruscotto.js?v=20261016_22"></script>
-  <script defer src="js/wizard-rules.js?v=20261016_22"></script>
-  <script defer src="js/legal-templates.js?v=20261016_22"></script>
-  <script defer src="js/views/wizard.js?v=20261016_22"></script>
-  <script defer src="js/views/cataloghi.js?v=20261016_22"></script>
-  <script defer src="js/views/amministrazioni.js?v=20261016_22"></script>
-  <script defer src="js/views/analytics.js?v=20261016_22"></script>
-  <script defer src="js/views/opendata.js?v=20261016_22"></script>
-  <script defer src="js/views/guida.js?v=20261016_22"></script>
-  <script defer src="js/app.js?v=20261016_22"></script>
+  <script defer src="js/utils.js?v=20261016_23"></script>
+  <script defer src="js/config.js?v=20261016_23"></script>
+  <script defer src="js/api.js?v=20261016_23"></script>
+  <script defer src="js/db-engine.js?v=20261016_23"></script>
+  <script defer src="js/importer.js?v=20261016_23"></script>
+  <script defer src="js/views/cruscotto.js?v=20261016_23"></script>
+  <script defer src="js/wizard-rules.js?v=20261016_23"></script>
+  <script defer src="js/legal-templates.js?v=20261016_23"></script>
+  <script defer src="js/views/wizard.js?v=20261016_23"></script>
+  <script defer src="js/views/cataloghi.js?v=20261016_23"></script>
+  <script defer src="js/views/amministrazioni.js?v=20261016_23"></script>
+  <script defer src="js/views/analytics.js?v=20261016_23"></script>
+  <script defer src="js/views/opendata.js?v=20261016_23"></script>
+  <script defer src="js/views/guida.js?v=20261016_23"></script>
+  <script defer src="js/app.js?v=20261016_23"></script>
 </body>
 </html>
