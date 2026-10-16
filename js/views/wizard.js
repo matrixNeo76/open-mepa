@@ -1023,6 +1023,48 @@ function renderCurrentStepContent(tender) {
             <span class="text-[10px] text-slate-500 font-mono">Verifica piena conformita' con i tuoi codici ATECO</span>
           </div>
         </div>
+
+        <!-- CARD DOWNLOAD DOCUMENTI FASE 1 -->
+        <div class="bg-slate-900/90 p-5 sm:p-6 rounded-3xl border border-cyan-500/30 space-y-3 shadow-xl">
+          <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-3">
+            <div class="flex items-center gap-2">
+              <span class="w-7 h-7 rounded-lg bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 flex items-center justify-center font-bold text-xs">📥</span>
+              <div>
+                <h4 class="text-xs sm:text-sm font-bold text-white">Documenti Scaricabili &amp; Fascicolo Bando</h4>
+                <span class="text-[11px] text-slate-400 font-mono">Esporta scheda gara, scadenzario perentorio e file calendario</span>
+              </div>
+            </div>
+            <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-800 text-cyan-300 border border-slate-700">Export Immediato</span>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-1 text-xs">
+            <!-- 1. Scheda Bando Markdown -->
+            <button type="button" onclick="window.downloadFase1Scheda('md')" class="p-3 rounded-2xl bg-slate-950 border border-slate-800 hover:border-cyan-500/50 text-left transition group cursor-pointer">
+              <div class="flex items-center justify-between text-xs mb-1">
+                <span class="font-bold text-slate-200 group-hover:text-cyan-300">📋 Scheda Bando</span>
+                <span class="font-mono text-[10px] text-cyan-400 font-bold">.MD</span>
+              </div>
+              <p class="text-[11px] text-slate-400 leading-tight">Riepilogo scadenze perentorie, RUP e note legali in Markdown.</p>
+            </button>
+
+            <!-- 2. Scheda Bando Word -->
+            <button type="button" onclick="window.downloadFase1Scheda('docx')" class="p-3 rounded-2xl bg-slate-950 border border-slate-800 hover:border-cyan-500/50 text-left transition group cursor-pointer">
+              <div class="flex items-center justify-between text-xs mb-1">
+                <span class="font-bold text-slate-200 group-hover:text-cyan-300">📄 Scheda Word</span>
+                <span class="font-mono text-[10px] text-cyan-400 font-bold">.DOCX</span>
+              </div>
+              <p class="text-[11px] text-slate-400 leading-tight">Documento Word formattato per archiviazione nel fascicolo d'appalto.</p>
+            </button>
+
+            <!-- 3. Calendario iCalendar -->
+            <button type="button" onclick="window.exportCurrentTenderIcs()" class="p-3 rounded-2xl bg-slate-950 border border-slate-800 hover:border-cyan-500/50 text-left transition group cursor-pointer">
+              <div class="flex items-center justify-between text-xs mb-1">
+                <span class="font-bold text-slate-200 group-hover:text-cyan-300">📅 Calendario Alert</span>
+                <span class="font-mono text-[10px] text-cyan-400 font-bold">.ICS</span>
+              </div>
+              <p class="text-[11px] text-slate-400 leading-tight">Evento scadenze per Microsoft Outlook, Google e Apple Calendar.</p>
+            </button>
+        </div>
       </div>
     `;
   }
@@ -1187,6 +1229,58 @@ function renderCurrentStepContent(tender) {
           </div>
         </div>
 
+      </div>
+
+      <!-- CARD DOWNLOAD DOCUMENTI FASE 2 -->
+      <div class="bg-slate-900/90 p-5 sm:p-6 rounded-3xl border border-amber-500/30 space-y-3 shadow-xl">
+        <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-3">
+          <div class="flex items-center gap-2">
+            <span class="w-7 h-7 rounded-lg bg-amber-500/10 text-amber-400 border border-amber-500/20 flex items-center justify-center font-bold text-xs">📥</span>
+            <div>
+              <h4 class="text-xs sm:text-sm font-bold text-white">Documenti Scaricabili &amp; Fascicolo di Delibera</h4>
+              <span class="text-[11px] text-slate-400 font-mono">Esporta verbale formale, foglio di calcolo analitico e dati strutturati</span>
+            </div>
+          </div>
+          <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-800 text-amber-300 border border-slate-700">Export Immediato</span>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 pt-1 text-xs">
+          <!-- 1. Verbale Word/Doc -->
+          <button type="button" onclick="window.downloadFase2Verbale('docx')" class="p-3 rounded-2xl bg-slate-950 border border-slate-800 hover:border-cyan-500/50 text-left transition group cursor-pointer">
+            <div class="flex items-center justify-between text-xs mb-1">
+              <span class="font-bold text-slate-200 group-hover:text-cyan-300">📄 Verbale Delibera</span>
+              <span class="font-mono text-[10px] text-cyan-400 font-bold">.DOCX / .DOC</span>
+            </div>
+            <p class="text-[11px] text-slate-400 leading-tight">Verbale formale di Go/No-Go per fascicolo aziendale e firma direzione.</p>
+          </button>
+
+          <!-- 2. Verbale Markdown -->
+          <button type="button" onclick="window.downloadFase2Verbale('md')" class="p-3 rounded-2xl bg-slate-950 border border-slate-800 hover:border-cyan-500/50 text-left transition group cursor-pointer">
+            <div class="flex items-center justify-between text-xs mb-1">
+              <span class="font-bold text-slate-200 group-hover:text-cyan-300">📝 Verbale Markdown</span>
+              <span class="font-mono text-[10px] text-cyan-400 font-bold">.MD</span>
+            </div>
+            <p class="text-[11px] text-slate-400 leading-tight">Report di qualificazione in formato Markdown interoperabile.</p>
+          </button>
+
+          <!-- 3. Business Case Excel CSV -->
+          <button type="button" onclick="window.downloadFase2BusinessCaseCsv()" class="p-3 rounded-2xl bg-slate-950 border border-slate-800 hover:border-emerald-500/50 text-left transition group cursor-pointer">
+            <div class="flex items-center justify-between text-xs mb-1">
+              <span class="font-bold text-slate-200 group-hover:text-emerald-300">📊 Business Case</span>
+              <span class="font-mono text-[10px] text-emerald-400 font-bold">.CSV (EXCEL)</span>
+            </div>
+            <p class="text-[11px] text-slate-400 leading-tight">Foglio di calcolo costi commessa, manodopera art. 108 e marginalità.</p>
+          </button>
+
+          <!-- 4. Scheda Qualificazione JSON -->
+          <button type="button" onclick="window.downloadFase2Json()" class="p-3 rounded-2xl bg-slate-950 border border-slate-800 hover:border-purple-500/50 text-left transition group cursor-pointer">
+            <div class="flex items-center justify-between text-xs mb-1">
+              <span class="font-bold text-slate-200 group-hover:text-purple-300">💾 Dati Qualificazione</span>
+              <span class="font-mono text-[10px] text-purple-400 font-bold">.JSON</span>
+            </div>
+            <p class="text-[11px] text-slate-400 leading-tight">Dati completi per archiviazione documentale, ERP o agenti AI.</p>
+          </button>
+        </div>
       </div>
     `;
   }
@@ -3258,4 +3352,197 @@ Restiamo in attesa dell'invio del file PDF firmato digitalmente.`;
   renderContent();
   modal.classList.remove("hidden");
 };
+
+/**
+ * ==============================================================================
+ * EXPORT & DOWNLOAD DOCUMENTI FASE 1 & FASE 2
+ * ==============================================================================
+ */
+
+/**
+ * Scarica la Scheda Bando (Fase 1) in formato Word (.doc / .docx) o Markdown (.md)
+ */
+window.downloadFase1Scheda = function(format = 'docx') {
+  readInputsFromWizardDOM();
+  const d = currentWizardData;
+  const s1 = d.step1_data || {};
+  const tender = (typeof getAllTendersFromSQLite === "function" ? getAllTendersFromSQLite() : []).find(t => t.id === currentWizardGaraId) || {};
+  
+  const params = {
+    cig: s1.cig || tender.cig || "GARA",
+    title: s1.title || tender.title || "Procedura di Gara",
+    authority: s1.authority || tender.authority || "Stazione Appaltante",
+    rup: s1.rup_name || tender.rup || "Da nominare / Disciplinare",
+    amount: tender.amount || 0,
+    deadline: s1.deadline || tender.deadline,
+    qa_deadline: s1.qa_deadline || null,
+    link: tender.link || "https://www.acquistinretepa.it",
+    notes: s1.notes || tender.notes || ""
+  };
+
+  const cigSafe = (params.cig || "gara").replace(/[^a-zA-Z0-9_-]/g, "_");
+
+  if (format === 'md') {
+    const mdContent = typeof LegalTemplates !== "undefined"
+      ? LegalTemplates.generateFase1SchedaMd(params)
+      : `# SCHEDA BANDO CIG ${params.cig}\nOggetto: ${params.title}\nEnte: ${params.authority}`;
+    
+    window.downloadTextFile(`scheda_bando_${cigSafe}.md`, mdContent);
+    showNotification("Scheda Bando Markdown (.md) scaricata!");
+  } else {
+    const htmlContent = typeof LegalTemplates !== "undefined"
+      ? LegalTemplates.generateFase1SchedaHtml(params)
+      : `<html><body><h1>Scheda Bando ${params.cig}</h1><p>${params.title}</p></body></html>`;
+    
+    const blob = new Blob([htmlContent], { type: "application/msword;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `scheda_bando_${cigSafe}.doc`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    showNotification("Scheda Bando Word (.doc) scaricata!");
+  }
+};
+
+/**
+ * Scarica il Verbale Delibera Go/No-Go (Fase 2) in formato Word (.doc / .docx) o Markdown (.md)
+ */
+window.downloadFase2Verbale = function(format = 'docx') {
+  readInputsFromWizardDOM();
+  const d = currentWizardData;
+  const s1 = d.step1_data || {};
+  const s2 = d.step2_data || {};
+  const tender = (typeof getAllTendersFromSQLite === "function" ? getAllTendersFromSQLite() : []).find(t => t.id === currentWizardGaraId) || {};
+
+  const params = {
+    cig: s1.cig || tender.cig || "GARA",
+    title: s1.title || tender.title || "Procedura di Gara",
+    authority: s1.authority || tender.authority || "Stazione Appaltante",
+    rup: s1.rup_name || tender.rup || "N/D",
+    amount: tender.amount || 0,
+    deadline: s1.deadline || tender.deadline,
+    go_decision: s2.go_decision || "GO",
+    margin_estimated_pct: s2.margin_estimated_pct !== undefined ? s2.margin_estimated_pct : 12.5,
+    check_fatturato: s2.check_fatturato,
+    check_iso: s2.check_iso,
+    check_sopralluogo: s2.check_sopralluogo,
+    check_garanzie: s2.check_garanzie,
+    notes: s2.notes || ""
+  };
+
+  const cigSafe = (params.cig || "gara").replace(/[^a-zA-Z0-9_-]/g, "_");
+
+  if (format === 'md') {
+    const mdContent = typeof LegalTemplates !== "undefined"
+      ? LegalTemplates.generateFase2VerbaleMd(params)
+      : `# VERBALE DELIBERA CIG ${params.cig}\nEsito: ${params.go_decision}`;
+    
+    window.downloadTextFile(`verbale_delibera_${cigSafe}.md`, mdContent);
+    showNotification("Verbale Delibera Markdown (.md) scaricato!");
+  } else {
+    const htmlContent = typeof LegalTemplates !== "undefined"
+      ? LegalTemplates.generateFase2VerbaleHtml(params)
+      : `<html><body><h1>Verbale Delibera ${params.cig}</h1><p>Esito: ${params.go_decision}</p></body></html>`;
+
+    const blob = new Blob([htmlContent], { type: "application/msword;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `verbale_delibera_${cigSafe}.doc`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    showNotification("Verbale Delibera Word (.doc) scaricato!");
+  }
+};
+
+/**
+ * Scarica il Business Case di Fase 2 in formato CSV compatibile Excel (BOM UTF-8, ';')
+ */
+window.downloadFase2BusinessCaseCsv = function() {
+  readInputsFromWizardDOM();
+  const d = currentWizardData;
+  const s1 = d.step1_data || {};
+  const s2 = d.step2_data || {};
+  const s3 = d.step3_data || {};
+  const tender = (typeof getAllTendersFromSQLite === "function" ? getAllTendersFromSQLite() : []).find(t => t.id === currentWizardGaraId) || {};
+
+  const params = {
+    cig: s1.cig || tender.cig || "GARA",
+    title: s1.title || tender.title || "Procedura di Gara",
+    authority: s1.authority || tender.authority || "Stazione Appaltante",
+    amount: tender.amount || 0,
+    discount_pct: s3.busta_c_discount_pct || 5.5,
+    manodopera: s3.busta_c_manodopera || 0,
+    sicurezza: s3.busta_c_sicurezza || 0,
+    margin_estimated_pct: s2.margin_estimated_pct !== undefined ? s2.margin_estimated_pct : 12.5,
+    go_decision: s2.go_decision || "GO"
+  };
+
+  const cigSafe = (params.cig || "gara").replace(/[^a-zA-Z0-9_-]/g, "_");
+  const csvContent = typeof LegalTemplates !== "undefined"
+    ? LegalTemplates.generateFase2BusinessCaseCsv(params)
+    : `\uFEFFCIG;${params.cig}\nBase;${params.amount}`;
+
+  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `business_case_${cigSafe}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  showNotification("Business Case Excel (.csv) scaricato!");
+};
+
+/**
+ * Scarica il fascicolo di qualificazione di Fase 2 in formato JSON
+ */
+window.downloadFase2Json = function() {
+  readInputsFromWizardDOM();
+  const d = currentWizardData;
+  const s1 = d.step1_data || {};
+  const s2 = d.step2_data || {};
+  const tender = (typeof getAllTendersFromSQLite === "function" ? getAllTendersFromSQLite() : []).find(t => t.id === currentWizardGaraId) || {};
+
+  const params = {
+    cig: s1.cig || tender.cig || "GARA",
+    title: s1.title || tender.title || "Procedura di Gara",
+    authority: s1.authority || tender.authority || "Stazione Appaltante",
+    rup: s1.rup_name || tender.rup || "N/D",
+    amount: tender.amount || 0,
+    deadline: s1.deadline || tender.deadline,
+    qa_deadline: s1.qa_deadline || null,
+    check_fatturato: s2.check_fatturato,
+    check_iso: s2.check_iso,
+    check_sopralluogo: s2.check_sopralluogo,
+    check_garanzie: s2.check_garanzie,
+    margin_estimated_pct: s2.margin_estimated_pct !== undefined ? s2.margin_estimated_pct : 12.5,
+    go_decision: s2.go_decision || "GO",
+    notes: s2.notes || ""
+  };
+
+  const cigSafe = (params.cig || "gara").replace(/[^a-zA-Z0-9_-]/g, "_");
+  const jsonObj = typeof LegalTemplates !== "undefined"
+    ? LegalTemplates.generateFase2Json(params)
+    : params;
+
+  const jsonStr = JSON.stringify(jsonObj, null, 2);
+  const blob = new Blob([jsonStr], { type: "application/json;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `qualificazione_fase2_${cigSafe}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  showNotification("Fascicolo Qualificazione JSON scaricato!");
+};
+
 

@@ -109,7 +109,110 @@ test("iCalendar: Supporta lista di gare multiple per export massivo", () => {
   assert.ok(ics.includes("CIG0000002"));
 });
 
+// 4. Scheda Bando Fase 1 (Word HTML & Markdown)
+test("Fase 1: Genera Scheda Bando in formato Word HTML e Markdown", () => {
+  const p = {
+    cig: "B123456789",
+    title: "Servizi Cloud per la PA",
+    authority: "Regione Lazio",
+    rup: "Ing. Rossi",
+    amount: 150000,
+    deadline: "2026-12-01T14:00:00",
+    qa_deadline: "2026-11-20T12:00:00",
+    link: "https://www.acquistinretepa.it/rdo/123",
+    notes: "Note di gara per il team tecnico"
+  };
+
+  const html = LegalTemplates.generateFase1SchedaHtml(p);
+  assert.ok(html.includes("xmlns:w='urn:schemas-microsoft-com:office:word'"));
+  assert.ok(html.includes("B123456789"));
+  assert.ok(html.includes("Servizi Cloud per la PA"));
+  assert.ok(html.includes("Regione Lazio"));
+  assert.ok(html.includes("150.000,00"));
+
+  const md = LegalTemplates.generateFase1SchedaMd(p);
+  assert.ok(md.includes("# SCHEDA SINTETICA PROCEDURA DI GARA"));
+  assert.ok(md.includes("`B123456789`"));
+  assert.ok(md.includes("Art. 92, comma 2"));
+});
+
+// 5. Verbale Delibera Go/No-Go Fase 2 (Word HTML & Markdown)
+test("Fase 2: Genera Verbale Delibera Go/No-Go conforme", () => {
+  const p = {
+    cig: "A987654321",
+    title: "Fornitura Switch e Cablaggio",
+    authority: "Comune di Firenze",
+    rup: "Dott. Bianchi",
+    amount: 80000,
+    deadline: "2026-12-10T12:00:00",
+    go_decision: "GO",
+    margin_estimated_pct: 14.5,
+    check_fatturato: true,
+    check_iso: true,
+    check_sopralluogo: true,
+    check_garanzie: true,
+    notes: "Commessa ad elevata marginalità strategica"
+  };
+
+  const html = LegalTemplates.generateFase2VerbaleHtml(p);
+  assert.ok(html.includes("VERBALE DI QUALIFICAZIONE E DELIBERA PARTECIPAZIONE"));
+  assert.ok(html.includes("DELIBERA FAVOREVOLE (GO)"));
+  assert.ok(html.includes("A987654321"));
+  assert.ok(html.includes("14.5%"));
+  assert.ok(html.includes("Firma digitale per approvazione"));
+
+  const md = LegalTemplates.generateFase2VerbaleMd(p);
+  assert.ok(md.includes("🟢 GO - PARTECIPAZIONE APPROVATA"));
+  assert.ok(md.includes("Fatturato Triennale Specifico"));
+});
+
+// 6. Business Case CSV per Microsoft Excel
+test("Fase 2: Genera CSV Business Case formattato con BOM UTF-8 e ';'", () => {
+  const p = {
+    cig: "C112233445",
+    title: "Assistenza Sistemistica",
+    authority: "Ministero della Difesa",
+    amount: 200000,
+    discount_pct: 7.0,
+    margin_estimated_pct: 12.0,
+    go_decision: "GO"
+  };
+
+  const csv = LegalTemplates.generateFase2BusinessCaseCsv(p);
+  assert.ok(csv.startsWith("\uFEFF"), "Deve contenere BOM UTF-8 per compatibilità Excel");
+  assert.ok(csv.includes("CIG ANAC;C112233445"));
+  assert.ok(csv.includes("Importo a Base di Gara;200000,00"));
+  assert.ok(csv.includes("Art. 108 c. 9 D.Lgs. 36/2023"));
+  assert.ok(csv.includes("MARGINE OPERATIVO NETTO FINALE"));
+});
+
+// 7. Esportazione JSON Qualificazione Fase 2
+test("Fase 2: Genera JSON strutturato per fascicolo e agenti", () => {
+  const p = {
+    cig: "D998877665",
+    title: "Noleggio Stampanti Multifunzione",
+    authority: "INPS Roma",
+    amount: 45000,
+    check_fatturato: true,
+    check_iso: false,
+    check_sopralluogo: true,
+    check_garanzie: true,
+    margin_estimated_pct: 9.5,
+    go_decision: "GO",
+    notes: "Approvato con riserva su certificazione ISO"
+  };
+
+  const json = LegalTemplates.generateFase2Json(p);
+  assert.strictEqual(json.metadata.version, "2.0");
+  assert.strictEqual(json.tender.cig, "D998877665");
+  assert.strictEqual(json.qualification_checklist.check_fatturato, true);
+  assert.strictEqual(json.qualification_checklist.check_iso, false);
+  assert.strictEqual(json.deliberation.outcome, "GO");
+  assert.strictEqual(json.business_case.target_sustainable, true);
+});
+
 console.log(`\nRisultato: ${passedTests}/${totalTests} test superati con successo.\n`);
 if (passedTests !== totalTests) {
   process.exit(1);
 }
+
