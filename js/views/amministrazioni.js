@@ -11,6 +11,91 @@ let ammSearchDebounceTimer = null;
 let currentAmmItemsCache = [];
 
 /**
+ * Estrae il termine di ricerca ottimale per trovare le gare di un'amministrazione
+ */
+function getAuthoritySearchTerm(item) {
+  if (!item || !item.denominazione) return '';
+  const raw = item.denominazione.trim();
+  const upper = raw.toUpperCase();
+  
+  if (upper.includes("CONSIP")) return "Consip";
+  
+  if (upper.startsWith("COMUNE DI ")) return raw;
+  if (upper.startsWith("CITTA' METROPOLITANA DI ") || upper.startsWith("CITTA METROPOLITANA DI ")) return raw;
+  if (upper.startsWith("PROVINCIA DI ") || upper.startsWith("PROVINCIA AUTONOMA DI ")) return raw;
+  if (upper.startsWith("REGIONE ")) return raw;
+  
+  if (raw.length > 25) {
+    const words = raw.split(/[\s,()/-]+/).filter(w => {
+      const u = w.toUpperCase();
+      return w.length >= 3 && !['DELLA', 'DELLE', 'DEGLI', 'DELLO', 'DEI', 'DEL', 'ALLA', 'ALLE', 'AGLI', 'ALLO', 'PER', 'CON', 'FRA', 'TRA', 'SPA', 'SRL', 'SOCIETA', 'ENTE', 'AZIENDA', 'ISTITUTO', 'COMPRENSIVO', 'DIREZIONE', 'SETTORE', 'AREA', 'SERVIZIO', 'UFFICIO', 'TERRITORIALE'].includes(u);
+    });
+    if (words.length > 0) {
+      return words.slice(0, 2).join(' ');
+    }
+  }
+  return raw;
+}
+
+/**
+ * Calcola in tempo reale il numero di procedure attive e totali collegate a un'amministrazione
+ */
+function getAuthorityTenderCounts(item) {
+  if (!item) return { active: 0, total: 0, query: '' };
+  
+  const all = (typeof getAllTendersFromSQLite === "function") 
+    ? getAllTendersFromSQLite() 
+    : (window.allTenders || window.fallbackTenders || []);
+    
+  if (!all || !Array.isArray(all) || all.length === 0) {
+    return { active: 0, total: 0, query: '' };
+  }
+  
+  const query = getAuthoritySearchTerm(item);
+  if (!query) return { active: 0, total: 0, query: '' };
+  
+  const termLower = query.toLowerCase();
+  const cf = (item.codice_fiscale || '').trim().toLowerCase();
+  
+  let active = 0;
+  let total = 0;
+  
+  for (let i = 0; i < all.length; i++) {
+    const t = all[i];
+    if (!t) continue;
+    
+    const auth = (t.authority || '').toLowerCase();
+    const title = (t.title || '').toLowerCase();
+    const owner = (t.owner || '').toLowerCase();
+    const cig = (t.cig || '').toLowerCase();
+    
+    const matches = (termLower && (auth.includes(termLower) || title.includes(termLower) || owner.includes(termLower))) ||
+                    (cf && cf.length > 5 && (auth.includes(cf) || title.includes(cf) || owner.includes(cf) || cig.includes(cf)));
+                    
+    if (matches) {
+      total++;
+      let isActive = true;
+      if (typeof window.isTenderActive === "function") {
+        isActive = window.isTenderActive(t);
+      } else {
+        const isConcluded = ["Vinta", "Persa", "Scartata", "AGGIUDICATA", "DESERTA", "REVOCATA", "ANNULLATA"].includes(t.status);
+        if (isConcluded) {
+          isActive = false;
+        } else if (t.status === "Inviata") {
+          isActive = true;
+        } else if (t.deadline) {
+          const d = new Date(t.deadline);
+          isActive = isNaN(d.getTime()) || d.getTime() >= Date.now();
+        }
+      }
+      if (isActive) active++;
+    }
+  }
+  
+  return { active, total, query };
+}
+
+/**
  * Caricamento asincrono paginato delle stazioni appaltanti dal backend SQLite
  */
 async function loadAmministrazioni() {
@@ -126,6 +211,8 @@ async function loadAmministrazioni() {
     if (tbody) {
       tbody.innerHTML = items.map((item) => {
         const poCount = item.po_attivi || 0;
+        const tenderCounts = getAuthorityTenderCounts(item);
+        const hasActiveTenders = tenderCounts.active > 0;
         
         // Badge Punti Ordinanti con semaforo
         let poBadge = `<span class="inline-flex items-center justify-center px-2 py-0.5 rounded-full text-xs font-mono tabular-nums font-bold bg-slate-800 text-slate-400 border border-slate-700/80" title="Nessun Punto Ordinante attivo segnalato su MePA">0 PO</span>`;
@@ -156,6 +243,22 @@ async function loadAmministrazioni() {
             </div>
           `
           : `<span class="text-slate-500 font-mono text-[11px]">-</span>`;
+
+        // Pulsante Bandi con contatore e badge semaforico
+        const bandiActionHtml = hasActiveTenders ? `
+          <button type="button" onclick="window.filterGareByAuthorityId(${item.id}, event);" class="px-2.5 py-1 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-400 border border-emerald-500/40 text-[10px] font-bold transition flex items-center gap-1.5 shadow-sm shadow-emerald-950/40 group/btn" title="${tenderCounts.active} procedure attive e aperte per ${escapeHtml(item.denominazione)}">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span>Bandi</span>
+            <span class="px-1.5 py-0.2 rounded-full bg-emerald-500/30 text-emerald-200 text-[10px] font-mono font-bold tabular-nums">${tenderCounts.active.toLocaleString('it-IT')}</span>
+            <span class="group-hover/btn:translate-x-0.5 transition-transform">&rarr;</span>
+          </button>
+        ` : `
+          <button type="button" onclick="window.filterGareByAuthorityId(${item.id}, event);" class="px-2.5 py-1 rounded-lg bg-slate-800/80 hover:bg-slate-800 text-slate-400 hover:text-slate-200 border border-slate-700/60 text-[10px] font-medium transition flex items-center gap-1.5" title="Nessun bando attivo al momento per ${escapeHtml(item.denominazione)} (clicca per verificare nel Cruscotto)">
+            <span>Bandi</span>
+            <span class="px-1.5 py-0.2 rounded-full bg-slate-900 text-slate-500 text-[10px] font-mono tabular-nums">0</span>
+            <span>&rarr;</span>
+          </button>
+        `;
 
         return `
           <tr onclick="window.openAmmItemModal(${item.id})" class="hover:bg-slate-900/80 transition group border-b border-slate-800/40 cursor-pointer">
@@ -193,16 +296,13 @@ async function loadAmministrazioni() {
               ${poBadge}
             </td>
 
-            <!-- Azioni: Scheda & Bandi -->
+            <!-- Azioni: Scheda & Bandi con Contatore Reale -->
             <td class="px-4 py-3.5 text-center">
               <div class="flex items-center justify-center gap-1.5" onclick="event.stopPropagation()">
                 <button type="button" onclick="window.openAmmItemModal(${item.id}); event.stopPropagation();" class="px-2 py-1 rounded-lg bg-slate-800 hover:bg-sky-950/80 hover:text-sky-300 border border-slate-700 hover:border-sky-500/40 text-[10px] font-semibold text-slate-300 transition" title="Visualizza Scheda Ente">
                   Scheda
                 </button>
-                <button type="button" onclick="window.filterGareByAuthorityId(${item.id}, event);" class="px-2 py-1 rounded-lg bg-sky-500/10 hover:bg-sky-500/20 text-sky-400 border border-sky-500/30 text-[10px] font-semibold transition flex items-center gap-1" title="Cerca bandi di questa amministrazione">
-                  <span>Bandi</span>
-                  <span>&rarr;</span>
-                </button>
+                ${bandiActionHtml}
               </div>
             </td>
           </tr>
@@ -276,6 +376,7 @@ window.openAmmItemModal = function(itemId) {
   }
 
   const poCount = item.po_attivi || 0;
+  const counts = getAuthorityTenderCounts(item);
 
   modal.innerHTML = `
     <div class="bg-slate-900 border border-slate-700/80 rounded-3xl p-6 sm:p-8 max-w-2xl w-full shadow-2xl relative text-left space-y-6 max-h-[90vh] overflow-y-auto" onclick="event.stopPropagation()">
@@ -301,8 +402,39 @@ window.openAmmItemModal = function(itemId) {
         </button>
       </div>
 
-      <!-- Dati Fiscali & Sede -->
+      <!-- Dati Fiscali, Sede & Bandi Attivi -->
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <!-- Card Procedure d'Appalto Collegate (Cruscotto Gare) -->
+        <div class="sm:col-span-2 p-4 rounded-2xl ${counts.active > 0 ? 'bg-emerald-950/20 border border-emerald-500/40' : 'bg-slate-950/80 border border-slate-800/80'} space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="text-[10px] uppercase font-mono text-slate-400 block tracking-wider">Procedure d'Appalto nel Cruscotto Gare</span>
+            ${counts.active > 0 ? `
+              <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-mono">
+                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                ${counts.active.toLocaleString('it-IT')} GARE ATTIVE
+              </span>
+            ` : `
+              <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-mono font-medium bg-slate-800 text-slate-400 border border-slate-700/80">
+                0 Gare Aperte
+              </span>
+            `}
+          </div>
+          <div class="flex items-baseline gap-2">
+            <span class="text-2xl font-black font-mono ${counts.active > 0 ? 'text-emerald-400' : 'text-slate-300'} tabular-nums">
+              ${counts.active.toLocaleString('it-IT')}
+            </span>
+            <span class="text-xs text-slate-400">
+              ${counts.active === 1 ? 'procedura attiva aperta alla partecipazione' : 'procedure attive aperte alla partecipazione'}
+              ${counts.total > counts.active ? ` (${counts.total - counts.active} archiviate o concluse)` : ''}
+            </span>
+          </div>
+          <p class="text-[11px] text-slate-400 leading-relaxed">
+            ${counts.active > 0 
+              ? `Questa stazione appaltante ha ${counts.active.toLocaleString('it-IT')} lotti o gare aperte con termine di scadenza attivo. Clicca sul pulsante sottostante per visualizzarle e predisporre la partecipazione.`
+              : `Al momento non risultano procedure aperte caricate per questo Ente nel database locale. Puoi importare nuove RdO MePA o creare un bando manuale dal Cruscotto.`}
+          </p>
+        </div>
+
         <!-- Codice Fiscale -->
         <div class="p-4 rounded-2xl bg-slate-950/80 border border-slate-800/80 space-y-1.5">
           <span class="text-[10px] uppercase font-mono text-slate-400 block tracking-wider">Codice Fiscale Stazione Appaltante</span>
@@ -360,10 +492,17 @@ window.openAmmItemModal = function(itemId) {
       <!-- Action Buttons -->
       <div class="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-slate-800">
         <div class="flex flex-wrap items-center gap-2">
-          <button type="button" onclick="window.filterGareByAuthorityId(${item.id}, event)" class="px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-semibold text-xs transition shadow-lg shadow-sky-900/30 flex items-center gap-1.5">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-            <span>Cerca Bandi Attivi dell'Ente</span>
-          </button>
+          ${counts.active > 0 ? `
+            <button type="button" onclick="window.filterGareByAuthorityId(${item.id}, event)" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs transition shadow-lg shadow-emerald-950/40 flex items-center gap-1.5">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+              <span>Visualizza i ${counts.active.toLocaleString('it-IT')} Bandi Attivi (${counts.active})</span>
+            </button>
+          ` : `
+            <button type="button" onclick="window.filterGareByAuthorityId(${item.id}, event)" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-xs border border-slate-700 transition flex items-center gap-1.5">
+              <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+              <span>Verifica nel Cruscotto (0 gare)</span>
+            </button>
+          `}
 
           <button type="button" onclick="window.copyAmmDatiCompleti(${item.id})" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs border border-slate-700 transition flex items-center gap-1.5">
             <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/></svg>
@@ -423,7 +562,7 @@ Data Estrazione:  ${new Date().toLocaleDateString('it-IT')}
 /**
  * Ricerca incrociata delle gare nel Cruscotto senza troncamenti arbitrari
  */
-window.filterGareByAuthority = function(authName, cf) {
+window.filterGareByAuthority = function(authName, cf, counts) {
   window.closeAmmDetailModal();
   if (typeof window.switchView === "function") {
     window.switchView("cruscotto");
@@ -432,20 +571,19 @@ window.filterGareByAuthority = function(authName, cf) {
   setTimeout(() => {
     const searchInput = document.getElementById("searchInput");
     if (searchInput) {
-      // Se è presente il Codice Fiscale, usalo come ricerca primaria, altrimenti usa le prime parole significative
-      let query = (cf && cf.trim() !== '') ? cf.trim() : (authName ? authName.trim() : '');
+      let query = (counts && counts.query) ? counts.query : (authName ? authName.trim() : (cf ? cf.trim() : ''));
       
-      // Se il nome è molto lungo, prendi le parole più caratteristiche per non mancare match nei bandi
-      if (!cf && query.length > 25) {
-        const words = query.split(/\s+/).filter(w => w.length > 3 && !['DELLA', 'DELLE', 'DEGLI', 'ISTITUTO', 'COMPRENSIVO', 'COMUNE', 'CITTA', 'REGIONE', 'PROVINCIA'].includes(w.toUpperCase()));
-        if (words.length > 0) query = words.slice(0, 2).join(' ');
-      }
-
       searchInput.value = query;
       searchInput.dispatchEvent(new Event("input", { bubbles: true }));
       
       if (typeof window.showNotification === "function") {
-        window.showNotification(`Ricerca bandi nel Cruscotto per: ${query}`);
+        if (counts && counts.active > 0) {
+          window.showNotification(`Trovate ${counts.active.toLocaleString('it-IT')} procedure attive per: "${query}"`);
+        } else if (counts && counts.active === 0) {
+          window.showNotification(`Nessuna procedura attiva al momento per "${query}" nel database.`, false);
+        } else {
+          window.showNotification(`Ricerca bandi nel Cruscotto per: ${query}`);
+        }
       }
     }
   }, 100);
@@ -458,7 +596,8 @@ window.filterGareByAuthorityId = function(itemId, event) {
   if (event) event.stopPropagation();
   const item = currentAmmItemsCache.find(x => x.id === itemId);
   if (!item) return;
-  window.filterGareByAuthority(item.denominazione, item.codice_fiscale);
+  const counts = getAuthorityTenderCounts(item);
+  window.filterGareByAuthority(counts.query || item.denominazione, item.codice_fiscale, counts);
 };
 
 /**

@@ -21,6 +21,7 @@ function isTenderActive(t) {
   const d = new Date(t.deadline);
   return isNaN(d.getTime()) || d.getTime() >= Date.now();
 }
+window.isTenderActive = isTenderActive;
 
 function getFilteredAndSortedTenders() {
   const all = getAllTendersFromSQLite();
