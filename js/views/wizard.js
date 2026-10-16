@@ -137,12 +137,7 @@ const WIZARD_HELP_GUIDE = {
     what: "Delibera aziendale formale che autorizza l'avanzamento alla Fase 3 (redazione delle 3 buste) oppure archivia la gara.",
     portal_location: "Scelta strategica interna dell'Ufficio Gare / Direzione Commerciale.",
     what_to_do: "Seleziona GO solo se la checklist è spuntata e il margine è positivo. Il sistema blocca l'accesso alle buste se deliberi NO-GO.",
-    legal_tip: "Una rigorosa delibera GO/NO-GO riduce dell'80% i costi amministrativi aziendali per gare non aggiudicabili."
-  },
-    what: "La decisione formale dell'ufficio gare: investire tempo ed energie per partecipare (GO), scartare la procedura (NO-GO), oppure attendere risposta ai chiarimenti (PENDING).",
-    portal_location: "Decisione interna aziendale da registrare nel gestionale.",
-    what_to_do: "Seleziona 'GO' solo se tutti i requisiti sono soddisfatti e il margine e' sostenibile. Se mancano requisiti insuperabili, seleziona 'NO-GO' per archiviare la gara ed evitare sprechi. Con delibera NO-GO il sistema blocca deterministamente l'avanzamento alla Fase 3.",
-    legal_tip: "Il filtro Go/No-Go riduce del 40% i costi amministrativi dell'ufficio gare massimizzando la percentuale di successo (win rate)."
+    legal_tip: "Una rigorosa delibera GO/NO-GO riduce dell'80% i costi amministrativi aziendali per gare non aggiudicabili evitando sanzioni o cauzioni escusse."
   },
   step2_notes: {
     category: "FASE 2: QUALIFICAZIONE",
