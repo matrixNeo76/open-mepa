@@ -38,8 +38,8 @@ window.switchView = function(viewId) {
         window.openTenderWizard(null, 1);
       }
     } else if (viewId === "cataloghi") {
-      topBarTitle.innerHTML = `<span>Cataloghi MePA &amp; Listini Prodotti</span><span class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-pink-500/10 text-pink-400 border border-pink-500/20 hidden sm:inline-flex">287.536 Articoli</span>`;
-      topBarSubtitle.textContent = "Ricerca avanzata su tutti gli articoli merci, codici CPV e lotti fornitori";
+      topBarTitle.innerHTML = `<span>Cataloghi MePA &amp; Listini Prodotti</span><span class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 hidden sm:inline-flex">287.536 Articoli</span>`;
+      topBarSubtitle.textContent = "Banca dati ufficiale Consip, codici CPV europei, Accordi Quadro e Convenzioni";
       if (typeof loadCataloghi === "function") loadCataloghi();
     } else if (viewId === "amministrazioni") {
       topBarTitle.innerHTML = `<span>Anagrafica Amministrazioni Pubbliche</span><span class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-sky-500/10 text-sky-400 border border-sky-500/20 hidden sm:inline-flex">20.776 Enti PA</span>`;

@@ -84,10 +84,10 @@ async function loadAnalytics() {
           <div class="space-y-1">
             <div class="flex items-center justify-between text-xs">
               <span class="font-semibold text-slate-200 truncate max-w-[280px]">${escapeHtml(p.categoria)}</span>
-              <span class="font-mono text-pink-400 font-bold tabular-nums">${p.count.toLocaleString('it-IT')} articoli</span>
+              <span class="font-mono text-cyan-400 font-bold tabular-nums">${p.count.toLocaleString('it-IT')} articoli</span>
             </div>
             <div class="h-2 rounded-full bg-slate-900 border border-slate-800 overflow-hidden" role="progressbar" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100" aria-label="Categoria ${escapeHtml(p.categoria)}: ${pct}%">
-              <div class="h-full bg-gradient-to-r from-pink-500 to-rose-500 rounded-full" style="width: ${pct}%"></div>
+              <div class="h-full bg-gradient-to-r from-cyan-500 to-sky-500 rounded-full" style="width: ${pct}%"></div>
             </div>
           </div>
         `;

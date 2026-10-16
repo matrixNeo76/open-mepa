@@ -537,6 +537,8 @@ class MePAHandler(SimpleHTTPRequestHandler):
                 qs = parse_qs(parsed.query)
                 q = qs.get("q", [""])[0].strip()
                 cat = qs.get("categoria", [""])[0].strip()
+                strumento = qs.get("strumento", [""])[0].strip()
+                disponibile = qs.get("disponibile", [""])[0].strip()
                 page = max(1, int(qs.get("page", ["1"])[0]))
                 page_size = max(5, min(100, int(qs.get("pageSize", ["25"])[0])))
                 offset = (page - 1) * page_size
@@ -547,18 +549,24 @@ class MePAHandler(SimpleHTTPRequestHandler):
                 cur.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='cataloghi'")
                 if not cur.fetchone():
                     conn.close()
-                    self.send_json_response({"items": [], "total": 0, "categories": [], "message": "Tabella cataloghi non presente"})
+                    self.send_json_response({"items": [], "total": 0, "categories": [], "strumenti": [], "message": "Tabella cataloghi non presente"})
                     return
 
                 conditions = []
                 params = []
                 if q:
                     like_term = f"%{q}%"
-                    conditions.append("(prodotto LIKE ? OR cpv_desc LIKE ? OR cpv LIKE ? OR iniziativa LIKE ? OR dettaglio LIKE ?)")
-                    params.extend([like_term, like_term, like_term, like_term, like_term])
+                    conditions.append("(prodotto LIKE ? OR cpv_desc LIKE ? OR cpv LIKE ? OR iniziativa LIKE ? OR dettaglio LIKE ? OR lotto_cig LIKE ? OR lotto_nome LIKE ?)")
+                    params.extend([like_term, like_term, like_term, like_term, like_term, like_term, like_term])
                 if cat:
                     conditions.append("categoria = ?")
                     params.append(cat)
+                if strumento:
+                    conditions.append("strumento = ?")
+                    params.append(strumento)
+                if disponibile:
+                    conditions.append("disponibile = ?")
+                    params.append(disponibile)
 
                 where_clause = " WHERE " + " AND ".join(conditions) if conditions else ""
 
@@ -568,9 +576,12 @@ class MePAHandler(SimpleHTTPRequestHandler):
                 cur.execute(f"SELECT * FROM cataloghi{where_clause} ORDER BY id ASC LIMIT ? OFFSET ?", params + [page_size, offset])
                 rows = [dict(row) for row in cur.fetchall()]
 
-                # Ottieni le categorie principali per il menu a tendina
-                cur.execute("SELECT DISTINCT categoria FROM cataloghi WHERE categoria != '' ORDER BY categoria ASC LIMIT 30")
+                # Ottieni le categorie e gli strumenti unici
+                cur.execute("SELECT DISTINCT categoria FROM cataloghi WHERE categoria != '' AND categoria != 'ND' ORDER BY categoria ASC")
                 categories = [r[0] for r in cur.fetchall()]
+
+                cur.execute("SELECT DISTINCT strumento FROM cataloghi WHERE strumento != '' ORDER BY strumento ASC")
+                strumenti = [r[0] for r in cur.fetchall()]
 
                 conn.close()
                 self.send_json_response({
@@ -579,8 +590,69 @@ class MePAHandler(SimpleHTTPRequestHandler):
                     "pageSize": page_size,
                     "total": total,
                     "totalPages": max(1, (total + page_size - 1) // page_size),
-                    "categories": categories
+                    "categories": categories,
+                    "strumenti": strumenti
                 })
+            except Exception as e:
+                self.send_json_response({"error": str(e)}, 500)
+            return
+
+        # API: Export Catalogo Prodotti (CSV Excel con BOM UTF-8 o JSON)
+        if path == "/api/cataloghi/export":
+            try:
+                qs = parse_qs(parsed.query)
+                q = qs.get("q", [""])[0].strip()
+                cat = qs.get("categoria", [""])[0].strip()
+                strumento = qs.get("strumento", [""])[0].strip()
+                disponibile = qs.get("disponibile", [""])[0].strip()
+                fmt = qs.get("format", ["csv"])[0].strip().lower()
+                limit = min(5000, max(1, int(qs.get("limit", ["1000"])[0])))
+
+                conn = get_db_connection()
+                cur = conn.cursor()
+
+                conditions = []
+                params = []
+                if q:
+                    like_term = f"%{q}%"
+                    conditions.append("(prodotto LIKE ? OR cpv_desc LIKE ? OR cpv LIKE ? OR iniziativa LIKE ? OR dettaglio LIKE ? OR lotto_cig LIKE ? OR lotto_nome LIKE ?)")
+                    params.extend([like_term, like_term, like_term, like_term, like_term, like_term, like_term])
+                if cat:
+                    conditions.append("categoria = ?")
+                    params.append(cat)
+                if strumento:
+                    conditions.append("strumento = ?")
+                    params.append(strumento)
+                if disponibile:
+                    conditions.append("disponibile = ?")
+                    params.append(disponibile)
+
+                where_clause = " WHERE " + " AND ".join(conditions) if conditions else ""
+                cur.execute(f"SELECT id, iniziativa, lotto_cig, lotto_nome, categoria, cpv, cpv_desc, prodotto, dettaglio, strumento, disponibile FROM cataloghi{where_clause} ORDER BY id ASC LIMIT ?", params + [limit])
+                rows = [dict(row) for row in cur.fetchall()]
+                conn.close()
+
+                if fmt == "json":
+                    self.send_json_response({"items": rows, "count": len(rows)})
+                    return
+
+                import io, csv
+                output = io.StringIO()
+                output.write('\ufeff')  # UTF-8 BOM per Excel
+                writer = csv.writer(output, delimiter=';', quoting=csv.QUOTE_MINIMAL)
+                writer.writerow(["ID", "INIZIATIVA", "CIG_LOTTO", "NOME_LOTTO", "CATEGORIA", "CPV", "DESC_CPV", "PRODOTTO", "DETTAGLIO_ARTICOLO", "STRUMENTO", "DISPONIBILE"])
+                for r in rows:
+                    writer.writerow([r["id"], r["iniziativa"], r["lotto_cig"], r["lotto_nome"], r["categoria"], r["cpv"], r["cpv_desc"], r["prodotto"], r["dettaglio"], r["strumento"], r["disponibile"]])
+
+                csv_bytes = output.getvalue().encode('utf-8')
+                self.send_response(200)
+                self.send_header("Content-Type", "text/csv; charset=utf-8")
+                self.send_header("Content-Disposition", 'attachment; filename="export_cataloghi_consip.csv"')
+                self.send_header("Access-Control-Allow-Origin", "*")
+                self.send_header("Content-Length", str(len(csv_bytes)))
+                self.end_headers()
+                self.wfile.write(csv_bytes)
+                return
             except Exception as e:
                 self.send_json_response({"error": str(e)}, 500)
             return

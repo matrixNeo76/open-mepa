@@ -83,11 +83,11 @@
 
       <!-- Item 2: Cataloghi Beni & Servizi MePA -->
       <button onclick="switchView('cataloghi')" id="nav-cataloghi" class="w-full text-left px-3 py-2.5 rounded-xl flex items-center gap-3 transition nav-item-inactive">
-        <svg class="w-4 h-4 text-pink-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
+        <svg class="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
         <div class="flex-1">
           <div class="flex items-center justify-between">
             <span class="font-semibold text-slate-200">Cataloghi MePA</span>
-            <span class="text-[9px] font-mono px-1.5 py-0.2 rounded bg-pink-500/10 text-pink-400 border border-pink-500/20">287k</span>
+            <span class="text-[9px] font-mono px-1.5 py-0.2 rounded bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">287k</span>
           </div>
           <div class="text-[10px] text-slate-400 font-normal">Articoli, CPV e Listini Merci</div>
         </div>
@@ -571,103 +571,157 @@
         <!-- Dynamically rendered by js/views/wizard.js -->
       </div>
 
-      <!-- SECTION: CATALOGHI BENI & SERVIZI (287k Articoli MePA) -->
+      <!-- SECTION: CATALOGHI BENI & SERVIZI (287k Articoli MePA & Consip) -->
       <div id="view-cataloghi" class="section-view hidden space-y-6">
         
-        <!-- Header & Stats Banner -->
-        <div class="bg-slate-900/70 border border-slate-800/90 rounded-3xl p-6 sm:p-8 shadow-xl">
-          <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-6 border-b border-slate-800">
-            <div class="space-y-1">
-              <div class="flex items-center gap-2">
-                <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-pink-500/10 text-pink-400 border border-pink-500/20">
-                  DATABASE COMMERCIALE MEPA • 287.536 ARTICOLI A LISTINO
+        <!-- Header & Enterprise Stats Banner -->
+        <div class="bg-slate-900/80 border border-slate-800/90 rounded-3xl p-6 sm:p-8 shadow-xl relative overflow-hidden">
+          <div class="absolute -right-20 -top-20 w-80 h-80 bg-cyan-500/5 rounded-full blur-3xl pointer-events-none"></div>
+
+          <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-6 border-b border-slate-800/80 relative z-10">
+            <div class="space-y-2 max-w-3xl">
+              <div class="flex flex-wrap items-center gap-2">
+                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono font-bold bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
+                  <span class="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse"></span>
+                  DATABASE UFFICIALE CONSIP &bull; 287.536 ARTICOLI A LISTINO
                 </span>
-                <span class="text-[10px] font-mono text-slate-400 bg-slate-950 px-2 py-0.5 rounded border border-slate-800">
-                  SQLite Format 3
+                <span class="text-[11px] font-mono text-slate-400 bg-slate-950 px-2.5 py-0.5 rounded-lg border border-slate-800">
+                  Accordi Quadro &bull; Convenzioni &bull; MePA
                 </span>
+                <button type="button" onclick="window.showCatalogHelpModal('intro')" class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 text-[11px] font-medium transition touch-target-action" title="Informazioni e guida pratica all'uso dei cataloghi">
+                  <span class="w-4 h-4 rounded-full bg-cyan-500/20 text-cyan-300 text-[10px] font-bold flex items-center justify-center">?</span>
+                  <span>Guida Cataloghi</span>
+                </button>
               </div>
-              <h2 class="text-xl sm:text-2xl font-extrabold text-white mt-2">
-                Esplora Cataloghi, Beni &amp; Servizi Consip
+              <h2 class="text-xl sm:text-2xl font-extrabold text-white tracking-tight">
+                Consultazione Cataloghi, Beni &amp; Servizi Consip
               </h2>
-              <p class="text-xs text-slate-400 max-w-2xl leading-relaxed">
-                Consultazione istantanea di tutti gli articoli a catalogo offerti dai fornitori abilitati MePA. Cerca per nome prodotto, CPV o iniziativa con paginazione server-side ultra-veloce.
+              <p class="text-xs text-slate-400 leading-relaxed">
+                Banca dati ufficiale dei prodotti e servizi a listino offerti dai fornitori abilitati MePA, Accordi Quadro e Convenzioni Consip. Utilizzabile per indagini di mercato, prezzi benchmark ANAC, identificazione immediata dei CIG di lotto e codici CPV.
               </p>
             </div>
 
-            <!-- Quick Metrics -->
-            <div class="grid grid-cols-2 gap-3 min-w-[280px]">
-              <div class="bg-slate-950 p-3.5 rounded-2xl border border-slate-800">
-                <span class="text-[10px] uppercase font-mono text-slate-400 block">Articoli Indicizzati</span>
-                <div id="catalogTotalCount" class="text-2xl font-black text-pink-400 font-mono mt-0.5">287.536</div>
+            <!-- Enterprise Business Metrics -->
+            <div class="grid grid-cols-3 gap-3 min-w-[340px]">
+              <div class="bg-slate-950/80 p-3.5 rounded-2xl border border-slate-800/90 shadow-sm">
+                <span class="text-[10px] uppercase font-mono text-slate-400 block tracking-wider">Articoli a Catalogo</span>
+                <div id="catalogTotalCount" class="text-xl sm:text-2xl font-black text-cyan-400 font-mono mt-0.5 tabular-nums">287.536</div>
                 <div class="text-[10px] text-slate-500">Listini attivi su disco</div>
               </div>
-              <div class="bg-slate-950 p-3.5 rounded-2xl border border-slate-800">
-                <span class="text-[10px] uppercase font-mono text-slate-400 block">Tempi Query</span>
-                <div class="text-2xl font-black text-emerald-400 font-mono mt-0.5">&lt; 15 ms</div>
-                <div class="text-[10px] text-emerald-500/80">Indici B-Tree SQLite</div>
+              <div class="bg-slate-950/80 p-3.5 rounded-2xl border border-slate-800/90 shadow-sm">
+                <span class="text-[10px] uppercase font-mono text-slate-400 block tracking-wider">Accordi &amp; Conv.</span>
+                <div class="text-xl sm:text-2xl font-black text-sky-400 font-mono mt-0.5 tabular-nums">3.907</div>
+                <div class="text-[10px] text-slate-500">Lotti e CIG strategici</div>
+              </div>
+              <div class="bg-slate-950/80 p-3.5 rounded-2xl border border-slate-800/90 shadow-sm">
+                <span class="text-[10px] uppercase font-mono text-slate-400 block tracking-wider">Settori Merci</span>
+                <div class="text-xl sm:text-2xl font-black text-emerald-400 font-mono mt-0.5 tabular-nums">16</div>
+                <div class="text-[10px] text-emerald-500/80">Categorie MePA</div>
               </div>
             </div>
           </div>
 
           <!-- Controls & Search Row -->
-          <div class="pt-6 space-y-4">
+          <div class="pt-6 space-y-4 relative z-10">
             <div class="grid grid-cols-1 md:grid-cols-12 gap-3">
-              <!-- Search Input -->
-              <div class="md:col-span-6 relative">
+              <!-- Search Input with CIG & CPV support -->
+              <div class="md:col-span-5 relative">
                 <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                 </div>
-                <input id="catalogSearchInput" type="text" placeholder="Cerca prodotto, CPV, descrizione, dettaglio..." class="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-950 border border-slate-700/80 focus:border-pink-500 focus:ring-1 focus:ring-pink-500 text-xs text-white placeholder-slate-500 transition">
+                <input id="catalogSearchInput" type="text" placeholder="Cerca bene/servizio, CIG lotto, codice CPV, iniziativa..." class="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-950 border border-slate-700/80 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 text-xs text-white placeholder-slate-500 transition">
+              </div>
+
+              <!-- Strumento Negoziale Dropdown -->
+              <div class="md:col-span-2">
+                <select id="catalogInstrumentSelect" class="w-full py-2.5 px-3 rounded-xl bg-slate-950 border border-slate-700/80 focus:border-cyan-500 text-xs text-white transition">
+                  <option value="">Tutti gli strumenti</option>
+                  <option value="Accordo Quadro">Accordo Quadro (AQ)</option>
+                  <option value="Convenzione">Convenzione Consip</option>
+                  <option value="MePA">MePA (Mercato Elettronico)</option>
+                </select>
               </div>
 
               <!-- Category Dropdown -->
-              <div class="md:col-span-4">
-                <select id="catalogCategorySelect" class="w-full py-2.5 px-3 rounded-xl bg-slate-950 border border-slate-700/80 focus:border-pink-500 text-xs text-white transition">
+              <div class="md:col-span-3">
+                <select id="catalogCategorySelect" class="w-full py-2.5 px-3 rounded-xl bg-slate-950 border border-slate-700/80 focus:border-cyan-500 text-xs text-white transition">
                   <option value="">Tutte le categorie merceologiche</option>
                 </select>
               </div>
 
-              <!-- Reset Button -->
+              <!-- Availability Dropdown -->
               <div class="md:col-span-2">
-                <button id="catalogResetBtn" class="w-full py-2.5 px-3 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white font-semibold text-xs border border-slate-700 transition flex items-center justify-center gap-1.5">
-                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-                  <span>Reimposta</span>
-                </button>
+                <select id="catalogAvailSelect" class="w-full py-2.5 px-3 rounded-xl bg-slate-950 border border-slate-700/80 focus:border-cyan-500 text-xs text-white transition">
+                  <option value="">Tutte le disponibilità</option>
+                  <option value="S">Solo Disponibili (S)</option>
+                  <option value="N">Non Disponibili (N)</option>
+                </select>
               </div>
             </div>
 
-            <!-- Meta info bar -->
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between text-xs text-slate-400 gap-2 pt-2 border-t border-slate-800/60 font-mono">
-              <span id="catalogResultsInfo">Caricamento articoli...</span>
+            <!-- Meta info bar & Actions -->
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between text-xs text-slate-400 gap-3 pt-2 border-t border-slate-800/60 font-mono">
+              <div class="flex items-center gap-3">
+                <span id="catalogResultsInfo" class="text-cyan-400 font-semibold tabular-nums">Caricamento articoli...</span>
+                <span class="text-slate-600 hidden sm:inline">|</span>
+                <div class="flex items-center gap-1.5 text-slate-400">
+                  <span>Righe:</span>
+                  <select id="catalogPageSizeSelect" class="bg-slate-950 text-white rounded-lg px-2 py-1 border border-slate-700 text-xs focus:outline-none focus:border-cyan-500">
+                    <option value="15">15</option>
+                    <option value="25" selected>25</option>
+                    <option value="50">50</option>
+                    <option value="100">100</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Action Buttons: Reset, Export CSV, Export JSON -->
               <div class="flex items-center gap-2">
-                <span>Righe per pagina:</span>
-                <select id="catalogPageSizeSelect" class="bg-slate-950 text-white rounded px-2 py-1 border border-slate-700 text-xs focus:outline-none">
-                  <option value="15">15</option>
-                  <option value="25" selected>25</option>
-                  <option value="50">50</option>
-                  <option value="100">100</option>
-                </select>
+                <button id="catalogResetBtn" class="py-1.5 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white font-medium text-xs border border-slate-700 transition flex items-center gap-1.5" title="Reimposta tutti i filtri">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                  <span>Reimposta</span>
+                </button>
+
+                <button id="catalogExportCsvBtn" onclick="window.exportCatalogData('csv')" class="py-1.5 px-3 rounded-xl bg-emerald-950/40 hover:bg-emerald-900/60 text-emerald-300 font-medium text-xs border border-emerald-800/80 transition flex items-center gap-1.5" title="Scarica i dati filtrati in formato Excel con codifica UTF-8 BOM">
+                  <svg class="w-3.5 h-3.5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                  <span>Esporta Excel (.csv)</span>
+                </button>
+
+                <button id="catalogExportJsonBtn" onclick="window.exportCatalogData('json')" class="py-1.5 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white font-medium text-xs border border-slate-700 transition flex items-center gap-1.5" title="Scarica i dati in JSON strutturato">
+                  <svg class="w-3.5 h-3.5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                  <span>JSON</span>
+                </button>
               </div>
             </div>
           </div>
 
           <!-- Table Container -->
-          <div class="overflow-x-auto rounded-2xl border border-slate-800/90 mt-4 bg-slate-950/60">
+          <div class="overflow-x-auto rounded-2xl border border-slate-800/90 mt-4 bg-slate-950/70">
             <table class="w-full text-left text-xs text-slate-300">
               <thead class="bg-slate-950 text-[11px] uppercase font-mono text-slate-400 border-b border-slate-800">
                 <tr>
-                  <th scope="col" class="px-4 py-3.5 font-bold">Prodotto &amp; Dettaglio</th>
-                  <th scope="col" class="px-4 py-3.5 font-bold">Codice CPV</th>
-                  <th scope="col" class="px-4 py-3.5 font-bold">Categoria Merci</th>
-                  <th scope="col" class="px-4 py-3.5 font-bold">Iniziativa / Lotto</th>
-                  <th scope="col" class="px-4 py-3.5 font-bold text-center">Strumento</th>
-                  <th scope="col" class="px-4 py-3.5 font-bold text-center">Disponibilità</th>
+                  <th scope="col" class="px-4 py-3.5 font-bold">Articolo &amp; Dettaglio Specifico</th>
+                  <th scope="col" class="px-4 py-3.5 font-bold">CIG Lotto &amp; Iniziativa</th>
+                  <th scope="col" class="px-4 py-3.5 font-bold">
+                    <div class="flex items-center gap-1">
+                      <span>Codice CPV</span>
+                      <button type="button" onclick="window.showCatalogHelpModal('cpv')" class="text-cyan-400 hover:text-cyan-300 font-bold" title="Cosa è il codice CPV?">(?)</button>
+                    </div>
+                  </th>
+                  <th scope="col" class="px-4 py-3.5 font-bold">Categoria Merceologica</th>
+                  <th scope="col" class="px-4 py-3.5 font-bold text-center">
+                    <div class="inline-flex items-center gap-1 justify-center">
+                      <span>Strumento</span>
+                      <button type="button" onclick="window.showCatalogHelpModal('strumento')" class="text-cyan-400 hover:text-cyan-300 font-bold" title="Cosa sono Accordi Quadro, Convenzioni e MePA?">(?)</button>
+                    </div>
+                  </th>
+                  <th scope="col" class="px-4 py-3.5 font-bold text-center">Stato &amp; Scheda</th>
                 </tr>
               </thead>
               <tbody id="catalogTableBody" class="divide-y divide-slate-800/60">
                 <tr>
                   <td colspan="6" class="px-4 py-12 text-center text-slate-500 font-mono">
-                    Caricamento del catalogo in corso...
+                    Caricamento del catalogo MePA in corso...
                   </td>
                 </tr>
               </tbody>
@@ -677,14 +731,14 @@
           <!-- Pagination Bar -->
           <div class="p-3 sm:px-5 border-t border-slate-800 bg-slate-950/90 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs mt-4 rounded-xl border border-slate-800">
             <div class="flex items-center gap-2 text-slate-400 font-mono text-[11px]">
-              <span id="catalogResultsInfo" class="text-cyan-400 font-semibold tabular-nums">Caricamento articoli...</span>
+              <span id="catalogResultsInfoBottom" class="text-cyan-400 font-semibold tabular-nums">Caricamento articoli...</span>
             </div>
             <div class="inline-flex items-center gap-1.5">
-              <button id="catalogFirstPageBtn" aria-label="Prima pagina" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 disabled:opacity-30 disabled:cursor-not-allowed transition font-mono text-xs" title="Prima Pagina">«</button>
-              <button id="catalogPrevPageBtn" aria-label="Pagina precedente" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 disabled:opacity-30 disabled:cursor-not-allowed transition font-mono text-xs" title="Precedente">‹ Prec</button>
-              <span id="catalogPaginationText" class="px-3 py-1 font-mono tabular-nums text-slate-300 text-xs font-semibold">Pagina 1 di 1</span>
-              <button id="catalogNextPageBtn" aria-label="Pagina successiva" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 disabled:opacity-30 disabled:cursor-not-allowed transition font-mono text-xs" title="Successiva">Succ ›</button>
-              <button id="catalogLastPageBtn" aria-label="Ultima pagina" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 disabled:opacity-30 disabled:cursor-not-allowed transition font-mono text-xs" title="Ultima Pagina">»</button>
+              <button id="catalogFirstPageBtn" aria-label="Prima pagina" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 disabled:opacity-30 disabled:cursor-not-allowed transition font-mono text-xs" title="Prima Pagina">«</button>
+              <button id="catalogPrevPageBtn" aria-label="Pagina precedente" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 disabled:opacity-30 disabled:cursor-not-allowed transition font-mono text-xs" title="Precedente">‹ Prec</button>
+              <span id="catalogPaginationText" class="px-3 py-1.5 font-mono tabular-nums text-slate-300 text-xs font-semibold bg-slate-900 border border-slate-800 rounded-lg">Pagina 1 di 1</span>
+              <button id="catalogNextPageBtn" aria-label="Pagina successiva" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 disabled:opacity-30 disabled:cursor-not-allowed transition font-mono text-xs" title="Successiva">Succ ›</button>
+              <button id="catalogLastPageBtn" aria-label="Ultima pagina" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 disabled:opacity-30 disabled:cursor-not-allowed transition font-mono text-xs" title="Ultima Pagina">»</button>
             </div>
           </div>
         </div>
@@ -857,8 +911,8 @@
             </div>
 
             <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800">
-              <span class="text-[10px] uppercase font-mono text-pink-400 font-bold block">Articoli a Catalogo</span>
-              <div id="anaCatalogCount" class="text-3xl font-black text-pink-400 font-mono mt-1">--</div>
+              <span class="text-[10px] uppercase font-mono text-cyan-400 font-bold block">Articoli a Catalogo</span>
+              <div id="anaCatalogCount" class="text-3xl font-black text-cyan-400 font-mono mt-1">--</div>
               <div class="text-[11px] text-slate-500 mt-1">Listini fornitori abilitati</div>
             </div>
 
@@ -1453,18 +1507,18 @@ CREATE INDEX IF NOT EXISTS idx_deadline ON gare(deadline);</pre>
 
 
   <!-- Moduli Applicativi JavaScript (Zero-Build Vanilla Architecture) -->
-  <script defer src="js/utils.js?v=20261016_8"></script>
-  <script defer src="js/config.js?v=20261016_8"></script>
-  <script defer src="js/api.js?v=20261016_8"></script>
-  <script defer src="js/db-engine.js?v=20261016_8"></script>
-  <script defer src="js/importer.js?v=20261016_8"></script>
-  <script defer src="js/views/cruscotto.js?v=20261016_8"></script>
-  <script defer src="js/wizard-rules.js?v=20261016_8"></script>
-  <script defer src="js/legal-templates.js?v=20261016_8"></script>
-  <script defer src="js/views/wizard.js?v=20261016_8"></script>
-  <script defer src="js/views/cataloghi.js?v=20261016_8"></script>
-  <script defer src="js/views/amministrazioni.js?v=20261016_8"></script>
-  <script defer src="js/views/analytics.js?v=20261016_8"></script>
-  <script defer src="js/app.js?v=20261016_8"></script>
+  <script defer src="js/utils.js?v=20261016_9"></script>
+  <script defer src="js/config.js?v=20261016_9"></script>
+  <script defer src="js/api.js?v=20261016_9"></script>
+  <script defer src="js/db-engine.js?v=20261016_9"></script>
+  <script defer src="js/importer.js?v=20261016_9"></script>
+  <script defer src="js/views/cruscotto.js?v=20261016_9"></script>
+  <script defer src="js/wizard-rules.js?v=20261016_9"></script>
+  <script defer src="js/legal-templates.js?v=20261016_9"></script>
+  <script defer src="js/views/wizard.js?v=20261016_9"></script>
+  <script defer src="js/views/cataloghi.js?v=20261016_9"></script>
+  <script defer src="js/views/amministrazioni.js?v=20261016_9"></script>
+  <script defer src="js/views/analytics.js?v=20261016_9"></script>
+  <script defer src="js/app.js?v=20261016_9"></script>
 </body>
 </html>
