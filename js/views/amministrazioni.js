@@ -139,7 +139,7 @@ async function loadAmministrazioni() {
           ? `
             <div class="flex items-center gap-1.5">
               <span class="font-mono text-cyan-400 font-bold text-xs tracking-wider">${escapeHtml(item.codice_fiscale)}</span>
-              <button type="button" onclick="window.copyAmmValue('${escapeHtml(item.codice_fiscale)}', 'Codice Fiscale', event)" class="p-1 text-slate-400 hover:text-cyan-300 hover:bg-slate-800 rounded transition touch-target-action" title="Copia Codice Fiscale">
+              <button type="button" onclick="window.copyAmmField(${item.id}, 'codice_fiscale', event)" class="p-1 text-slate-400 hover:text-cyan-300 hover:bg-slate-800 rounded transition touch-target-action" title="Copia Codice Fiscale">
                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
               </button>
             </div>
@@ -150,7 +150,7 @@ async function loadAmministrazioni() {
           ? `
             <div class="flex items-center gap-1.5">
               <span class="font-mono text-sky-300 font-bold text-xs uppercase tracking-wider">${escapeHtml(item.ipa)}</span>
-              <button type="button" onclick="window.copyAmmValue('${escapeHtml(item.ipa)}', 'Codice IPA (SDI)', event)" class="p-1 text-slate-400 hover:text-sky-300 hover:bg-slate-800 rounded transition touch-target-action" title="Copia Codice IPA / SDI">
+              <button type="button" onclick="window.copyAmmField(${item.id}, 'ipa', event)" class="p-1 text-slate-400 hover:text-sky-300 hover:bg-slate-800 rounded transition touch-target-action" title="Copia Codice IPA / SDI">
                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
               </button>
             </div>
@@ -199,7 +199,7 @@ async function loadAmministrazioni() {
                 <button type="button" onclick="window.openAmmItemModal(${item.id}); event.stopPropagation();" class="px-2 py-1 rounded-lg bg-slate-800 hover:bg-sky-950/80 hover:text-sky-300 border border-slate-700 hover:border-sky-500/40 text-[10px] font-semibold text-slate-300 transition" title="Visualizza Scheda Ente">
                   Scheda
                 </button>
-                <button type="button" onclick="window.filterGareByAuthority('${escapeHtml(item.denominazione)}', '${escapeHtml(item.codice_fiscale || '')}'); event.stopPropagation();" class="px-2 py-1 rounded-lg bg-sky-500/10 hover:bg-sky-500/20 text-sky-400 border border-sky-500/30 text-[10px] font-semibold transition flex items-center gap-1" title="Cerca bandi di questa amministrazione">
+                <button type="button" onclick="window.filterGareByAuthorityId(${item.id}, event);" class="px-2 py-1 rounded-lg bg-sky-500/10 hover:bg-sky-500/20 text-sky-400 border border-sky-500/30 text-[10px] font-semibold transition flex items-center gap-1" title="Cerca bandi di questa amministrazione">
                   <span>Bandi</span>
                   <span>&rarr;</span>
                 </button>
@@ -309,7 +309,7 @@ window.openAmmItemModal = function(itemId) {
           <div class="flex items-center gap-2">
             <span class="font-mono text-base font-black text-cyan-400 tracking-wider">${escapeHtml(item.codice_fiscale || 'Non specificato')}</span>
             ${item.codice_fiscale ? `
-              <button type="button" onclick="window.copyAmmValue('${escapeHtml(item.codice_fiscale)}', 'Codice Fiscale', event)" class="p-1 text-slate-400 hover:text-cyan-300 rounded hover:bg-slate-800 transition" title="Copia Codice Fiscale">
+              <button type="button" onclick="window.copyAmmField(${item.id}, 'codice_fiscale', event)" class="p-1 text-slate-400 hover:text-cyan-300 rounded hover:bg-slate-800 transition" title="Copia Codice Fiscale">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
               </button>
             ` : ''}
@@ -323,7 +323,7 @@ window.openAmmItemModal = function(itemId) {
           <div class="flex items-center gap-2">
             <span class="font-mono text-base font-black text-sky-400 tracking-wider uppercase">${escapeHtml(item.ipa || 'ND')}</span>
             ${item.ipa ? `
-              <button type="button" onclick="window.copyAmmValue('${escapeHtml(item.ipa)}', 'Codice IPA', event)" class="p-1 text-slate-400 hover:text-sky-300 rounded hover:bg-slate-800 transition" title="Copia Codice IPA">
+              <button type="button" onclick="window.copyAmmField(${item.id}, 'ipa', event)" class="p-1 text-slate-400 hover:text-sky-300 rounded hover:bg-slate-800 transition" title="Copia Codice IPA">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
               </button>
             ` : ''}
@@ -360,7 +360,7 @@ window.openAmmItemModal = function(itemId) {
       <!-- Action Buttons -->
       <div class="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-slate-800">
         <div class="flex flex-wrap items-center gap-2">
-          <button type="button" onclick="window.filterGareByAuthority('${escapeHtml(item.denominazione)}', '${escapeHtml(item.codice_fiscale || '')}')" class="px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-semibold text-xs transition shadow-lg shadow-sky-900/30 flex items-center gap-1.5">
+          <button type="button" onclick="window.filterGareByAuthorityId(${item.id}, event)" class="px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-semibold text-xs transition shadow-lg shadow-sky-900/30 flex items-center gap-1.5">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
             <span>Cerca Bandi Attivi dell'Ente</span>
           </button>
@@ -433,12 +433,12 @@ window.filterGareByAuthority = function(authName, cf) {
     const searchInput = document.getElementById("searchInput");
     if (searchInput) {
       // Se è presente il Codice Fiscale, usalo come ricerca primaria, altrimenti usa le prime parole significative
-      let query = cf && cf.trim() !== '' ? cf.trim() : authName.trim();
+      let query = (cf && cf.trim() !== '') ? cf.trim() : (authName ? authName.trim() : '');
       
       // Se il nome è molto lungo, prendi le parole più caratteristiche per non mancare match nei bandi
-      if (!cf && query.length > 30) {
-        const words = query.split(/\s+/).filter(w => w.length > 3 && !['DELLA', 'DELLE', 'DEGLI', 'ISTITUTO', 'COMPRENSIVO', 'COMUNE'].includes(w.toUpperCase()));
-        if (words.length > 0) query = words.slice(0, 3).join(' ');
+      if (!cf && query.length > 25) {
+        const words = query.split(/\s+/).filter(w => w.length > 3 && !['DELLA', 'DELLE', 'DEGLI', 'ISTITUTO', 'COMPRENSIVO', 'COMUNE', 'CITTA', 'REGIONE', 'PROVINCIA'].includes(w.toUpperCase()));
+        if (words.length > 0) query = words.slice(0, 2).join(' ');
       }
 
       searchInput.value = query;
@@ -449,6 +449,28 @@ window.filterGareByAuthority = function(authName, cf) {
       }
     }
   }, 100);
+};
+
+/**
+ * Ricerca incrociata gare per ID Stazione Appaltante (100% immune da errori di quote)
+ */
+window.filterGareByAuthorityId = function(itemId, event) {
+  if (event) event.stopPropagation();
+  const item = currentAmmItemsCache.find(x => x.id === itemId);
+  if (!item) return;
+  window.filterGareByAuthority(item.denominazione, item.codice_fiscale);
+};
+
+/**
+ * Copia campo specifico per ID Stazione Appaltante (100% immune da errori di quote)
+ */
+window.copyAmmField = function(itemId, field, event) {
+  if (event) event.stopPropagation();
+  const item = currentAmmItemsCache.find(x => x.id === itemId);
+  if (!item) return;
+  const val = item[field] || '';
+  const label = field === 'codice_fiscale' ? 'Codice Fiscale' : (field === 'ipa' ? 'Codice IPA (SDI)' : field);
+  window.copyAmmValue(val, label, event);
 };
 
 /**

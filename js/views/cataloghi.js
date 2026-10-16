@@ -136,7 +136,7 @@ async function loadCataloghi() {
           ? `
             <div class="flex items-center gap-1.5">
               <span class="font-mono text-cyan-400 font-bold text-xs tracking-wider">${escapeHtml(item.lotto_cig)}</span>
-              <button type="button" onclick="window.copyCatalogCig('${escapeHtml(item.lotto_cig)}', event)" class="p-1 text-slate-400 hover:text-cyan-300 hover:bg-slate-800 rounded transition touch-target-action" title="Copia CIG ${escapeHtml(item.lotto_cig)}">
+              <button type="button" onclick="window.copyCatalogCigById(${item.id}, event)" class="p-1 text-slate-400 hover:text-cyan-300 hover:bg-slate-800 rounded transition touch-target-action" title="Copia CIG ${escapeHtml(item.lotto_cig)}">
                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
               </button>
             </div>
@@ -293,7 +293,7 @@ window.openCatalogItemModal = function(itemId) {
           <div class="flex items-center gap-2">
             <span class="font-mono text-base font-black text-cyan-400 tracking-wider">${escapeHtml(item.lotto_cig || 'Non applicabile')}</span>
             ${item.lotto_cig ? `
-              <button type="button" onclick="window.copyCatalogCig('${escapeHtml(item.lotto_cig)}', event)" class="p-1 text-slate-400 hover:text-cyan-300 rounded hover:bg-slate-800 transition" title="Copia CIG">
+              <button type="button" onclick="window.copyCatalogCigById(${item.id}, event)" class="p-1 text-slate-400 hover:text-cyan-300 rounded hover:bg-slate-800 transition" title="Copia CIG">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
               </button>
             ` : ''}
@@ -343,7 +343,7 @@ window.openCatalogItemModal = function(itemId) {
       <div class="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-slate-800">
         <div class="flex items-center gap-2">
           ${item.lotto_cig ? `
-            <button type="button" onclick="window.searchTenderByCatalogCig('${escapeHtml(item.lotto_cig)}')" class="px-4 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-semibold text-xs transition shadow-lg shadow-cyan-900/30 flex items-center gap-1.5">
+            <button type="button" onclick="window.searchTenderByCatalogId(${item.id})" class="px-4 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-semibold text-xs transition shadow-lg shadow-cyan-900/30 flex items-center gap-1.5">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
               <span>Cerca nel Cruscotto Gare</span>
             </button>
