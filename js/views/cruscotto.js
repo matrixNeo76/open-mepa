@@ -54,11 +54,19 @@ function getFilteredAndSortedTenders() {
     }
 
     if (reg !== "ALL") {
-      if (reg === "Nazionale") {
-        if (t.region !== "Nazionale") return false;
+      const regLower = reg.toLowerCase();
+      const tenderRegLower = (t.region || "nazionale").toLowerCase();
+      const includeNationalEl = document.getElementById("filterIncludeNational");
+      const includeNational = includeNationalEl ? includeNationalEl.checked : false;
+
+      if (regLower === "nazionale") {
+        if (!tenderRegLower.includes("nazionale")) return false;
       } else {
-        // Include sia i bandi specifici regionali sia le procedure a copertura Nazionale che le PA di tale regione possono stipulare
-        if (t.region !== reg && t.region !== "Nazionale") return false;
+        const matchRegion = tenderRegLower.includes(regLower);
+        const isNational = tenderRegLower.includes("nazionale");
+        if (!matchRegion && (!includeNational || !isNational)) {
+          return false;
+        }
       }
     }
     if (src !== "ALL") {
@@ -232,8 +240,8 @@ function renderApp() {
             </td>
             <td class="py-2.5 px-3.5 max-w-[200px]">
               <div class="font-medium text-slate-200 truncate text-xs" title="${escapeHtml(t.authority)}">${escapeHtml(t.authority || 'Ente PA')}</div>
-              <div class="text-[10px] text-slate-400 font-mono mt-0.5 flex items-center gap-1">
-                <span>📍</span> ${escapeHtml(t.region || 'Nazionale')}
+              <div class="text-[10px] text-slate-400 font-mono mt-0.5 flex items-center gap-1" title="${escapeHtml(t.region || 'Nazionale')}">
+                <span>📍</span> <span class="truncate">${escapeHtml(t.region || 'Nazionale')}</span>
               </div>
             </td>
             <td class="py-2.5 px-3.5 max-w-[280px]">
@@ -318,7 +326,7 @@ function renderKanbanColumns(items) {
           </div>
           <div class="flex items-center gap-1.5 flex-wrap">
             ${getCategoryBadge(t.category)}
-            <span class="text-[10px] text-slate-400 font-mono">📍 ${escapeHtml(t.region || 'Nazionale')}</span>
+            <span class="text-[10px] text-slate-400 font-mono truncate max-w-[140px]" title="${escapeHtml(t.region || 'Nazionale')}">📍 ${escapeHtml(t.region || 'Nazionale')}</span>
           </div>
           <p class="text-xs text-slate-100 font-medium line-clamp-2 leading-relaxed">${escapeHtml(t.title || 'Senza descrizione')}</p>
           <div class="text-[11px] text-slate-400 truncate">${escapeHtml(t.authority || 'Ente PA')}</div>
@@ -589,12 +597,13 @@ function initCruscotto() {
   const filterCategory = document.getElementById("filterCategory");
   const sortTenders = document.getElementById("sortTenders");
   const filterRegion = document.getElementById("filterRegion");
+  const filterIncludeNational = document.getElementById("filterIncludeNational");
   const filterSource = document.getElementById("filterSource");
   const filterStatus = document.getElementById("filterStatus");
   const searchInput = document.getElementById("searchInput");
   const btnResetFilters = document.getElementById("btnResetFilters");
 
-  [filterCategory, sortTenders, filterRegion, filterSource, filterStatus].forEach(el => {
+  [filterCategory, sortTenders, filterRegion, filterIncludeNational, filterSource, filterStatus].forEach(el => {
     if (el) {
       el.addEventListener("change", () => {
         currentPage = 1;
@@ -618,6 +627,7 @@ function initCruscotto() {
       if (filterCategory) filterCategory.value = "ALL";
       if (sortTenders) sortTenders.value = "deadline_asc";
       if (filterRegion) filterRegion.value = "ALL";
+      if (filterIncludeNational) filterIncludeNational.checked = false;
       if (filterSource) filterSource.value = "ALL";
       if (filterStatus) filterStatus.value = "SOLO_ATTIVE";
       if (searchInput) searchInput.value = "";

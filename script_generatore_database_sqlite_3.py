@@ -311,6 +311,10 @@ class MePAHandler(SimpleHTTPRequestHandler):
             self.send_header('Vary', 'Origin')
         self.send_header('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS')
         self.send_header('Access-Control-Allow-Headers', 'Content-Type, X-Confirm-Reset')
+        # Disabilita caching HTTP aggressivo per file statici e API
+        self.send_header('Cache-Control', 'no-cache, no-store, must-revalidate, max-age=0')
+        self.send_header('Pragma', 'no-cache')
+        self.send_header('Expires', '0')
         super().end_headers()
 
     def write_forbidden(self):

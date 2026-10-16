@@ -13,6 +13,7 @@ import os
 import sqlite3
 import json
 import time
+import re
 
 DB_NAME = "gare_consip.db"
 JSON_DIR = "json"
@@ -139,41 +140,63 @@ def detect_category(txt):
         return "ENERGIA"
     return "ALTRO"
 
-import re
+REGIONS_ITALY = {
+    'Abruzzo': ['abruzzo', 'pescara', 'chieti', 'teramo', "l'aquila", 'aquila'],
+    'Basilicata': ['basilicata', 'potenza', 'matera'],
+    'Calabria': ['calabria', 'catanzaro', 'cosenza', 'reggio calabria', 'crotone', 'vibo'],
+    'Campania': ['campania', 'napoli', 'salerno', 'caserta', 'avellino', 'benevento'],
+    'Emilia-Romagna': ['emilia', 'romagna', 'bologna', 'modena', 'parma', 'reggio emilia', 'ravenna', 'ferrara', 'rimini', 'forlì', 'forli', 'piacenza', 'cesena'],
+    'Friuli-Venezia Giulia': ['friuli', 'venezia giulia', 'trieste', 'udine', 'pordenone', 'gorizia'],
+    'Lazio': ['lazio', 'roma', 'latina', 'frosinone', 'viterbo', 'rieti'],
+    'Liguria': ['liguria', 'genova', 'la spezia', 'savona', 'imperia'],
+    'Lombardia': ['lombardia', 'milano', 'bergamo', 'brescia', 'monza', 'como', 'varese', 'pavia', 'cremona', 'mantova', 'lecco', 'lodi', 'sondrio'],
+    'Marche': ['marche', 'ancona', 'pesaro', 'macerata', 'ascoli', 'fermo', 'urbino'],
+    'Molise': ['molise', 'campobasso', 'isernia'],
+    'Piemonte': ['piemonte', 'torino', 'novara', 'alessandria', 'cuneo', 'asti', 'vercelli', 'biella', 'verbano'],
+    'Puglia': ['puglia', 'bari', 'taranto', 'lecce', 'foggia', 'brindisi', 'barletta', 'andria', 'trani'],
+    'Sardegna': ['sardegna', 'cagliari', 'sassari', 'nuoro', 'oristano', 'olbia'],
+    'Sicilia': ['sicilia', 'palermo', 'catania', 'messina', 'siracusa', 'trapani', 'agrigento', 'caltanissetta', 'enna', 'ragusa'],
+    'Toscana': ['toscana', 'firenze', 'pisa', 'livorno', 'arezzo', 'siena', 'lucca', 'prato', 'pistoia', 'massa', 'carrara', 'grosseto'],
+    'Trentino-Alto Adige': ['trentino', 'alto adige', 'sudtirol', 'südtirol', 'trento', 'bolzano'],
+    'Umbria': ['umbria', 'perugia', 'terni'],
+    "Valle d'Aosta": ["valle d'aosta", "val d'aosta", "aosta"],
+    'Veneto': ['veneto', 'venezia', 'verona', 'padova', 'vicenza', 'treviso', 'rovigo', 'belluno']
+}
 
-REGION_MAP = {
-    "abruzzo": "Abruzzo",
-    "basilicata": "Basilicata",
-    "calabria": "Calabria",
-    "campania": "Campania",
-    "emilia": "Emilia-Romagna",
-    "emilia-romagna": "Emilia-Romagna",
-    "friuli": "Friuli-Venezia Giulia",
-    "lazio": "Lazio",
-    "liguria": "Liguria",
-    "lombardia": "Lombardia",
-    "marche": "Marche",
-    "molise": "Molise",
-    "piemonte": "Piemonte",
-    "puglia": "Puglia",
-    "sardegna": "Sardegna",
-    "sicilia": "Sicilia",
-    "toscana": "Toscana",
-    "trentino": "Trentino-Alto Adige",
-    "alto adige": "Trentino-Alto Adige",
-    "umbria": "Umbria",
-    "valle d'aosta": "Valle d'Aosta",
-    "veneto": "Veneto"
+MACRO_AREAS = {
+    'nord-ovest': ['Piemonte', "Valle d'Aosta", 'Liguria', 'Lombardia'],
+    'nord-est': ['Trentino-Alto Adige', 'Veneto', 'Friuli-Venezia Giulia', 'Emilia-Romagna'],
+    'nord': ['Piemonte', "Valle d'Aosta", 'Liguria', 'Lombardia', 'Trentino-Alto Adige', 'Veneto', 'Friuli-Venezia Giulia', 'Emilia-Romagna'],
+    'centro': ['Toscana', 'Umbria', 'Marche', 'Lazio', 'Sardegna'],
+    'sud': ['Abruzzo', 'Molise', 'Campania', 'Basilicata', 'Puglia', 'Calabria', 'Sicilia'],
+    'isole': ['Sicilia', 'Sardegna']
 }
 
 def detect_region(txt):
     if not txt:
         return "Nazionale"
     t = str(txt).lower()
-    for key, reg in REGION_MAP.items():
-        if re.search(r'\b' + re.escape(key) + r'\b', t):
-            return reg
-    return "Nazionale"
+    matched = set()
+
+    for reg, keywords in REGIONS_ITALY.items():
+        for kw in keywords:
+            if re.search(r'\b' + re.escape(kw) + r'\b', t):
+                matched.add(reg)
+                break
+
+    for area, regs in MACRO_AREAS.items():
+        if re.search(r'\b' + re.escape(area) + r'\b', t):
+            for r in regs:
+                matched.add(r)
+
+    if not matched:
+        return "Nazionale"
+    
+    # Se tutte le 20 regioni sono presenti, o se ha copertura completa, è Nazionale
+    if len(matched) >= 15:
+        return "Nazionale"
+
+    return ", ".join(sorted(matched))
 
 def reorganize_and_clean_database():
     """
