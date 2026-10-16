@@ -1071,6 +1071,9 @@ function renderCurrentStepContent(tender) {
                     ${renderHelpBtn('check_fatturato')}
                   </div>
                   <span class="text-[11px] text-slate-400 block mt-0.5">Fatturato negli ultimi 3 esercizi idoneo a coprire quanto richiesto dal bando.</span>
+                  <button type="button" onclick="window.openFatturatoModal()" class="mt-2 px-2.5 py-1 rounded-xl bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-300 font-mono text-[11px] border border-cyan-500/30 inline-flex items-center gap-1.5 transition cursor-pointer">
+                    <span>⚡ Pipeline Verifica Requisito Fatturato (art. 100)</span>
+                  </button>
                 </div>
               </label>
             </div>
@@ -1084,6 +1087,9 @@ function renderCurrentStepContent(tender) {
                     ${renderHelpBtn('check_iso')}
                   </div>
                   <span class="text-[11px] text-slate-400 block mt-0.5">ISO 9001 valida (riduzione 30% cauzione provvisoria ex art. 106 c.8).</span>
+                  <button type="button" onclick="window.openCertificazioniModal()" class="mt-2 px-2.5 py-1 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 font-mono text-[11px] border border-amber-500/30 inline-flex items-center gap-1.5 transition cursor-pointer">
+                    <span>⚡ Verifica Certificazioni &amp; Taglio Cauzione (-30%)</span>
+                  </button>
                 </div>
               </label>
             </div>
@@ -1122,6 +1128,11 @@ function renderCurrentStepContent(tender) {
             <span class="font-mono font-bold text-emerald-400 uppercase text-xs">Stima Margine &amp; Delibera Finale</span>
             <span class="text-[10px] text-slate-500 font-mono">Decisione Strategica</span>
           </div>
+
+          <!-- Pulsante Pipeline Business Case Deterministico -->
+          <button type="button" onclick="window.openMargineModal()" class="w-full py-2.5 px-3 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-slate-950 font-bold text-xs flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 transition cursor-pointer">
+            <span>⚡ Calcolatore Analitico Margine di Commessa (Business Case)</span>
+          </button>
 
           <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-2">
             <label class="flex items-center text-slate-300 font-semibold">
@@ -2325,4 +2336,533 @@ window.saveCurrentSvincoloToDiary = function() {
   if (!textEl) return;
   window.addNewGaraNote("ESITO", textEl.innerText);
   document.getElementById("svincoloFacsimileModal")?.classList.add("hidden");
+};
+
+/**
+ * ==============================================================================
+ * PIPELINE DETERMINISTICA 1: Verifica Requisito Fatturato (art. 100 D.Lgs. 36/2023)
+ * ==============================================================================
+ */
+window.openFatturatoModal = function() {
+  const tender = getAllTendersFromSQLite().find(t => t.id === currentWizardGaraId) || {};
+  const baseAmount = currentWizardData?.step3_data?.busta_c_base_amount || tender.amount || 100000;
+  const multiplier = 2.0; // Art. 100 c.11: max il doppio del valore dell'appalto
+  const requiredTotal = baseAmount * multiplier;
+
+  let modal = document.getElementById("fatturatoModal");
+  if (!modal) {
+    modal = document.createElement("div");
+    modal.id = "fatturatoModal";
+    modal.className = "fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4 transition-all";
+    document.body.appendChild(modal);
+  }
+
+  const renderContent = () => {
+    modal.innerHTML = `
+      <div class="bg-slate-900 border border-cyan-500/40 rounded-3xl p-6 max-w-xl w-full shadow-2xl space-y-4 max-h-[90vh] flex flex-col animate-in fade-in zoom-in-95 duration-150">
+        <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+          <div class="flex items-center gap-2.5">
+            <span class="w-8 h-8 rounded-xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 flex items-center justify-center font-bold text-sm">📊</span>
+            <div>
+              <h3 class="text-sm font-bold text-white">Pipeline Verifica Fatturato Specifico (art. 100)</h3>
+              <p class="text-[11px] text-cyan-300/80 font-mono">D.Lgs. 36/2023 art. 100 c.11 (Soglia max 2x Base d'Asta)</p>
+            </div>
+          </div>
+          <button onclick="document.getElementById('fatturatoModal').classList.add('hidden')" class="text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-800 text-sm">✕</button>
+        </div>
+
+        <div class="bg-slate-950 p-3.5 rounded-2xl border border-slate-800 space-y-1.5 text-xs">
+          <div class="flex justify-between text-slate-300">
+            <span>Base d'Asta Procedura:</span>
+            <span class="font-mono font-bold text-slate-100">${formatEUR(baseAmount)}</span>
+          </div>
+          <div class="flex justify-between text-slate-300">
+            <span>Soglia Richiesta Disciplinare (2x):</span>
+            <span class="font-mono font-bold text-cyan-400">${formatEUR(requiredTotal)}</span>
+          </div>
+        </div>
+
+        <div class="space-y-3 text-xs">
+          <label class="block font-semibold text-slate-200">Inserisci i fatturati aziendali degli ultimi 3 esercizi:</label>
+          <div class="grid grid-cols-3 gap-2.5">
+            <div>
+              <label class="block text-[11px] text-slate-400 mb-1 font-mono">Anno T-1 (€)</label>
+              <input id="inputFat1" type="number" value="${Math.round(requiredTotal * 0.4)}" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-2.5 py-1.5 text-slate-100 font-mono text-xs focus:border-cyan-400">
+            </div>
+            <div>
+              <label class="block text-[11px] text-slate-400 mb-1 font-mono">Anno T-2 (€)</label>
+              <input id="inputFat2" type="number" value="${Math.round(requiredTotal * 0.38)}" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-2.5 py-1.5 text-slate-100 font-mono text-xs focus:border-cyan-400">
+            </div>
+            <div>
+              <label class="block text-[11px] text-slate-400 mb-1 font-mono">Anno T-3 (€)</label>
+              <input id="inputFat3" type="number" value="${Math.round(requiredTotal * 0.35)}" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-2.5 py-1.5 text-slate-100 font-mono text-xs focus:border-cyan-400">
+            </div>
+          </div>
+        </div>
+
+        <div id="fatturatoOutcomeBox" class="p-3.5 rounded-2xl border text-xs space-y-1"></div>
+
+        <div class="pt-3 border-t border-slate-800 flex justify-end gap-2 text-xs">
+          <button type="button" onclick="document.getElementById('fatturatoModal').classList.add('hidden')" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium transition cursor-pointer">
+            Annulla
+          </button>
+          <button type="button" id="btnApplyFatturato" class="px-4 py-2 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold transition shadow-lg shadow-cyan-500/20 cursor-pointer">
+            Applica &amp; Spunta Requisito
+          </button>
+        </div>
+      </div>
+    `;
+
+    const recalc = () => {
+      const f1 = parseFloat(document.getElementById("inputFat1")?.value) || 0;
+      const f2 = parseFloat(document.getElementById("inputFat2")?.value) || 0;
+      const f3 = parseFloat(document.getElementById("inputFat3")?.value) || 0;
+      const total = f1 + f2 + f3;
+      const diff = total - requiredTotal;
+      const box = document.getElementById("fatturatoOutcomeBox");
+      const btn = document.getElementById("btnApplyFatturato");
+
+      if (box) {
+        if (total >= requiredTotal) {
+          box.className = "p-3.5 rounded-2xl border border-emerald-500/40 bg-emerald-950/20 text-xs space-y-1.5";
+          box.innerHTML = `
+            <div class="flex items-center justify-between text-emerald-400 font-bold">
+              <span>🟢 REQUISITO PIENAMENTE SODDISFATTO</span>
+              <span class="font-mono">${formatEUR(total)} (Surplus: +${formatEUR(diff)})</span>
+            </div>
+            <p class="text-slate-300 text-[11px] leading-relaxed">L'azienda è autosufficiente per la partecipazione singola. Nessuna necessità di ricorso a RTI o Avvalimento.</p>
+          `;
+          if (btn) btn.textContent = "Applica: Requisito Conforme (Autosufficiente)";
+        } else {
+          box.className = "p-3.5 rounded-2xl border border-rose-500/40 bg-rose-950/20 text-xs space-y-1.5";
+          box.innerHTML = `
+            <div class="flex items-center justify-between text-rose-400 font-bold">
+              <span>🔴 REQUISITO NON SUFFICIENTE IN FORMA SINGOLA</span>
+              <span class="font-mono">${formatEUR(total)} (Deficit: ${formatEUR(Math.abs(diff))})</span>
+            </div>
+            <p class="text-slate-300 text-[11px] leading-relaxed">Raccomandazione Strategica: Partecipazione in Raggruppamento Temporaneo (RTI con mandante) oppure stipula contratto di Avvalimento di garanzia ex art. 104 D.Lgs. 36/2023.</p>
+          `;
+          if (btn) btn.textContent = "Applica con Nota Strategica RTI / Avvalimento";
+        }
+      }
+    };
+
+    document.getElementById("inputFat1")?.addEventListener("input", recalc);
+    document.getElementById("inputFat2")?.addEventListener("input", recalc);
+    document.getElementById("inputFat3")?.addEventListener("input", recalc);
+    recalc();
+
+    document.getElementById("btnApplyFatturato")?.addEventListener("click", () => {
+      const f1 = parseFloat(document.getElementById("inputFat1")?.value) || 0;
+      const f2 = parseFloat(document.getElementById("inputFat2")?.value) || 0;
+      const f3 = parseFloat(document.getElementById("inputFat3")?.value) || 0;
+      const total = f1 + f2 + f3;
+      const isOk = total >= requiredTotal;
+
+      const chk = document.getElementById("w_check_fatturato");
+      if (chk) chk.checked = true;
+      currentWizardData.step2_data.check_fatturato = true;
+
+      const notesEl = document.getElementById("w_step2_notes");
+      if (notesEl) {
+        const noteText = isOk
+          ? `[Verifica Fatturato] Triennio ${formatEUR(total)} vs Richiesto ${formatEUR(requiredTotal)}: CONFORME (Autosufficiente).`
+          : `[Verifica Fatturato] Triennio ${formatEUR(total)} vs Richiesto ${formatEUR(requiredTotal)}: DEFICIT di ${formatEUR(Math.abs(total - requiredTotal))}. Prevista partecipazione con RTI o Avvalimento art. 104.`;
+        notesEl.value = notesEl.value ? `${notesEl.value}\n${noteText}` : noteText;
+        currentWizardData.step2_data.notes = notesEl.value;
+      }
+
+      document.getElementById("fatturatoModal").classList.add("hidden");
+      showNotification("Requisito fatturato calcolato e applicato!");
+    });
+  };
+
+  renderContent();
+  modal.classList.remove("hidden");
+};
+
+/**
+ * ==============================================================================
+ * PIPELINE DETERMINISTICA 2: Certificazioni ISO & Taglio Cauzione (art. 106 c.8)
+ * ==============================================================================
+ */
+window.openCertificazioniModal = function() {
+  const tender = getAllTendersFromSQLite().find(t => t.id === currentWizardGaraId) || {};
+  const baseAmount = currentWizardData?.step3_data?.busta_c_base_amount || tender.amount || 100000;
+  const standardProvvisoria = baseAmount * 0.02; // 2% base d'asta
+
+  let modal = document.getElementById("certificazioniModal");
+  if (!modal) {
+    modal = document.createElement("div");
+    modal.id = "certificazioniModal";
+    modal.className = "fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4 transition-all";
+    document.body.appendChild(modal);
+  }
+
+  const renderContent = () => {
+    modal.innerHTML = `
+      <div class="bg-slate-900 border border-amber-500/40 rounded-3xl p-6 max-w-xl w-full shadow-2xl space-y-4 max-h-[90vh] flex flex-col animate-in fade-in zoom-in-95 duration-150">
+        <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+          <div class="flex items-center gap-2.5">
+            <span class="w-8 h-8 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20 flex items-center justify-center font-bold text-sm">🏅</span>
+            <div>
+              <h3 class="text-sm font-bold text-white">Certificazioni di Qualita' &amp; Taglio Cauzione</h3>
+              <p class="text-[11px] text-amber-300/80 font-mono">D.Lgs. 36/2023 art. 106 comma 8 (Abbattimento Garanzia Provvisoria)</p>
+            </div>
+          </div>
+          <button onclick="document.getElementById('certificazioniModal').classList.add('hidden')" class="text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-800 text-sm">✕</button>
+        </div>
+
+        <div class="bg-slate-950 p-3.5 rounded-2xl border border-slate-800 space-y-1.5 text-xs">
+          <div class="flex justify-between text-slate-300">
+            <span>Base d'Asta:</span>
+            <span class="font-mono font-bold text-slate-100">${formatEUR(baseAmount)}</span>
+          </div>
+          <div class="flex justify-between text-slate-300">
+            <span>Garanzia Provvisoria Standard (2%):</span>
+            <span class="font-mono font-bold text-amber-400">${formatEUR(standardProvvisoria)}</span>
+          </div>
+        </div>
+
+        <div class="space-y-2 text-xs">
+          <label class="block font-semibold text-slate-200">Seleziona le certificazioni e requisiti posseduti:</label>
+          <div class="space-y-2">
+            <label class="flex items-center justify-between p-2.5 bg-slate-950 border border-slate-800 rounded-xl cursor-pointer hover:border-amber-500/50 transition">
+              <div class="flex items-center gap-2">
+                <input type="checkbox" id="chkIso9001" checked class="rounded bg-slate-900 border-slate-700 text-amber-500 focus:ring-0">
+                <span class="text-slate-200 font-medium">ISO 9001:2015 (Sistema Gestione Qualità)</span>
+              </div>
+              <span class="font-mono text-emerald-400 font-bold">-30%</span>
+            </label>
+            <label class="flex items-center justify-between p-2.5 bg-slate-950 border border-slate-800 rounded-xl cursor-pointer hover:border-amber-500/50 transition">
+              <div class="flex items-center gap-2">
+                <input type="checkbox" id="chkPmi" class="rounded bg-slate-900 border-slate-700 text-amber-500 focus:ring-0">
+                <span class="text-slate-200 font-medium">Micro, Piccola o Media Impresa (PMI)</span>
+              </div>
+              <span class="font-mono text-emerald-400 font-bold">-50%</span>
+            </label>
+            <label class="flex items-center justify-between p-2.5 bg-slate-950 border border-slate-800 rounded-xl cursor-pointer hover:border-amber-500/50 transition">
+              <div class="flex items-center gap-2">
+                <input type="checkbox" id="chkDigitalFide" checked class="rounded bg-slate-900 border-slate-700 text-amber-500 focus:ring-0">
+                <span class="text-slate-200 font-medium">Fideiussione Digitale (Firma Digitale + Notifica)</span>
+              </div>
+              <span class="font-mono text-emerald-400 font-bold">-10% (cumulabile)</span>
+            </label>
+            <label class="flex items-center justify-between p-2.5 bg-slate-950 border border-slate-800 rounded-xl cursor-pointer hover:border-amber-500/50 transition">
+              <div class="flex items-center gap-2">
+                <input type="checkbox" id="chkParita" class="rounded bg-slate-900 border-slate-700 text-amber-500 focus:ring-0">
+                <span class="text-slate-200 font-medium">Parità di Genere (UNI/PdR 125) o ISO 27001 ICT</span>
+              </div>
+              <span class="font-mono text-emerald-400 font-bold">-20%</span>
+            </label>
+          </div>
+        </div>
+
+        <div id="certOutcomeBox" class="p-3.5 rounded-2xl border border-emerald-500/40 bg-emerald-950/20 text-xs space-y-1"></div>
+
+        <div class="pt-3 border-t border-slate-800 flex justify-end gap-2 text-xs">
+          <button type="button" onclick="document.getElementById('certificazioniModal').classList.add('hidden')" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium transition cursor-pointer">
+            Annulla
+          </button>
+          <button type="button" id="btnApplyCert" class="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold transition shadow-lg shadow-amber-500/20 cursor-pointer">
+            Applica al Fascicolo Busta A
+          </button>
+        </div>
+      </div>
+    `;
+
+    const recalc = () => {
+      const hasIso = document.getElementById("chkIso9001")?.checked || false;
+      const hasPmi = document.getElementById("chkPmi")?.checked || false;
+      const hasDigital = document.getElementById("chkDigitalFide")?.checked || false;
+      const hasParita = document.getElementById("chkParita")?.checked || false;
+
+      // Logica conforme WizardRules / Art. 106 c.8
+      let baseReduction = 0;
+      if (hasPmi) {
+        baseReduction = 0.50;
+      } else if (hasIso) {
+        baseReduction = 0.30;
+      } else if (hasParita) {
+        baseReduction = 0.20;
+      }
+
+      let extraReduction = 0;
+      if (hasDigital) extraReduction += 0.10;
+
+      const totalReductionPct = Math.min(60, Math.round((baseReduction + extraReduction) * 100));
+      const reducedAmount = standardProvvisoria * (1 - (totalReductionPct / 100));
+      const savings = standardProvvisoria - reducedAmount;
+
+      const box = document.getElementById("certOutcomeBox");
+      if (box) {
+        box.innerHTML = `
+          <div class="flex items-center justify-between text-emerald-400 font-bold">
+            <span>Garanzia Provvisoria Ricalcolata:</span>
+            <span class="font-mono text-sm">${formatEUR(reducedAmount)}</span>
+          </div>
+          <div class="flex items-center justify-between text-[11px] text-slate-300">
+            <span>Sconto totale di legge applicato:</span>
+            <span class="font-mono text-emerald-300 font-semibold">-${totalReductionPct}% (Risparmio: ${formatEUR(savings)})</span>
+          </div>
+        `;
+      }
+    };
+
+    ["chkIso9001", "chkPmi", "chkDigitalFide", "chkParita"].forEach(id => {
+      document.getElementById(id)?.addEventListener("change", recalc);
+    });
+    recalc();
+
+    document.getElementById("btnApplyCert")?.addEventListener("click", () => {
+      const hasIso = document.getElementById("chkIso9001")?.checked || false;
+      const hasPmi = document.getElementById("chkPmi")?.checked || false;
+      const hasDigital = document.getElementById("chkDigitalFide")?.checked || false;
+
+      let baseRed = hasPmi ? 0.50 : (hasIso ? 0.30 : 0);
+      let extraRed = hasDigital ? 0.10 : 0;
+      const totalRedPct = Math.min(60, Math.round((baseRed + extraRed) * 100));
+      const reducedAmount = standardProvvisoria * (1 - (totalRedPct / 100));
+
+      const chk = document.getElementById("w_check_iso");
+      if (chk) chk.checked = hasIso || hasPmi;
+      currentWizardData.step2_data.check_iso = hasIso || hasPmi;
+
+      // Sincronizza importo provvisoria ridotta in Busta A (Fase 3)
+      currentWizardData.step3_data.busta_a_fideiussione_importo = Math.round(reducedAmount * 100) / 100;
+
+      document.getElementById("certificazioniModal").classList.add("hidden");
+      showNotification(`Certificazioni confermate: Cauzione provvisoria ridotta a ${formatEUR(reducedAmount)} (-${totalRedPct}%)`);
+    });
+  };
+
+  renderContent();
+  modal.classList.remove("hidden");
+};
+
+/**
+ * ==============================================================================
+ * PIPELINE DETERMINISTICA 3: Business Case & Simulatore Margine di Commessa
+ * ==============================================================================
+ */
+window.openMargineModal = function() {
+  const tender = getAllTendersFromSQLite().find(t => t.id === currentWizardGaraId) || {};
+  const baseAmount = currentWizardData?.step3_data?.busta_c_base_amount || tender.amount || 100000;
+
+  let modal = document.getElementById("margineModal");
+  if (!modal) {
+    modal = document.createElement("div");
+    modal.id = "margineModal";
+    modal.className = "fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4 transition-all";
+    document.body.appendChild(modal);
+  }
+
+  const renderContent = () => {
+    // Valori iniziali stimati di costo
+    const defaultFornitura = Math.round(baseAmount * 0.55);
+    const defaultManodopera = Math.round(baseAmount * 0.20);
+    const defaultSicurezza = Math.round(baseAmount * 0.02);
+    const defaultGenerali = Math.round(baseAmount * 0.03);
+    const defaultDiscount = currentWizardData?.step3_data?.busta_c_discount_pct || 8.0;
+
+    modal.innerHTML = `
+      <div class="bg-slate-900 border border-emerald-500/40 rounded-3xl p-6 max-w-2xl w-full shadow-2xl space-y-4 max-h-[90vh] flex flex-col animate-in fade-in zoom-in-95 duration-150">
+        <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+          <div class="flex items-center gap-2.5">
+            <span class="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center justify-center font-bold text-sm">💹</span>
+            <div>
+              <h3 class="text-sm font-bold text-white">Business Case &amp; Simulatore Margine di Commessa</h3>
+              <p class="text-[11px] text-emerald-300/80 font-mono">Calcolo deterministico redditività e soglia anomalia (art. 110 D.Lgs. 36/2023)</p>
+            </div>
+          </div>
+          <button onclick="document.getElementById('margineModal').classList.add('hidden')" class="text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-800 text-sm">✕</button>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3 text-xs">
+          <div class="bg-slate-950 p-3 rounded-2xl border border-slate-800">
+            <span class="text-slate-400 block text-[11px]">Base d'Asta Gara:</span>
+            <span class="font-mono font-bold text-slate-100 text-sm">${formatEUR(baseAmount)}</span>
+          </div>
+          <div class="bg-slate-950 p-3 rounded-2xl border border-slate-800">
+            <span class="text-slate-400 block text-[11px]">Prezzo Netto Offerto:</span>
+            <span id="displayOfferedPrice" class="font-mono font-bold text-cyan-400 text-sm">${formatEUR(baseAmount * (1 - defaultDiscount/100))}</span>
+          </div>
+        </div>
+
+        <!-- Slider Ribasso Offerto -->
+        <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-2 text-xs">
+          <div class="flex items-center justify-between">
+            <label class="font-semibold text-slate-200">Ipotesi Ribasso Percentuale di Gara:</label>
+            <span id="sliderValueText" class="font-mono font-bold text-amber-400 text-sm">${defaultDiscount.toFixed(1)}%</span>
+          </div>
+          <input id="sliderDiscount" type="range" min="0" max="35" step="0.5" value="${defaultDiscount}" class="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-emerald-500">
+          <div class="flex justify-between text-[10px] text-slate-500 font-mono">
+            <span>0% (Base Piena)</span>
+            <span>10% (Media Consip)</span>
+            <span>20% (Aggressivo)</span>
+            <span>35% (Soglia Critica)</span>
+          </div>
+        </div>
+
+        <!-- Scomposizione Costi Industriali -->
+        <div class="space-y-2 text-xs">
+          <label class="block font-semibold text-slate-200">Scomposizione Costi Industriali di Esecuzione:</label>
+          <div class="grid grid-cols-2 gap-2.5">
+            <div>
+              <label class="block text-[11px] text-slate-400 mb-1">Costi Forniture / Hardware / Licenze (€):</label>
+              <input id="costFornitura" type="number" value="${defaultFornitura}" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-2.5 py-1.5 text-slate-100 font-mono text-xs focus:border-emerald-400">
+            </div>
+            <div>
+              <label class="block text-[11px] text-slate-400 mb-1">Costi Manodopera Stimati (€ art. 108 c.9):</label>
+              <input id="costManodopera" type="number" value="${defaultManodopera}" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-2.5 py-1.5 text-slate-100 font-mono text-xs focus:border-emerald-400">
+            </div>
+            <div>
+              <label class="block text-[11px] text-slate-400 mb-1">Oneri Sicurezza Aziendali (€ art. 108 c.9):</label>
+              <input id="costSicurezza" type="number" value="${defaultSicurezza}" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-2.5 py-1.5 text-slate-100 font-mono text-xs focus:border-emerald-400">
+            </div>
+            <div>
+              <label class="block text-[11px] text-slate-400 mb-1">Spese Generali / Oneri Finanziari (€):</label>
+              <input id="costGenerali" type="number" value="${defaultGenerali}" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-2.5 py-1.5 text-slate-100 font-mono text-xs focus:border-emerald-400">
+            </div>
+          </div>
+        </div>
+
+        <!-- Card Sintesi Esito e Semaforo Margine -->
+        <div id="margineOutcomeCard" class="p-4 rounded-2xl border text-xs space-y-1.5"></div>
+
+        <div class="pt-3 border-t border-slate-800 flex justify-end gap-2 text-xs">
+          <button type="button" onclick="document.getElementById('margineModal').classList.add('hidden')" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium transition cursor-pointer">
+            Chiudi
+          </button>
+          <button type="button" id="btnApplyMargine" class="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold transition shadow-lg shadow-emerald-500/20 cursor-pointer">
+            Applica al Wizard &amp; Delibera
+          </button>
+        </div>
+      </div>
+    `;
+
+    const recalc = () => {
+      const discountPct = parseFloat(document.getElementById("sliderDiscount")?.value) || 0;
+      const fornitura = parseFloat(document.getElementById("costFornitura")?.value) || 0;
+      const manodopera = parseFloat(document.getElementById("costManodopera")?.value) || 0;
+      const sicurezza = parseFloat(document.getElementById("costSicurezza")?.value) || 0;
+      const generali = parseFloat(document.getElementById("costGenerali")?.value) || 0;
+
+      const offeredPrice = baseAmount * (1 - discountPct / 100);
+      const totalCosts = fornitura + manodopera + sicurezza + generali;
+      const netMarginEuro = offeredPrice - totalCosts;
+      const netMarginPct = offeredPrice > 0 ? (netMarginEuro / offeredPrice) * 100 : 0;
+
+      const sliderText = document.getElementById("sliderValueText");
+      if (sliderText) sliderText.textContent = `${discountPct.toFixed(1)}%`;
+
+      const priceDisp = document.getElementById("displayOfferedPrice");
+      if (priceDisp) priceDisp.textContent = formatEUR(offeredPrice);
+
+      const card = document.getElementById("margineOutcomeCard");
+      const btn = document.getElementById("btnApplyMargine");
+
+      if (card) {
+        if (netMarginPct >= 8.0) {
+          card.className = "p-4 rounded-2xl border border-emerald-500/40 bg-emerald-950/20 text-xs space-y-1.5";
+          card.innerHTML = `
+            <div class="flex items-center justify-between text-emerald-400 font-bold">
+              <span>🟢 COMMESSA PROFITTEVOLE — PROPOSTA: DELIBERA GO</span>
+              <span class="font-mono text-sm">+${formatEUR(netMarginEuro)} (${netMarginPct.toFixed(1)}%)</span>
+            </div>
+            <div class="flex justify-between text-slate-300 text-[11px]">
+              <span>Totale Costi Industriali: ${formatEUR(totalCosts)}</span>
+              <span class="text-emerald-300 font-semibold">Marginalità congrua &ge; 8%</span>
+            </div>
+          `;
+          if (btn) btn.textContent = `Applica Delibera 🟢 GO (Margine: ${netMarginPct.toFixed(1)}%)`;
+        } else if (netMarginPct >= 0) {
+          card.className = "p-4 rounded-2xl border border-amber-500/40 bg-amber-950/20 text-xs space-y-1.5";
+          card.innerHTML = `
+            <div class="flex items-center justify-between text-amber-400 font-bold">
+              <span>🟡 MARGINE RISTRETTO — RISCHIO ANOMALIA ART. 110</span>
+              <span class="font-mono text-sm">+${formatEUR(netMarginEuro)} (${netMarginPct.toFixed(1)}%)</span>
+            </div>
+            <div class="flex justify-between text-slate-300 text-[11px]">
+              <span>Totale Costi: ${formatEUR(totalCosts)}</span>
+              <span class="text-amber-300 font-semibold">Consigliata prudenza</span>
+            </div>
+          `;
+          if (btn) btn.textContent = `Applica con Riserva (Margine: ${netMarginPct.toFixed(1)}%)`;
+        } else {
+          card.className = "p-4 rounded-2xl border border-rose-500/40 bg-rose-950/20 text-xs space-y-1.5";
+          card.innerHTML = `
+            <div class="flex items-center justify-between text-rose-400 font-bold">
+              <span>🔴 COMMESSA IN PERDITA — PROPOSTA: DELIBERA NO-GO</span>
+              <span class="font-mono text-sm">${formatEUR(netMarginEuro)} (${netMarginPct.toFixed(1)}%)</span>
+            </div>
+            <div class="flex justify-between text-slate-300 text-[11px]">
+              <span>Totale Costi: ${formatEUR(totalCosts)}</span>
+              <span class="text-rose-400 font-semibold">I costi superano l'offerta netta!</span>
+            </div>
+          `;
+          if (btn) btn.textContent = `Applica Delibera 🔴 NO-GO (In Perdita)`;
+        }
+      }
+    };
+
+    document.getElementById("sliderDiscount")?.addEventListener("input", recalc);
+    ["costFornitura", "costManodopera", "costSicurezza", "costGenerali"].forEach(id => {
+      document.getElementById(id)?.addEventListener("input", recalc);
+    });
+    recalc();
+
+    document.getElementById("btnApplyMargine")?.addEventListener("click", () => {
+      const discountPct = parseFloat(document.getElementById("sliderDiscount")?.value) || 0;
+      const fornitura = parseFloat(document.getElementById("costFornitura")?.value) || 0;
+      const manodopera = parseFloat(document.getElementById("costManodopera")?.value) || 0;
+      const sicurezza = parseFloat(document.getElementById("costSicurezza")?.value) || 0;
+      const generali = parseFloat(document.getElementById("costGenerali")?.value) || 0;
+
+      const offeredPrice = baseAmount * (1 - discountPct / 100);
+      const totalCosts = fornitura + manodopera + sicurezza + generali;
+      const netMarginEuro = offeredPrice - totalCosts;
+      const netMarginPct = offeredPrice > 0 ? (netMarginEuro / offeredPrice) * 100 : 0;
+
+      // 1. Aggiorna Fase 2
+      const marginInput = document.getElementById("w_margin_pct");
+      if (marginInput) marginInput.value = Math.max(0, netMarginPct.toFixed(1));
+      currentWizardData.step2_data.margin_estimated_pct = parseFloat(netMarginPct.toFixed(1));
+
+      const goSelect = document.getElementById("w_go_decision");
+      if (goSelect) {
+        if (netMarginPct >= 8.0) {
+          goSelect.value = "GO";
+          currentWizardData.step2_data.go_decision = "GO";
+        } else if (netMarginPct >= 0) {
+          goSelect.value = "GO";
+          currentWizardData.step2_data.go_decision = "GO";
+        } else {
+          goSelect.value = "NO_GO";
+          currentWizardData.step2_data.go_decision = "NO_GO";
+        }
+      }
+
+      // 2. Sincronizza Busta C (Fase 3)
+      currentWizardData.step3_data.busta_c_base_amount = baseAmount;
+      currentWizardData.step3_data.busta_c_discount_pct = discountPct;
+      currentWizardData.step3_data.busta_c_offered_price = Math.round(offeredPrice * 100) / 100;
+      currentWizardData.step3_data.busta_c_manodopera = manodopera;
+      currentWizardData.step3_data.busta_c_sicurezza = sicurezza;
+
+      // 3. Annotazione automatica
+      const notesEl = document.getElementById("w_step2_notes");
+      if (notesEl) {
+        const busCaseNote = `[Business Case] Base ${formatEUR(baseAmount)} | Ribasso ${discountPct.toFixed(1)}% | Offerta ${formatEUR(offeredPrice)} | Costi ${formatEUR(totalCosts)} | Margine Netto: ${formatEUR(netMarginEuro)} (${netMarginPct.toFixed(1)}%).`;
+        notesEl.value = notesEl.value ? `${notesEl.value}\n${busCaseNote}` : busCaseNote;
+        currentWizardData.step2_data.notes = notesEl.value;
+      }
+
+      document.getElementById("margineModal").classList.add("hidden");
+      showNotification(`Margine commessa calcolato (${netMarginPct.toFixed(1)}%) e sincronizzato con Busta C!`);
+    });
+  };
+
+  renderContent();
+  modal.classList.remove("hidden");
 };
