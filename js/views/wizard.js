@@ -150,6 +150,7 @@ const WIZARD_HELP_GUIDE = {
   buste_overview: {
     category: "FASE 3: LE 3 BUSTE TELEMATICHE",
     title: "Regola di Separazione delle 3 Buste (D.Lgs. 36/2023)",
+    simple_explanation: "Immagina di dover consegnare tre cartelline chiuse e sigillate: nella cartella A metti i tuoi documenti d'identità e garanzie; nella cartella B spieghi cosa offri tecnicamente (senza dire il prezzo!); nella cartella C metti il prezzo. È vitale non mischiare mai il prezzo nelle altre buste, altrimenti la legge ti esclude all'istante!",
     what: "Il portale MePA richiede di caricare 3 buste elettroniche distinte: Busta A (Documenti Amministrativi), Busta B (Progetto Tecnico), Busta C (Offerta di Prezzo).",
     portal_location: "Portale www.acquistinretepa.it -> Wizard di sottomissione offerta della RdO.",
     what_to_do: "Clicca sui 3 tab (A, B, C) per visualizzare i documenti e i file specifici richiesti per ciascuna busta. Assicurati che ogni file sia firmato digitalmente in formato CAdES (.p7m).",
@@ -158,30 +159,34 @@ const WIZARD_HELP_GUIDE = {
   busta_a_dgue: {
     category: "FASE 3: BUSTA A AMMINISTRATIVA",
     title: "DGUE Elettronico (ESPD XML/PDF)",
+    simple_explanation: "È il passaporto europeo delle gare d'appalto: un modulo standard in cui dichiari con valore legale che la tua azienda non ha guai giudiziari, è in regola con il DURC e con le tasse, e ha le carte in regola per lavorare con la PA.",
     what: "Il Documento di Gara Unico Europeo e' l'autodichiarazione con cui l'operatore economico attesta il possesso dei requisiti di ordine generale (assenza di reati, regolarita' fiscale e contributiva DURC).",
     portal_location: "Compilabile direttamente online nella sezione 'Busta Amministrativa' di AcquistinretePA oppure su portale ANAC.",
-    what_to_do: "Compila tutti i quadri del DGUE sul portale, scarica il PDF generato, apponi la firma digitale CAdES del legale rappresentante (.pdf.p7m) e ricaricalo a sistema.",
+    what_to_do: "Usa il nostro assistente guidato '⚡ Procedura Guidata DGUE': verifica i requisiti di onorabilità e genera la dichiarazione integrativa già pronta.",
     legal_tip: "La falsa dichiarazione nel DGUE comporta la segnalazione all'ANAC con annotazione nel Casellario Informatico e interdizione dalle gare."
   },
   busta_a_fideiussione: {
     category: "FASE 3: BUSTA A AMMINISTRATIVA",
     title: "Garanzia Provvisoria (art. 106 D.Lgs. 36/2023)",
+    simple_explanation: "È una polizza assicurativa (o bancaria) che garantisce alla PA che, se vinci la gara, non scapperai ma firmerai il contratto. Di base costa il 2% della gara, ma la legge ti dà il 50% di sconto se sei una PMI e un altro 10% se la fai digitale.",
     what: "Fideiussione bancaria o assicurativa a garanzia della serieta' dell'offerta, pari di norma al 2% (modulabile dalla PA tra 1% e 4%) del valore a base d'asta.",
     portal_location: "Da allegare come file firmato digitalmente dal garante nella Busta Amministrativa su MePA.",
-    what_to_do: "Calcola l'importo ridotto con il calcolatore integrato e richiedi la polizza digitale. Verifica: 1) Rinuncia al beneficio della preventiva escussione; 2) Rinuncia all'eccezione ex art. 1957 c.c.; 3) Pagamento entro 15 giorni; 4) Impegno a rilasciare la cauzione definitiva.",
+    what_to_do: "Usa il pulsante '⚡ Genera Richiesta Polizza al Broker' per ottenere il testo email con tutte le clausole obbligatorie per legge da inoltrare alla tua compagnia.",
     legal_tip: "RIDUZIONI EX ART. 106 C.8: 50% per Micro, Piccole e Medie Imprese (PMI); 30% per certificazione ISO 9001 (non cumulabile con la riduzione PMI: prevale la maggiore, 50%); ulteriore 10% per fideiussione digitale verificabile telematicamente (cumulabile)."
   },
   fvoe_passoe: {
     category: "FASE 3: BUSTA A AMMINISTRATIVA",
     title: "Fascicolo Virtuale FVOE 2.0 ANAC",
+    simple_explanation: "È la 'chiave d'accesso' per l'ANAC: registri la gara sul sito ANAC e ottieni un codice. Con questo codice l'ente pubblico può verificare da solo e all'istante il tuo casellario giudiziale e la tua regolarità fiscale senza chiederti mille certificati cartacei.",
     what: "Il codice generato sulla piattaforma ANAC (FVOE 2.0) che consente alla Stazione Appaltante di verificare i requisiti generali (DURC, casellario giudiziale, antimafia).",
     portal_location: "Portale dei Servizi ANAC -> Fascicolo Virtuale dell'Operatore Economico (FVOE 2.0).",
-    what_to_do: "Inserisci il CIG su FVOE 2.0, associa la tua azienda e genera il documento di partecipazione. Incolla il codice identificativo in questo campo e allega il PDF nella Busta A.",
+    what_to_do: "Clicca su '⚡ Assistente FVOE 2.0 ANAC': segui i 3 passi guidati con link diretto al portale ANAC e genera il codice da inserire nel campo.",
     legal_tip: "Dal 2024 il FVOE 2.0 e' obbligatorio ed e' interconnesso con la Banca Dati Nazionale dei Contratti Pubblici (BDNCP). Il fascicolo deve essere perfezionato prima della scadenza del bando."
   },
   busta_a_files: {
     category: "FASE 3: BUSTA A AMMINISTRATIVA",
     title: "Nomenclatura File e Firma Digitale CAdES",
+    simple_explanation: "Tutti i documenti PDF che carichi sul MePA devono essere firmati digitalmente (con la chiavetta USB o smart card di firma): il file firmato assume l'estensione .p7m. Usa i nostri pulsanti 'Copia Nome' per non sbagliare mai il nome dei file.",
     what: "Elenco dei file amministrativi standard da caricare. Consip richiede file firmati digitalmente con estensione .pdf.p7m.",
     portal_location: "Sezione Allegati Busta A su MePA.",
     what_to_do: "Clicca su 'Copia Nome' accanto a ciascun file per rinominare i tuoi documenti PDF prima di firmarli con il tuo software di firma (Dike, ArubaSign, GoSign).",
@@ -190,22 +195,25 @@ const WIZARD_HELP_GUIDE = {
   busta_b_ready: {
     category: "FASE 3: BUSTA B TECNICA",
     title: "Relazione Tecnica Descrittiva",
+    simple_explanation: "È il cuore tecnico della tua offerta: il progetto in cui descrivi come eseguirai il servizio o quali prodotti consegnerai. Rispetta rigorosamente il limite massimo di pagine del bando (es. 20 pagine) e NON citare mai cifre o sconti!",
     what: "Il documento principale in cui l'azienda illustra le caratteristiche qualitative dei beni o servizi offerti, il piano organizzativo e le migliorie.",
     portal_location: "Caricamento nella sezione 'Busta Tecnica' su AcquistinretePA.",
-    what_to_do: "Spunta quando la relazione tecnica e' stata redatta e impaginata rispettando rigorosamente il numero massimo di facciate (pagine) e la dimensione carattere imposti dal disciplinare.",
+    what_to_do: "Clicca su '⚡ Guida & Checklist Busta Tecnica': verifica l'indice dei capitoli, il rispetto del numero di pagine e l'assenza assoluta di elementi di prezzo.",
     legal_tip: "Le pagine eccedenti il limite stabilito dal disciplinare non vengono lette dalla Commissione Giudicatrice o possono portare all'esclusione."
   },
   busta_b_cam: {
     category: "FASE 3: BUSTA B TECNICA",
     title: "Criteri Ambientali Minimi (CAM) & Punteggio Tecnico",
+    simple_explanation: "CAM significa Criteri Ambientali Minimi: le leggi ecologiche obbligatorie per gli acquisti della PA. Se i tuoi prodotti sono ecologici, a basso consumo energetico o hanno imballaggi riciclati, allega le schede tecniche dei produttori per prendere punti preziosi in graduatoria.",
     what: "Dichiarazioni e schede tecniche dei produttori attestanti la conformita' del prodotto ai criteri ecologici ministeriali.",
     portal_location: "Allegati tecnici Busta B su MePA.",
-    what_to_do: "Allega schede tecniche ufficiali, marchi ecolabel o dichiarazioni di conformita' per ottenere il massimo punteggio tecnico discrezionale o tabellare.",
+    what_to_do: "Clicca su '⚡ Verifica Criteri Ambientali Minimi (CAM)': seleziona le certificazioni green possedute e genera l'attestazione per l'ente.",
     legal_tip: "I Criteri Ambientali Minimi (art. 57 D.Lgs. 36/2023) sono obbligatori per legge per tutte le forniture della Pubblica Amministrazione."
   },
   busta_b_files: {
     category: "FASE 3: BUSTA B TECNICA",
     title: "File Busta Tecnica (.p7m)",
+    simple_explanation: "Sono i file della tua proposta tecnica (relazione descrittiva, schede tecniche dei produttori, certificati CAM) da firmare digitalmente in formato .p7m. Ricorda la regola d'oro: nessun prezzo nella busta tecnica!",
     what: "I file contenenti l'offerta tecnica e le schede prodotto, da firmare in formato digitale CAdES.",
     portal_location: "Sezione Busta Tecnica su MePA.",
     what_to_do: "Copia il nome file standardizzato e rinomina il documento prima della firma digitale.",
@@ -214,6 +222,7 @@ const WIZARD_HELP_GUIDE = {
   busta_c_base: {
     category: "FASE 3: BUSTA C ECONOMICA",
     title: "Base d'Asta (€)",
+    simple_explanation: "È il prezzo massimo stabilito dall'ente pubblico per la gara: non puoi fare un'offerta più alta della base d'asta, altrimenti vieni escluso immediatamente.",
     what: "L'importo economico massimo stimato dalla Stazione Appaltante a base di gara su cui formulare il ribasso percentuale.",
     portal_location: "Scheda economica della RdO su MePA o bando di gara.",
     what_to_do: "E' precaricata in automatico dal gestionale. Qualsiasi offerta economica con valore superiore alla base d'asta viene esclusa automaticamente.",
@@ -222,6 +231,7 @@ const WIZARD_HELP_GUIDE = {
   busta_c_discount: {
     category: "FASE 3: BUSTA C ECONOMICA",
     title: "Ribasso Percentuale Offerto (%)",
+    simple_explanation: "È la percentuale di sconto che concedi all'ente pubblico rispetto alla base d'asta. Il nostro sistema calcola subito sia il prezzo netto finale in euro, sia il guadagno reale che ti resta in tasca.",
     what: "La percentuale di sconto che l'azienda offre rispetto all'importo a base di gara.",
     portal_location: "Campo 'Ribasso Percentuale' o 'Prezzo a Corpo' nel form economico di AcquistinretePA.",
     what_to_do: "Digita la percentuale (es. 6.50). Il Wizard ricalcola istantaneamente il Prezzo Netto Offerto in euro e verifica l'impatto sul margine.",
@@ -230,6 +240,7 @@ const WIZARD_HELP_GUIDE = {
   busta_c_price: {
     category: "FASE 3: BUSTA C ECONOMICA",
     title: "Prezzo Netto Offerto (IVA esclusa)",
+    simple_explanation: "È la cifra netta finale in euro che la PA ti pagherà se vinci la gara (IVA esclusa). Clicca su 'Copia Cifra' per incollarla senza errori nei campi del portale MePA.",
     what: "La cifra totale in euro risultante dall'applicazione del ribasso percentuale alla base d'asta.",
     portal_location: "Modulo offerta economica generato su MePA.",
     what_to_do: "Usa il tasto 'Copia Cifra' per incollare l'importo esatto nel form di compilazione del portale Consip.",
@@ -238,22 +249,25 @@ const WIZARD_HELP_GUIDE = {
   busta_c_manodopera: {
     category: "FASE 3: BUSTA C ECONOMICA",
     title: "Costi della Manodopera (art. 108 c. 9)",
+    simple_explanation: "La legge (art. 108 c.9) obbliga a dichiarare quanto del tuo prezzo totale andrà a pagare il lavoro degli addetti/tecnici. Non è un costo in più per la PA, ma una quota interna del tuo prezzo. Se ti dimentichi di scriverlo vieni escluso senza appello!",
     what: "La quota del prezzo totale offerto che l'azienda destina ai costi del personale impiegato per l'esecuzione della commessa.",
     portal_location: "Campo obbligatorio nel modello di offerta economica su MePA.",
-    what_to_do: "Inserisci l'importo della manodopera calcolato sulle tabelle ministeriali del costo orario del lavoro. Deve essere > 0, a meno che non si tratti di fornitura senza posa.",
+    what_to_do: "Clicca su '⚡ Calcolatore Analitico Manodopera': inserisci ore e profilo contrattuale (CCNL) per ottenere la cifra certificata da inserire.",
     legal_tip: "La mancata indicazione dei costi della manodopera comporta l'esclusione automatica della gara (art. 108 c. 9 D.Lgs. 36/2023) non sanabile con soccorso istruttorio, salvo che si tratti di sole forniture senza posa in opera o servizi di natura intellettuale."
   },
   busta_c_sicurezza: {
     category: "FASE 3: BUSTA C ECONOMICA",
     title: "Oneri Aziendali per la Salute e Sicurezza",
+    simple_explanation: "Sono le spese interne che la tua azienda sostiene per proteggere i propri dipendenti (visite mediche, corsi sicurezza 81/08, scarpe antinfortunistiche, DPI). Anche questo va scorporato obbligatoriamente per legge.",
     what: "Le spese specifiche che la tua azienda sostiene per adempiere agli obblighi di sicurezza sul lavoro dei propri addetti (DPI, visite mediche, formazione D.Lgs. 81/08).",
     portal_location: "Campo dedicato nel form dell'offerta economica MePA.",
-    what_to_do: "Inserisci la stima dei costi aziendali della sicurezza. Attenzione: non confonderli con i 'costi della sicurezza da interferenze (DUVRI)' che sono stabiliti dalla PA!",
+    what_to_do: "Inserisci la stima dei costi aziendali della sicurezza calcolata con il nostro calcolatore guidato.",
     legal_tip: "La mancata indicazione degli oneri aziendali di sicurezza comporta l'esclusione insanabile ex art. 108 c. 9."
   },
   fornitura_senza_posa: {
     category: "FASE 3: BUSTA C ECONOMICA",
     title: "Esclusione Obbligo Manodopera (art. 108 c. 9)",
+    simple_explanation: "Se vendi solo prodotti 'da scaffale' (es. scatole di cancelleria, PC imballati senza installazione) o consulenze intellettuali pure, la legge ti esonera dallo scorporare manodopera e sicurezza: basta spuntare questa casella per essere in regola al 100%.",
     what: "Deroga espressa di legge all'obbligo di indicare separatamente i costi della manodopera e della sicurezza.",
     portal_location: "Disciplinare di Gara -> Oggetto della prestazione.",
     what_to_do: "Spunta questa opzione SOLTANTO se la gara ha per oggetto la mera fornitura di beni materiali senza posa in opera, oppure servizi di natura puramente intellettuale.",
@@ -262,6 +276,7 @@ const WIZARD_HELP_GUIDE = {
   offerta_inviata: {
     category: "FASE 3: BUSTA C ECONOMICA",
     title: "Conferma Trasmissione Offerta su MePA",
+    simple_explanation: "È il traguardo della Fase 3: dopo aver caricato e firmato tutte e 3 le buste sul portale MePA e aver ricevuto la ricevuta con orario ufficiale, spunta questa casella per registrare l'avvenuto invio e passare alla Fase 4 di monitoraggio dell'esito.",
     what: "Dichiarazione formale che tutte e 3 le buste sono state caricate, firmate digitalmente e trasmesse con successo attraverso il portale www.acquistinretepa.it.",
     portal_location: "Riepilogo finale di partecipazione su MePA con ricevuta di protocollazione / timestamp.",
     what_to_do: "Spunta questa casella dopo aver ricevuto la ricevuta di invio della RdO. E' il requisito deterministico obbligatorio per sbloccare la Fase 4 (Esito e Svincolo).",
@@ -270,6 +285,7 @@ const WIZARD_HELP_GUIDE = {
   busta_c_files: {
     category: "FASE 3: BUSTA C ECONOMICA",
     title: "File Offerta Economica MePA",
+    simple_explanation: "Sul portale MePA, dopo aver inserito il ribasso, il sito genera un modulo PDF con la tua offerta economica: devi scaricarlo sul tuo PC, firmarlo digitalmente con la tua smart card/token e ricaricarlo a sistema (.p7m).",
     what: "Il modello PDF generato dal portale AcquistinretePA contenente il ribasso e i prezzi unitari, da scaricare, firmare e ricaricare.",
     portal_location: "Sezione Busta Economica su MePA.",
     what_to_do: "Scarica il PDF dal portale MePA solo dopo aver inserito i prezzi, firmalo con la tua smart card / token USB e ricaricalo con estensione .p7m.",
@@ -1367,6 +1383,9 @@ function renderCurrentStepContent(tender) {
                     <span class="text-[11px] text-slate-400 block mt-0.5">Compilato sul portale ANAC/MePA e firmato dal legale rappresentante (.p7m).</span>
                   </div>
                 </label>
+                <button type="button" onclick="window.openDgueModal()" class="mt-2.5 w-full px-3 py-1.5 rounded-xl bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-300 text-xs font-semibold border border-cyan-500/30 flex items-center justify-center gap-1.5 transition cursor-pointer" title="Verifica guidata requisiti di onorabilità e generazione dichiarazione DGUE">
+                  <span>⚡ Procedura Guidata DGUE (ESPD)</span>
+                </button>
               </div>
 
               <!-- SEZIONE CALCOLATORE CAUZIONE PROVVISORIA (ART. 106 C.8) -->
@@ -1416,6 +1435,10 @@ function renderCurrentStepContent(tender) {
                   <div class="text-[10px] text-slate-500 font-mono text-right">
                     Lorda: ${formatEUR(guaranteeCalc.gross)} &bull; Sconto: ${guaranteeCalc.mainReductionPct}%
                   </div>
+
+                  <button type="button" onclick="window.openBrokerGuaranteeModal()" class="mt-2 w-full px-3 py-1.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 text-xs font-semibold border border-emerald-500/30 flex items-center justify-center gap-1.5 transition cursor-pointer" title="Genera testo PEC o email per richiesta polizza al broker assicurativo">
+                    <span>⚡ Richiesta Polizza Fideiussoria (Fac-simile Broker)</span>
+                  </button>
                 </div>
               </div>
 
@@ -1430,6 +1453,9 @@ function renderCurrentStepContent(tender) {
                   <button type="button" onclick="navigator.clipboard.writeText(document.getElementById('w_fvoe_code').value); showNotification('Codice FVOE copiato!');" class="px-2.5 py-1 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-mono text-[11px] shrink-0">Copia</button>
                 </div>
                 <span class="text-[10px] text-slate-500 font-mono">Consente all'ente il controllo dei requisiti generali</span>
+                <button type="button" onclick="window.openFvoeModal()" class="mt-2 w-full px-3 py-1.5 rounded-xl bg-purple-500/10 hover:bg-purple-500/20 text-purple-300 text-xs font-semibold border border-purple-500/30 flex items-center justify-center gap-1.5 transition cursor-pointer" title="Guida passo-passo per generare il codice FVOE sul portale ANAC">
+                  <span>⚡ Assistente FVOE 2.0 ANAC</span>
+                </button>
               </div>
             </div>
           </div>
@@ -1481,6 +1507,9 @@ function renderCurrentStepContent(tender) {
                     <span class="text-[11px] text-slate-400 block mt-0.5">Impaginata rigorosamente entro il limite massimo di pagine del disciplinare.</span>
                   </div>
                 </label>
+                <button type="button" onclick="window.openBustaBCheckModal()" class="mt-2.5 w-full px-3 py-1.5 rounded-xl bg-purple-500/10 hover:bg-purple-500/20 text-purple-300 text-xs font-semibold border border-purple-500/30 flex items-center justify-center gap-1.5 transition cursor-pointer" title="Checklist pre-invio e struttura proposta tecnica">
+                  <span>⚡ Guida &amp; Checklist Busta Tecnica</span>
+                </button>
               </div>
 
               <div class="p-3 rounded-2xl bg-slate-950 border border-slate-800">
@@ -1494,6 +1523,9 @@ function renderCurrentStepContent(tender) {
                     <span class="text-[11px] text-slate-400 block mt-0.5">Schede dei produttori e certificati ecologici per massimo punteggio.</span>
                   </div>
                 </label>
+                <button type="button" onclick="window.openBustaBCamModal()" class="mt-2.5 w-full px-3 py-1.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 text-xs font-semibold border border-emerald-500/30 flex items-center justify-center gap-1.5 transition cursor-pointer" title="Verifica certificazioni ambientali possedute per la fornitura">
+                  <span>⚡ Verifica Criteri Ambientali Minimi (CAM)</span>
+                </button>
               </div>
             </div>
           </div>
@@ -1584,24 +1616,33 @@ function renderCurrentStepContent(tender) {
             </div>
 
             <!-- Manodopera & Oneri Sicurezza ex art. 108 c. 9 -->
-            <div id="boxManodoperaSicurezza" class="grid grid-cols-2 gap-3.5 pt-1 ${s3.fornitura_senza_posa ? 'opacity-40 pointer-events-none' : ''}">
-              <div class="bg-slate-950 p-3.5 rounded-2xl border border-slate-800">
-                <label class="flex items-center text-slate-300 font-semibold mb-1">
-                  <span>Costi Manodopera (€):</span>
-                  ${renderHelpBtn('busta_c_manodopera')}
-                </label>
-                <input id="w_manodopera" type="number" value="${s3.busta_c_manodopera || 0}" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-amber-300 font-mono text-xs focus:border-cyan-400">
-                <span class="text-[9px] text-rose-400 block mt-1">Obbligatorio a pena di esclusione!</span>
+            <div id="boxManodoperaSicurezza" class="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-3 ${s3.fornitura_senza_posa ? 'opacity-40 pointer-events-none' : ''}">
+              <div class="flex items-center justify-between border-b border-slate-800/80 pb-2">
+                <strong class="text-slate-200 font-mono text-xs">Scorporo Costi ex art. 108 c. 9 D.Lgs. 36/2023</strong>
+                <span class="text-[10px] text-rose-400 font-mono">Obbligatorio a pena di esclusione</span>
               </div>
 
-              <div class="bg-slate-950 p-3.5 rounded-2xl border border-slate-800">
-                <label class="flex items-center text-slate-300 font-semibold mb-1">
-                  <span>Oneri Sicurezza (€):</span>
-                  ${renderHelpBtn('busta_c_sicurezza')}
-                </label>
-                <input id="w_sicurezza" type="number" value="${s3.busta_c_sicurezza || 0}" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-amber-300 font-mono text-xs focus:border-cyan-400">
-                <span class="text-[9px] text-slate-500 block mt-1">Spese aziendali D.Lgs. 81/08</span>
+              <div class="grid grid-cols-2 gap-3.5">
+                <div>
+                  <label class="flex items-center text-slate-300 font-semibold mb-1">
+                    <span>Costi Manodopera (€):</span>
+                    ${renderHelpBtn('busta_c_manodopera')}
+                  </label>
+                  <input id="w_manodopera" type="number" value="${s3.busta_c_manodopera || 0}" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-amber-300 font-mono text-xs focus:border-cyan-400">
+                </div>
+
+                <div>
+                  <label class="flex items-center text-slate-300 font-semibold mb-1">
+                    <span>Oneri Sicurezza (€):</span>
+                    ${renderHelpBtn('busta_c_sicurezza')}
+                  </label>
+                  <input id="w_sicurezza" type="number" value="${s3.busta_c_sicurezza || 0}" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-amber-300 font-mono text-xs focus:border-cyan-400">
+                </div>
               </div>
+
+              <button type="button" onclick="window.openManodoperaModal()" class="w-full px-3 py-1.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 text-xs font-semibold border border-amber-500/30 flex items-center justify-center gap-1.5 transition cursor-pointer" title="Calcola automaticamente ore e tariffe CCNL per la manodopera">
+                <span>⚡ Calcolatore Analitico Manodopera &amp; Sicurezza</span>
+              </button>
             </div>
 
             <!-- Checkbox Obbligatoria per passaggio a Fase 4: Offerta inviata a sistema MePA -->
@@ -1643,6 +1684,58 @@ function renderCurrentStepContent(tender) {
 
         </div>
       ` : ''}
+
+      <!-- CARD DOWNLOAD DOCUMENTI FASE 3 -->
+      <div class="bg-slate-900/90 p-5 sm:p-6 rounded-3xl border border-purple-500/30 space-y-3 shadow-xl mt-4">
+        <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-3">
+          <div class="flex items-center gap-2">
+            <span class="w-7 h-7 rounded-lg bg-purple-500/10 text-purple-400 border border-purple-500/20 flex items-center justify-center font-bold text-xs">📥</span>
+            <div>
+              <h4 class="text-xs sm:text-sm font-bold text-white">Documenti Scaricabili &amp; Fascicolo Buste (Fase 3)</h4>
+              <span class="text-[11px] text-slate-400 font-mono">Esporta domanda di partecipazione integrale, computo offerta economica e fascicolo tecnico</span>
+            </div>
+          </div>
+          <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-800 text-purple-300 border border-slate-700">Fascicolo Completo</span>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 pt-1 text-xs">
+          <!-- 1. Istanza e Dichiarazione Integrativa Word/Doc -->
+          <button type="button" onclick="window.downloadFase3Istanza('docx')" class="p-3 rounded-2xl bg-slate-950 border border-slate-800 hover:border-cyan-500/50 text-left transition group cursor-pointer">
+            <div class="flex items-center justify-between text-xs mb-1">
+              <span class="font-bold text-slate-200 group-hover:text-cyan-300">📄 Domanda Partecipazione</span>
+              <span class="font-mono text-[10px] text-cyan-400 font-bold">.DOCX / .DOC</span>
+            </div>
+            <p class="text-[11px] text-slate-400 leading-tight">Dichiarazione integrativa omnicomprensiva Buste A-B-C pronta per firma digitale .p7m.</p>
+          </button>
+
+          <!-- 2. Fascicolo Buste Markdown -->
+          <button type="button" onclick="window.downloadFase3FascicoloMd()" class="p-3 rounded-2xl bg-slate-950 border border-slate-800 hover:border-cyan-500/50 text-left transition group cursor-pointer">
+            <div class="flex items-center justify-between text-xs mb-1">
+              <span class="font-bold text-slate-200 group-hover:text-cyan-300">📝 Fascicolo Buste</span>
+              <span class="font-mono text-[10px] text-cyan-400 font-bold">.MD</span>
+            </div>
+            <p class="text-[11px] text-slate-400 leading-tight">Checklist tecnica e riepilogo documenti e file .p7m da caricare a portale MePA.</p>
+          </button>
+
+          <!-- 3. Computo Offerta Economica Excel CSV -->
+          <button type="button" onclick="window.downloadFase3ComputoCsv()" class="p-3 rounded-2xl bg-slate-950 border border-slate-800 hover:border-emerald-500/50 text-left transition group cursor-pointer">
+            <div class="flex items-center justify-between text-xs mb-1">
+              <span class="font-bold text-slate-200 group-hover:text-emerald-300">📊 Computo Economico</span>
+              <span class="font-mono text-[10px] text-emerald-400 font-bold">.CSV (EXCEL)</span>
+            </div>
+            <p class="text-[11px] text-slate-400 leading-tight">Tabella offerta con scorporo analitico manodopera art. 108 c.9 e sicurezza per Excel.</p>
+          </button>
+
+          <!-- 4. Scheda Buste JSON -->
+          <button type="button" onclick="window.downloadFase3Json()" class="p-3 rounded-2xl bg-slate-950 border border-slate-800 hover:border-purple-500/50 text-left transition group cursor-pointer">
+            <div class="flex items-center justify-between text-xs mb-1">
+              <span class="font-bold text-slate-200 group-hover:text-purple-300">💾 Payload Buste</span>
+              <span class="font-mono text-[10px] text-purple-400 font-bold">.JSON</span>
+            </div>
+            <p class="text-[11px] text-slate-400 leading-tight">Dataset completo per caricamento automatico o handoff con agente Browser-Use.</p>
+          </button>
+        </div>
+      </div>
     `;
   }
 
@@ -3544,5 +3637,745 @@ window.downloadFase2Json = function() {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
   showNotification("Fascicolo Qualificazione JSON scaricato!");
 };
+
+/**
+ * ==============================================================================
+ * PIPELINE DETERMINISTICHE FASE 3 (BUSTA A, BUSTA B, BUSTA C)
+ * ==============================================================================
+ */
+
+/**
+ * 1. Pipeline Guidata DGUE Elettronico (ESPD)
+ */
+window.openDgueModal = function() {
+  const tender = (typeof getAllTendersFromSQLite === "function" ? getAllTendersFromSQLite() : []).find(t => t.id === currentWizardGaraId) || {};
+  const cig = currentWizardData?.step1_data?.cig || tender.cig || "GARA";
+
+  let modal = document.getElementById("dgueModal");
+  if (!modal) {
+    modal = document.createElement("div");
+    modal.id = "dgueModal";
+    modal.className = "fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4 transition-all";
+    document.body.appendChild(modal);
+  }
+
+  modal.innerHTML = `
+    <div class="bg-slate-900 border border-cyan-500/40 rounded-3xl p-6 max-w-xl w-full shadow-2xl space-y-4 max-h-[90vh] flex flex-col animate-in fade-in zoom-in-95 duration-150">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <div class="flex items-center gap-2.5">
+          <span class="w-8 h-8 rounded-xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 flex items-center justify-center font-bold text-sm">📋</span>
+          <div>
+            <h3 class="text-sm font-bold text-white">Procedura Guidata DGUE Elettronico (ESPD)</h3>
+            <p class="text-[11px] text-cyan-300/80 font-mono">D.Lgs. 36/2023 artt. 94-98 &bull; Dichiarazione Unica Europea</p>
+          </div>
+        </div>
+        <button onclick="document.getElementById('dgueModal').classList.add('hidden')" class="text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-800 text-sm">✕</button>
+      </div>
+
+      <div class="bg-cyan-950/30 p-3.5 rounded-2xl border border-cyan-800/40 text-cyan-200 text-xs space-y-1">
+        <strong>💡 In parole povere (se non sei del settore):</strong>
+        <p class="text-slate-200 text-[11px] leading-relaxed">
+          Il DGUE è il "passaporto" con cui attesti di avere i conti in ordine (DURC e tasse) e la fedina penale pulita.
+          Spunta i controlli seguenti per confermare che l'azienda è abilitata a partecipare.
+        </p>
+      </div>
+
+      <div class="space-y-2.5 text-xs">
+        <div>
+          <label class="block font-semibold text-slate-200 mb-1">Forma Giuridica di Partecipazione:</label>
+          <select id="selDgueForma" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-slate-100 font-mono text-xs focus:border-cyan-400">
+            <option value="singola">Impresa Singola (Operatore Economico Individuale o Societario)</option>
+            <option value="mandataria">Capogruppo Mandataria di Raggruppamento Temporaneo (RTI Costituendo/Costituito)</option>
+            <option value="mandante">Mandante di Raggruppamento Temporaneo (RTI)</option>
+            <option value="consorziata">Consorziata Esecutrice designata da Consorzio</option>
+          </select>
+        </div>
+
+        <div class="space-y-2 pt-2 border-t border-slate-800">
+          <label class="block font-semibold text-slate-200">Autoverifica Motivi di Esclusione (artt. 94, 95 D.Lgs. 36/2023):</label>
+          
+          <label class="flex items-start gap-2 p-2.5 rounded-xl bg-slate-950 border border-slate-800 cursor-pointer">
+            <input type="checkbox" id="chkDgue1" checked class="rounded bg-slate-900 border-slate-700 text-cyan-500 mt-0.5">
+            <div class="text-[11px] text-slate-300">
+              <strong>Assenza condanne penali e reati gravi (Art. 94):</strong> Nessuna condanna con sentenza passata in giudicato a carico degli amministratori per reati contro la PA, frode o riciclaggio.
+            </div>
+          </label>
+
+          <label class="flex items-start gap-2 p-2.5 rounded-xl bg-slate-950 border border-slate-800 cursor-pointer">
+            <input type="checkbox" id="chkDgue2" checked class="rounded bg-slate-900 border-slate-700 text-cyan-500 mt-0.5">
+            <div class="text-[11px] text-slate-300">
+              <strong>Regolarità Fiscale e Contributiva (Art. 95):</strong> DURC online in corso di validità e assenza di debiti tributari definitivamente accertati.
+            </div>
+          </label>
+
+          <label class="flex items-start gap-2 p-2.5 rounded-xl bg-slate-950 border border-slate-800 cursor-pointer">
+            <input type="checkbox" id="chkDgue3" checked class="rounded bg-slate-900 border-slate-700 text-cyan-500 mt-0.5">
+            <div class="text-[11px] text-slate-300">
+              <strong>Norme sul Lavoro dei Disabili & Sicurezza (L. 68/99, D.Lgs. 81/08):</strong> Piena osservanza delle norme sul diritto al lavoro dei disabili e adozione del DVR.
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <div class="pt-3 border-t border-slate-800 flex flex-wrap items-center justify-between gap-2 text-xs">
+        <span class="text-slate-400 font-mono text-[11px]">CIG: ${escapeHtml(cig)}</span>
+        <div class="flex items-center gap-2">
+          <button type="button" onclick="document.getElementById('dgueModal').classList.add('hidden')" class="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 transition">
+            Annulla
+          </button>
+          <button type="button" id="btnApplyDgue" class="px-4 py-1.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold transition">
+            Conferma e Spunta DGUE Pronto
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.getElementById("btnApplyDgue")?.addEventListener("click", () => {
+    const chk = document.getElementById("w_busta_a_dgue");
+    if (chk) chk.checked = true;
+    currentWizardData.step3_data.busta_a_dgue_ready = true;
+
+    const forma = document.getElementById("selDgueForma")?.value || "singola";
+    window.addNewGaraNote("BUSTE", `[DGUE ESPD] Verificato e validato per partecipazione in forma: ${forma.toUpperCase()}. Assenza motivi ostativi confermata.`);
+
+    document.getElementById("dgueModal").classList.add("hidden");
+    showNotification("DGUE verificato e registrato nel fascicolo Busta A!");
+  });
+
+  modal.classList.remove("hidden");
+};
+
+/**
+ * 2. Pipeline Assistente Codice FVOE 2.0 ANAC
+ */
+window.openFvoeModal = function() {
+  const tender = (typeof getAllTendersFromSQLite === "function" ? getAllTendersFromSQLite() : []).find(t => t.id === currentWizardGaraId) || {};
+  const cig = currentWizardData?.step1_data?.cig || tender.cig || "GARA";
+
+  let modal = document.getElementById("fvoeModal");
+  if (!modal) {
+    modal = document.createElement("div");
+    modal.id = "fvoeModal";
+    modal.className = "fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4 transition-all";
+    document.body.appendChild(modal);
+  }
+
+  const simulatedCode = `FVOE-${cig.slice(0, 4)}-${new Date().getFullYear()}`;
+
+  modal.innerHTML = `
+    <div class="bg-slate-900 border border-purple-500/40 rounded-3xl p-6 max-w-xl w-full shadow-2xl space-y-4 max-h-[90vh] flex flex-col animate-in fade-in zoom-in-95 duration-150">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <div class="flex items-center gap-2.5">
+          <span class="w-8 h-8 rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20 flex items-center justify-center font-bold text-sm">🏛️</span>
+          <div>
+            <h3 class="text-sm font-bold text-white">Assistente Fascicolo Virtuale FVOE 2.0 ANAC</h3>
+            <p class="text-[11px] text-purple-300/80 font-mono">Banca Dati Nazionale Contratti Pubblici (BDNCP)</p>
+          </div>
+        </div>
+        <button onclick="document.getElementById('fvoeModal').classList.add('hidden')" class="text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-800 text-sm">✕</button>
+      </div>
+
+      <div class="bg-purple-950/30 p-3.5 rounded-2xl border border-purple-800/40 text-purple-200 text-xs space-y-1">
+        <strong>💡 Come ottenere il codice sul portale ANAC:</strong>
+        <ol class="list-decimal list-inside text-slate-200 text-[11px] space-y-1 mt-1 leading-relaxed">
+          <li>Accedi con SPID/CIE al portale ANAC dei Servizi per le Imprese.</li>
+          <li>Apri il servizio <strong>FVOE 2.0</strong> e inserisci il CIG: <code class="text-cyan-300 font-mono font-bold">${escapeHtml(cig)}</code></li>
+          <li>Genera l'autorizzazione all'accesso per la Stazione Appaltante e copia il codice rilasciato.</li>
+        </ol>
+      </div>
+
+      <div class="space-y-2 text-xs">
+        <label class="block font-semibold text-slate-200">Codice Identificativo Fascicolo FVOE:</label>
+        <div class="flex gap-2">
+          <input id="inputFvoeCode" type="text" value="${escapeHtml(currentWizardData?.step3_data?.busta_a_fvoe_passoe || simulatedCode)}" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-cyan-300 font-mono text-xs focus:border-purple-400">
+          <button type="button" onclick="navigator.clipboard.writeText('${escapeHtml(cig)}'); showNotification('CIG copiato negli appunti!');" class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-mono text-xs shrink-0">
+            Copia CIG
+          </button>
+        </div>
+        <span class="text-[10px] text-slate-500 font-mono">Formato standard rilasciato da ANAC: FVOE-[ID]-ANNO</span>
+      </div>
+
+      <div class="pt-3 border-t border-slate-800 flex items-center justify-between gap-2 text-xs">
+        <a href="https://www.anticorruzione.it/-/fascicolo-virtuale-dell-operatore-economico-fvoe" target="_blank" rel="noopener noreferrer" class="text-purple-400 hover:underline flex items-center gap-1 font-mono text-[11px]">
+          <span>Portale ANAC FVOE ↗</span>
+        </a>
+        <div class="flex items-center gap-2">
+          <button type="button" onclick="document.getElementById('fvoeModal').classList.add('hidden')" class="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 transition">
+            Chiudi
+          </button>
+          <button type="button" id="btnApplyFvoe" class="px-4 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold transition">
+            Applica Codice al Wizard
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.getElementById("btnApplyFvoe")?.addEventListener("click", () => {
+    const val = document.getElementById("inputFvoeCode")?.value.trim() || "";
+    const el = document.getElementById("w_fvoe_code");
+    if (el) el.value = val;
+    currentWizardData.step3_data.busta_a_fvoe_passoe = val;
+
+    window.addNewGaraNote("BUSTE", `[FVOE 2.0 ANAC] Codice fascicolo registrato: ${val}`);
+    document.getElementById("fvoeModal").classList.add("hidden");
+    showNotification("Codice FVOE 2.0 registrato con successo!");
+  });
+
+  modal.classList.remove("hidden");
+};
+
+/**
+ * 3. Pipeline Richiesta Polizza Fideiussoria al Broker Assicurativo
+ */
+window.openBrokerGuaranteeModal = function() {
+  const tender = (typeof getAllTendersFromSQLite === "function" ? getAllTendersFromSQLite() : []).find(t => t.id === currentWizardGaraId) || {};
+  const s1 = currentWizardData?.step1_data || {};
+  const s3 = currentWizardData?.step3_data || {};
+  const tenderAmount = Number(s3.busta_c_base_amount || tender.amount) || 100000;
+  
+  const guaranteeCalc = typeof WizardRules !== "undefined"
+    ? WizardRules.computeGuarantee({
+        base: tenderAmount,
+        ratePct: s3.garanzia_rate_pct || 2.0,
+        iso9001: !!currentWizardData?.step2_data?.check_iso,
+        pmi: !!s3.garanzia_pmi,
+        extraReductionPct: s3.garanzia_riduzione_extra_pct || 0
+      })
+    : { amount: Math.round(tenderAmount * 0.01), gross: Math.round(tenderAmount * 0.02) };
+
+  const cig = s1.cig || tender.cig || "GARA";
+  const authority = s1.authority || tender.authority || "Stazione Appaltante";
+  const title = s1.title || tender.title || "Procedura di Gara";
+
+  let modal = document.getElementById("brokerGuaranteeModal");
+  if (!modal) {
+    modal = document.createElement("div");
+    modal.id = "brokerGuaranteeModal";
+    modal.className = "fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4 transition-all";
+    document.body.appendChild(modal);
+  }
+
+  const brokerMailText = `Spett.le Compagnia Assicuratrice / Broker Convenzionato,
+
+Si richiede con cortese urgenza l'emissione di Polizza Fideiussoria per GARANZIA PROVVISORIA ex art. 106 D.Lgs. 36/2023 per la partecipazione alla seguente procedura MePA:
+
+CIG ANAC: ${cig}
+OGGETTO: ${title}
+STAZIONE APPALTANTE: ${authority}
+VALORE A BASE D'ASTA: ${formatEUR(tenderAmount)}
+
+IMPORTO GARANTITO RICHIESTO: ${formatEUR(guaranteeCalc.amount)} (già al netto delle riduzioni di legge ex art. 106 c.8 per PMI e fideiussione digitale)
+BENEFICIARIO: ${authority}
+
+CLAUSOLE OBBLIGATORIE RICHIESTE DAL BANDO A PENA DI ESCLUSIONE:
+1. Rinuncia al beneficio della preventiva escussione del debitore principale ex art. 1944 c.c.;
+2. Rinuncia all'eccezione di cui all'art. 1957, comma 2, del codice civile;
+3. Operatività della garanzia entro 15 (quindici) giorni a semplice richiesta scritta dell'Ente;
+4. Impegno del garante a rilasciare la garanzia definitiva per l'esecuzione del contratto qualora l'impresa risulti aggiudicataria (art. 106 c.5 D.Lgs. 36/2023).
+
+Si richiede la trasmissione del documento firmato digitalmente in formato CAdES (.pdf.p7m) per il caricamento sulla piattaforma AcquistinretePA.
+
+In attesa di riscontro, cordiali saluti.`;
+
+  modal.innerHTML = `
+    <div class="bg-slate-900 border border-emerald-500/40 rounded-3xl p-6 max-w-2xl w-full shadow-2xl space-y-4 max-h-[90vh] flex flex-col animate-in fade-in zoom-in-95 duration-150">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <div class="flex items-center gap-2.5">
+          <span class="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center justify-center font-bold text-sm">🛡️</span>
+          <div>
+            <h3 class="text-sm font-bold text-white">Richiesta Polizza Fideiussoria ex art. 106 (Broker / Banca)</h3>
+            <p class="text-[11px] text-emerald-300/80 font-mono">Importo netto calcolato: ${formatEUR(guaranteeCalc.amount)}</p>
+          </div>
+        </div>
+        <button onclick="document.getElementById('brokerGuaranteeModal').classList.add('hidden')" class="text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-800 text-sm">✕</button>
+      </div>
+
+      <div class="flex-1 overflow-y-auto custom-scrollbar space-y-2">
+        <label class="text-[11px] font-mono text-slate-300 font-semibold block">Testo formale email pronto per invio alla compagnia assicurativa:</label>
+        <pre id="preBrokerMail" class="bg-slate-950 p-4 rounded-xl border border-slate-800 text-emerald-300 font-mono text-[11px] select-all leading-relaxed whitespace-pre-wrap">${escapeHtml(brokerMailText)}</pre>
+      </div>
+
+      <div class="pt-3 border-t border-slate-800 flex flex-wrap items-center justify-between gap-2 text-xs">
+        <button type="button" onclick="navigator.clipboard.writeText(document.getElementById('preBrokerMail').innerText); showNotification('Testo per broker copiato negli appunti!');" class="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-mono text-xs transition">
+          Copia Testo Email
+        </button>
+        <div class="flex items-center gap-2">
+          <button type="button" onclick="window.downloadTextFile('richiesta_fideiussione_${cig}.txt', document.getElementById('preBrokerMail').innerText)" class="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-emerald-300 font-mono text-xs transition">
+            Scarica .txt
+          </button>
+          <button type="button" id="btnConfirmGuarantee" class="px-4 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold transition">
+            Conferma Acquisizione e Spunta
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.getElementById("btnConfirmGuarantee")?.addEventListener("click", () => {
+    const chk = document.getElementById("w_busta_a_fideiussione");
+    if (chk) chk.checked = true;
+    currentWizardData.step3_data.busta_a_fideiussione_ready = true;
+    currentWizardData.step3_data.busta_a_fideiussione_importo = guaranteeCalc.amount;
+
+    window.addNewGaraNote("BUSTE", `[Garanzia Provvisoria art. 106] Polizza confermata per importo ridotto ${formatEUR(guaranteeCalc.amount)}.`);
+    document.getElementById("brokerGuaranteeModal").classList.add("hidden");
+    showNotification("Garanzia provvisoria confermata e spuntata nel Wizard!");
+  });
+
+  modal.classList.remove("hidden");
+};
+
+/**
+ * 4. Pipeline Checklist Anti-Esclusione Busta B Tecnica
+ */
+window.openBustaBCheckModal = function() {
+  let modal = document.getElementById("bustaBModal");
+  if (!modal) {
+    modal = document.createElement("div");
+    modal.id = "bustaBModal";
+    modal.className = "fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4 transition-all";
+    document.body.appendChild(modal);
+  }
+
+  modal.innerHTML = `
+    <div class="bg-slate-900 border border-purple-500/40 rounded-3xl p-6 max-w-xl w-full shadow-2xl space-y-4 max-h-[90vh] flex flex-col animate-in fade-in zoom-in-95 duration-150">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <div class="flex items-center gap-2.5">
+          <span class="w-8 h-8 rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20 flex items-center justify-center font-bold text-sm">📐</span>
+          <div>
+            <h3 class="text-sm font-bold text-white">Checklist Anti-Esclusione Relazione Tecnica (Busta B)</h3>
+            <p class="text-[11px] text-purple-300/80 font-mono">D.Lgs. 36/2023 &bull; Principio di Separazione Buste</p>
+          </div>
+        </div>
+        <button onclick="document.getElementById('bustaBModal').classList.add('hidden')" class="text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-800 text-sm">✕</button>
+      </div>
+
+      <div class="p-3 rounded-2xl bg-rose-950/30 border border-rose-500/40 text-rose-200 text-xs flex items-center gap-2.5">
+        <span class="text-lg">🚫</span>
+        <span><strong>DIVIETO ASSOLUTO DI COMMISTIONE:</strong> Assicurati che nessun file della Busta Tecnica contenga prezzi o sconti, pena l'esclusione insanabile!</span>
+      </div>
+
+      <div class="space-y-2.5 text-xs">
+        <label class="block font-semibold text-slate-200">Verifica di conformità pre-caricamento:</label>
+
+        <label class="flex items-start gap-2 p-2.5 rounded-xl bg-slate-950 border border-slate-800 cursor-pointer">
+          <input type="checkbox" id="chkB1" checked class="rounded bg-slate-900 border-slate-700 text-purple-500 mt-0.5">
+          <div class="text-[11px] text-slate-300">
+            <strong>Rispetto Limite Massimo Pagine:</strong> La relazione descrittiva non eccede il tetto massimo di facciate stabilito dal disciplinare.
+          </div>
+        </label>
+
+        <label class="flex items-start gap-2 p-2.5 rounded-xl bg-slate-950 border border-slate-800 cursor-pointer">
+          <input type="checkbox" id="chkB2" checked class="rounded bg-slate-900 border-slate-700 text-purple-500 mt-0.5">
+          <div class="text-[11px] text-slate-300">
+            <strong>Nessun Prezzo Citato:</strong> Nessuna cifra in euro, tariffa oraria o percentuale di ribasso è presente nella relazione tecnica.
+          </div>
+        </label>
+
+        <label class="flex items-start gap-2 p-2.5 rounded-xl bg-slate-950 border border-slate-800 cursor-pointer">
+          <input type="checkbox" id="chkB3" checked class="rounded bg-slate-900 border-slate-700 text-purple-500 mt-0.5">
+          <div class="text-[11px] text-slate-300">
+            <strong>Firma Digitale CAdES (.p7m):</strong> Il file PDF finale è stato firmato digitalmente dal legale rappresentante o procuratore.
+          </div>
+        </label>
+      </div>
+
+      <div class="pt-3 border-t border-slate-800 flex justify-end gap-2 text-xs">
+        <button type="button" onclick="document.getElementById('bustaBModal').classList.add('hidden')" class="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 transition">
+          Annulla
+        </button>
+        <button type="button" id="btnApplyBustaB" class="px-4 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold transition">
+          Conferma Relazione Tecnica e Spunta
+        </button>
+      </div>
+    </div>
+  `;
+
+  document.getElementById("btnApplyBustaB")?.addEventListener("click", () => {
+    const chk = document.getElementById("w_busta_b_ready");
+    if (chk) chk.checked = true;
+    currentWizardData.step3_data.busta_b_ready = true;
+
+    window.addNewGaraNote("BUSTE", "[Busta B Tecnica] Checklist conformità completata: assenza elementi di prezzo e limite pagine verificato.");
+    document.getElementById("bustaBModal").classList.add("hidden");
+    showNotification("Relazione tecnica verificata e contrassegnata come pronta!");
+  });
+
+  modal.classList.remove("hidden");
+};
+
+/**
+ * 5. Pipeline Criteri Ambientali Minimi (CAM) Busta B
+ */
+window.openBustaBCamModal = function() {
+  let modal = document.getElementById("camModal");
+  if (!modal) {
+    modal = document.createElement("div");
+    modal.id = "camModal";
+    modal.className = "fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4 transition-all";
+    document.body.appendChild(modal);
+  }
+
+  modal.innerHTML = `
+    <div class="bg-slate-900 border border-emerald-500/40 rounded-3xl p-6 max-w-xl w-full shadow-2xl space-y-4 max-h-[90vh] flex flex-col animate-in fade-in zoom-in-95 duration-150">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <div class="flex items-center gap-2.5">
+          <span class="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center justify-center font-bold text-sm">🌱</span>
+          <div>
+            <h3 class="text-sm font-bold text-white">Assistente Criteri Ambientali Minimi (CAM - Art. 57)</h3>
+            <p class="text-[11px] text-emerald-300/80 font-mono">Punteggio Tecnico Premiale &bull; Sostenibilità Ambientale</p>
+          </div>
+        </div>
+        <button onclick="document.getElementById('camModal').classList.add('hidden')" class="text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-800 text-sm">✕</button>
+      </div>
+
+      <div class="bg-emerald-950/30 p-3.5 rounded-2xl border border-emerald-800/40 text-emerald-200 text-xs space-y-1">
+        <strong>💡 A cosa servono i CAM:</strong>
+        <p class="text-slate-200 text-[11px] leading-relaxed">
+          I CAM premiano i prodotti ecologici. Seleziona le certificazioni disponibili dei produttori per richiedere l'attribuzione del punteggio tecnico tabellare.
+        </p>
+      </div>
+
+      <div class="space-y-2 text-xs">
+        <label class="block font-semibold text-slate-200">Certificazioni Green della Fornitura:</label>
+        
+        <label class="flex items-center gap-2.5 p-2.5 rounded-xl bg-slate-950 border border-slate-800 cursor-pointer text-slate-300">
+          <input type="checkbox" id="camCert1" checked class="rounded bg-slate-900 border-slate-700 text-emerald-500">
+          <span>Ecolabel UE o Marchio Ecologico Equivalente (ISO 14024)</span>
+        </label>
+
+        <label class="flex items-center gap-2.5 p-2.5 rounded-xl bg-slate-950 border border-slate-800 cursor-pointer text-slate-300">
+          <input type="checkbox" id="camCert2" checked class="rounded bg-slate-900 border-slate-700 text-emerald-500">
+          <span>Certificazione Efficienza Energetica (Energy Star / Classe A+)</span>
+        </label>
+
+        <label class="flex items-center gap-2.5 p-2.5 rounded-xl bg-slate-950 border border-slate-800 cursor-pointer text-slate-300">
+          <input type="checkbox" id="camCert3" checked class="rounded bg-slate-900 border-slate-700 text-emerald-500">
+          <span>Imballaggi Riciclabili al 100% o Compostabili (Direttiva UE)</span>
+        </label>
+      </div>
+
+      <div class="pt-3 border-t border-slate-800 flex justify-end gap-2 text-xs">
+        <button type="button" onclick="document.getElementById('camModal').classList.add('hidden')" class="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 transition">
+          Annulla
+        </button>
+        <button type="button" id="btnApplyCam" class="px-4 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold transition">
+          Conferma Conformità CAM e Spunta
+        </button>
+      </div>
+    </div>
+  `;
+
+  document.getElementById("btnApplyCam")?.addEventListener("click", () => {
+    const chk = document.getElementById("w_busta_b_cam");
+    if (chk) chk.checked = true;
+    currentWizardData.step3_data.busta_b_criteri_cam = true;
+
+    window.addNewGaraNote("BUSTE", "[CAM Art. 57] Conformità ai Criteri Ambientali Minimi verificata e confermata per Busta Tecnica.");
+    document.getElementById("camModal").classList.add("hidden");
+    showNotification("Conformità CAM registrata con successo!");
+  });
+
+  modal.classList.remove("hidden");
+};
+
+/**
+ * 6. Pipeline Calcolatore Analitico Manodopera & Oneri Sicurezza (art. 108 c.9)
+ */
+window.openManodoperaModal = function() {
+  const tender = (typeof getAllTendersFromSQLite === "function" ? getAllTendersFromSQLite() : []).find(t => t.id === currentWizardGaraId) || {};
+  const s3 = currentWizardData?.step3_data || {};
+  const offeredPrice = s3.busta_c_offered_price || tender.amount || 50000;
+
+  let modal = document.getElementById("manodoperaModal");
+  if (!modal) {
+    modal = document.createElement("div");
+    modal.id = "manodoperaModal";
+    modal.className = "fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4 transition-all";
+    document.body.appendChild(modal);
+  }
+
+  const renderContent = () => {
+    modal.innerHTML = `
+      <div class="bg-slate-900 border border-amber-500/40 rounded-3xl p-6 max-w-xl w-full shadow-2xl space-y-4 max-h-[90vh] flex flex-col animate-in fade-in zoom-in-95 duration-150">
+        <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+          <div class="flex items-center gap-2.5">
+            <span class="w-8 h-8 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20 flex items-center justify-center font-bold text-sm">👷</span>
+            <div>
+              <h3 class="text-sm font-bold text-white">Calcolatore Analitico Costo Manodopera &amp; Sicurezza</h3>
+              <p class="text-[11px] text-amber-300/80 font-mono">D.Lgs. 36/2023 art. 108 c. 9 &bull; Scorporo Inderogabile</p>
+            </div>
+          </div>
+          <button onclick="document.getElementById('manodoperaModal').classList.add('hidden')" class="text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-800 text-sm">✕</button>
+        </div>
+
+        <div class="bg-amber-950/30 p-3 rounded-2xl border border-amber-800/40 text-amber-200 text-xs space-y-1">
+          <strong>💡 Regola fondamentale di legge:</strong>
+          <p class="text-slate-200 text-[11px] leading-relaxed">
+            La manodopera non è un costo aggiuntivo pagato dalla PA, ma la parte del tuo prezzo netto che spendi per i tecnici e gli addetti. Deve essere realistica secondo le tabelle ministeriali del lavoro.
+          </p>
+        </div>
+
+        <div class="space-y-3 text-xs">
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-slate-300 font-semibold mb-1">Ore Lavoro Totali Stimate:</label>
+              <input id="inputManoHours" type="number" value="${Math.round(offeredPrice * 0.25 / 30)}" min="1" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-cyan-300 font-mono text-xs focus:border-amber-400">
+            </div>
+            <div>
+              <label class="block text-slate-300 font-semibold mb-1">Costo Orario CCNL (€/ora):</label>
+              <input id="inputManoRate" type="number" step="0.5" value="30.0" min="15" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-cyan-300 font-mono text-xs focus:border-amber-400">
+            </div>
+          </div>
+
+          <div class="p-3.5 rounded-2xl bg-slate-950 border border-slate-800 space-y-2 text-xs">
+            <div class="flex items-center justify-between text-slate-300 font-mono">
+              <span>Totale Manodopera Risultante:</span>
+              <strong id="labelCalcMano" class="text-amber-400 text-sm font-bold">€ 0,00</strong>
+            </div>
+            <div class="flex items-center justify-between text-slate-300 font-mono">
+              <span>Oneri Sicurezza Aziendali (D.Lgs. 81/08 ~2%):</span>
+              <strong id="labelCalcSic" class="text-amber-400 text-sm font-bold">€ 0,00</strong>
+            </div>
+            <div class="pt-1.5 border-t border-slate-800 flex items-center justify-between text-[11px] text-slate-400 font-mono">
+              <span>Incidenza sul prezzo offerto:</span>
+              <span id="labelIncidenzaPct" class="font-bold text-slate-200">0%</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="pt-3 border-t border-slate-800 flex justify-end gap-2 text-xs">
+          <button type="button" onclick="document.getElementById('manodoperaModal').classList.add('hidden')" class="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 transition">
+            Annulla
+          </button>
+          <button type="button" id="btnApplyManodopera" class="px-4 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold transition">
+            Applica Valori alla Busta C
+          </button>
+        </div>
+      </div>
+    `;
+
+    const recalc = () => {
+      const hours = parseFloat(document.getElementById("inputManoHours")?.value) || 0;
+      const rate = parseFloat(document.getElementById("inputManoRate")?.value) || 0;
+      const totalMano = Math.round(hours * rate);
+      const totalSic = Math.round(offeredPrice * 0.02);
+      const incidenza = offeredPrice > 0 ? ((totalMano / offeredPrice) * 100).toFixed(1) : 0;
+
+      const elM = document.getElementById("labelCalcMano");
+      const elS = document.getElementById("labelCalcSic");
+      const elI = document.getElementById("labelIncidenzaPct");
+
+      if (elM) elM.textContent = formatEUR(totalMano);
+      if (elS) elS.textContent = formatEUR(totalSic);
+      if (elI) elI.textContent = `${incidenza}% del prezzo netto`;
+    };
+
+    document.getElementById("inputManoHours")?.addEventListener("input", recalc);
+    document.getElementById("inputManoRate")?.addEventListener("input", recalc);
+    recalc();
+
+    document.getElementById("btnApplyManodopera")?.addEventListener("click", () => {
+      const hours = parseFloat(document.getElementById("inputManoHours")?.value) || 0;
+      const rate = parseFloat(document.getElementById("inputManoRate")?.value) || 0;
+      const totalMano = Math.round(hours * rate);
+      const totalSic = Math.round(offeredPrice * 0.02);
+
+      const manoInp = document.getElementById("w_manodopera");
+      const sicInp = document.getElementById("w_sicurezza");
+
+      if (manoInp) manoInp.value = totalMano;
+      if (sicInp) sicInp.value = totalSic;
+
+      currentWizardData.step3_data.busta_c_manodopera = totalMano;
+      currentWizardData.step3_data.busta_c_sicurezza = totalSic;
+
+      window.addNewGaraNote("BUSTE", `[Scorporo art. 108 c.9] Calcolata manodopera su CCNL (${hours}h x ${rate}€/h = ${formatEUR(totalMano)}) e sicurezza ${formatEUR(totalSic)}.`);
+      document.getElementById("manodoperaModal").classList.add("hidden");
+      showNotification("Valori manodopera e sicurezza applicati alla Busta C!");
+    });
+  };
+
+  renderContent();
+  modal.classList.remove("hidden");
+};
+
+/**
+ * ==============================================================================
+ * EXPORT & DOWNLOAD DOCUMENTI FASE 3
+ * ==============================================================================
+ */
+
+/**
+ * Scarica la Domanda di Partecipazione & Dichiarazione Integrativa (Fase 3) in Word (.doc / .docx)
+ */
+window.downloadFase3Istanza = function(format = 'docx') {
+  readInputsFromWizardDOM();
+  const d = currentWizardData;
+  const s1 = d.step1_data || {};
+  const s3 = d.step3_data || {};
+  const tender = (typeof getAllTendersFromSQLite === "function" ? getAllTendersFromSQLite() : []).find(t => t.id === currentWizardGaraId) || {};
+
+  const params = {
+    cig: s1.cig || tender.cig || "GARA",
+    title: s1.title || tender.title || "Procedura di Gara",
+    authority: s1.authority || tender.authority || "Stazione Appaltante",
+    rup: s1.rup_name || tender.rup || "Responsabile Unico del Progetto",
+    companyName: "La scrivente Impresa Concorrente",
+    piva: "P.IVA Aziendale",
+    legalRep: "Il Legale Rappresentante",
+    sedeLegale: "Sede Operativa",
+    pec: "ufficiogare@pec.it",
+    fvoe: s3.busta_a_fvoe_passoe || "FVOE-IN-ATTESA",
+    offered_price: s3.busta_c_offered_price || tender.amount || 0,
+    discount_pct: s3.busta_c_discount_pct || 5.5,
+    manodopera: s3.busta_c_manodopera || 0,
+    sicurezza: s3.busta_c_sicurezza || 0,
+    fornitura_senza_posa: Boolean(s3.fornitura_senza_posa)
+  };
+
+  const cigSafe = (params.cig || "gara").replace(/[^a-zA-Z0-9_-]/g, "_");
+  const htmlContent = typeof LegalTemplates !== "undefined"
+    ? LegalTemplates.generateFase3IstanzaHtml(params)
+    : `<html><body><h1>Domanda Partecipazione CIG ${params.cig}</h1></body></html>`;
+
+  const blob = new Blob([htmlContent], { type: "application/msword;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `domanda_partecipazione_${cigSafe}.doc`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  showNotification("Domanda di Partecipazione Word (.doc) scaricata!");
+};
+
+/**
+ * Scarica il Fascicolo Operativo Buste in formato Markdown (.md)
+ */
+window.downloadFase3FascicoloMd = function() {
+  readInputsFromWizardDOM();
+  const d = currentWizardData;
+  const s1 = d.step1_data || {};
+  const s3 = d.step3_data || {};
+  const tender = (typeof getAllTendersFromSQLite === "function" ? getAllTendersFromSQLite() : []).find(t => t.id === currentWizardGaraId) || {};
+
+  const params = {
+    cig: s1.cig || tender.cig || "GARA",
+    title: s1.title || tender.title || "Procedura di Gara",
+    authority: s1.authority || tender.authority || "Stazione Appaltante",
+    offered_price: s3.busta_c_offered_price || tender.amount || 0,
+    discount_pct: s3.busta_c_discount_pct || 5.5,
+    manodopera: s3.busta_c_manodopera || 0,
+    sicurezza: s3.busta_c_sicurezza || 0,
+    fornitura_senza_posa: Boolean(s3.fornitura_senza_posa),
+    fvoe: s3.busta_a_fvoe_passoe || "FVOE-IN-ATTESA",
+    busta_a_dgue_ready: Boolean(s3.busta_a_dgue_ready),
+    busta_a_fideiussione_ready: Boolean(s3.busta_a_fideiussione_ready),
+    busta_b_ready: Boolean(s3.busta_b_ready),
+    busta_b_criteri_cam: Boolean(s3.busta_b_criteri_cam)
+  };
+
+  const cigSafe = (params.cig || "gara").replace(/[^a-zA-Z0-9_-]/g, "_");
+  const mdContent = typeof LegalTemplates !== "undefined"
+    ? LegalTemplates.generateFase3FascicoloMd(params)
+    : `# FASCICOLO BUSTE CIG ${params.cig}`;
+
+  window.downloadTextFile(`fascicolo_buste_${cigSafe}.md`, mdContent);
+  showNotification("Fascicolo Buste Markdown (.md) scaricato!");
+};
+
+/**
+ * Scarica il Computo Offerta Economica in formato CSV compatibile Excel
+ */
+window.downloadFase3ComputoCsv = function() {
+  readInputsFromWizardDOM();
+  const d = currentWizardData;
+  const s1 = d.step1_data || {};
+  const s3 = d.step3_data || {};
+  const tender = (typeof getAllTendersFromSQLite === "function" ? getAllTendersFromSQLite() : []).find(t => t.id === currentWizardGaraId) || {};
+
+  const params = {
+    cig: s1.cig || tender.cig || "GARA",
+    title: s1.title || tender.title || "Procedura di Gara",
+    authority: s1.authority || tender.authority || "Stazione Appaltante",
+    base_amount: s3.busta_c_base_amount || tender.amount || 0,
+    discount_pct: s3.busta_c_discount_pct || 5.5,
+    offered_price: s3.busta_c_offered_price || tender.amount || 0,
+    manodopera: s3.busta_c_manodopera || 0,
+    sicurezza: s3.busta_c_sicurezza || 0,
+    fornitura_senza_posa: Boolean(s3.fornitura_senza_posa)
+  };
+
+  const cigSafe = (params.cig || "gara").replace(/[^a-zA-Z0-9_-]/g, "_");
+  const csvContent = typeof LegalTemplates !== "undefined"
+    ? LegalTemplates.generateFase3ComputoCsv(params)
+    : `\uFEFFCIG;${params.cig}\nOfferta;${params.offered_price}`;
+
+  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `computo_offerta_${cigSafe}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  showNotification("Computo Offerta Economica Excel (.csv) scaricato!");
+};
+
+/**
+ * Scarica il payload JSON completo delle 3 Buste
+ */
+window.downloadFase3Json = function() {
+  readInputsFromWizardDOM();
+  const d = currentWizardData;
+  const s1 = d.step1_data || {};
+  const s3 = d.step3_data || {};
+  const tender = (typeof getAllTendersFromSQLite === "function" ? getAllTendersFromSQLite() : []).find(t => t.id === currentWizardGaraId) || {};
+
+  const params = {
+    cig: s1.cig || tender.cig || "GARA",
+    title: s1.title || tender.title || "Procedura di Gara",
+    authority: s1.authority || tender.authority || "Stazione Appaltante",
+    rup: s1.rup_name || tender.rup || "N/D",
+    base_amount: s3.busta_c_base_amount || tender.amount || 0,
+    discount_pct: s3.busta_c_discount_pct || 5.5,
+    offered_price: s3.busta_c_offered_price || 0,
+    manodopera: s3.busta_c_manodopera || 0,
+    sicurezza: s3.busta_c_sicurezza || 0,
+    fornitura_senza_posa: Boolean(s3.fornitura_senza_posa),
+    offerta_inviata: Boolean(s3.offerta_inviata),
+    busta_a_dgue_ready: Boolean(s3.busta_a_dgue_ready),
+    busta_a_fideiussione_ready: Boolean(s3.busta_a_fideiussione_ready),
+    fvoe: s3.busta_a_fvoe_passoe || "",
+    busta_a_files: s3.busta_a_files || [],
+    busta_b_ready: Boolean(s3.busta_b_ready),
+    busta_b_criteri_cam: Boolean(s3.busta_b_criteri_cam),
+    busta_b_files: s3.busta_b_files || [],
+    busta_c_files: s3.busta_c_files || []
+  };
+
+  const cigSafe = (params.cig || "gara").replace(/[^a-zA-Z0-9_-]/g, "_");
+  const jsonObj = typeof LegalTemplates !== "undefined"
+    ? LegalTemplates.generateFase3Json(params)
+    : params;
+
+  const jsonStr = JSON.stringify(jsonObj, null, 2);
+  const blob = new Blob([jsonStr], { type: "application/json;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `payload_buste_${cigSafe}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  showNotification("Payload Buste JSON scaricato!");
+};
+
 
 

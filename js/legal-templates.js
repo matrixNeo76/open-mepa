@@ -634,6 +634,260 @@ ${notes ? `### Note e Prescrizioni del Comitato\n${notes}\n` : ""}
     };
   }
 
+  /**
+   * Genera documento HTML formattato compatibile Microsoft Word (.doc / .docx) per la Domanda di Partecipazione & Dichiarazione Integrativa (Fase 3)
+   */
+  function generateFase3IstanzaHtml(params) {
+    const p = params || {};
+    const cig = (p.cig || "N/D").trim().toUpperCase();
+    const title = (p.title || "Procedura di Gara").trim();
+    const authority = (p.authority || "Spett.le Stazione Appaltante").trim();
+    const rup = (p.rup || "Responsabile Unico del Progetto").trim();
+    const company = (p.companyName || "La scrivente Impresa Concorrente").trim();
+    const piva = (p.piva || "[P.IVA/C.F.]").trim();
+    const rep = (p.legalRep || "Il Legale Rappresentante").trim();
+    const sede = (p.sedeLegale || "[Sede Legale]").trim();
+    const pec = (p.pec || "[Indirizzo PEC]").trim();
+    const fvoe = (p.fvoe || "FVOE-IN-ATTESA").trim();
+    const offeredPrice = Number(p.offered_price) || 0;
+    const discountPct = Number(p.discount_pct) || 0;
+    const manodopera = Number(p.manodopera) || 0;
+    const sicurezza = Number(p.sicurezza) || 0;
+    const fornituraSenzaPosa = Boolean(p.fornitura_senza_posa);
+    const now = new Date();
+    const printDate = formatDateIt(now.toISOString());
+
+    return `<!DOCTYPE html>
+<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+<head>
+  <meta charset='utf-8'>
+  <title>Domanda di Partecipazione & Dichiarazione Integrativa - CIG ${escapeHtml(cig)}</title>
+  <!--[if gte mso 9]>
+  <xml>
+    <w:WordDocument>
+      <w:View>Print</w:View>
+      <w:Zoom>100</w:Zoom>
+      <w:DoNotOptimizeForBrowser/>
+    </w:WordDocument>
+  </xml>
+  <![endif]-->
+  <style>
+    body { font-family: 'Calibri', 'Segoe UI', Arial, sans-serif; font-size: 11pt; color: #1e293b; line-height: 1.5; margin: 30px; }
+    h1 { font-size: 16pt; color: #0f172a; border-bottom: 2px solid #0284c7; padding-bottom: 8px; margin-bottom: 14px; text-align: center; }
+    h2 { font-size: 12pt; color: #0369a1; margin-top: 20px; border-bottom: 1px solid #cbd5e1; padding-bottom: 4px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; margin-bottom: 16px; }
+    th, td { border: 1px solid #cbd5e1; padding: 7px 10px; text-align: left; font-size: 10pt; }
+    th { background-color: #f8fafc; font-weight: bold; color: #334155; width: 35%; }
+    .box { background-color: #f8fafc; border: 1px solid #cbd5e1; border-radius: 4px; padding: 12px; margin: 12px 0; }
+    .sign-box { margin-top: 40px; width: 100%; border: none; }
+    .sign-box td { border: none; padding: 20px 10px; width: 50%; vertical-align: top; }
+    .sign-line { border-top: 1px solid #64748b; margin-top: 40px; padding-top: 5px; font-size: 9.5pt; color: #475569; }
+    .footer { font-size: 9pt; color: #64748b; margin-top: 36px; border-top: 1px solid #e2e8f0; padding-top: 10px; }
+  </style>
+</head>
+<body>
+  <div style="text-align: right; font-size: 9.5pt; color: #475569; margin-bottom: 20px;">
+    Spett.le <strong>${escapeHtml(authority)}</strong><br>
+    All'attenzione del RUP: <strong>${escapeHtml(rup)}</strong><br>
+    Tramite piattaforma telematica AcquistinretePA (MePA)
+  </div>
+
+  <h1>DOMANDA DI PARTECIPAZIONE E DICHIARAZIONE INTEGRATIVA</h1>
+  <p style="text-align: center; font-size: 10pt; color: #475569;">
+    (Resa ai sensi degli artt. 46 e 47 del D.P.R. 28 dicembre 2000, n. 445 e del D.Lgs. 31 marzo 2023, n. 36)
+  </p>
+
+  <div class="box">
+    <strong>PROCEDURA:</strong> "${escapeHtml(title)}"<br>
+    <strong>CIG ANAC:</strong> <span style="font-family: Consolas, monospace; font-weight: bold; color: #0369a1;">${escapeHtml(cig)}</span>
+  </div>
+
+  <p>
+    Il/La sottoscritto/a <strong>${escapeHtml(rep)}</strong>, in qualità di Legale Rappresentante dell'operatore economico <strong>${escapeHtml(company)}</strong>, con sede legale in ${escapeHtml(sede)}, Codice Fiscale / Partita IVA <strong>${escapeHtml(piva)}</strong>, indirizzo PEC <strong>${escapeHtml(pec)}</strong>;
+  </p>
+
+  <h2>CHIEDE</h2>
+  <p>
+    di essere ammesso a partecipare alla procedura di affidamento in oggetto e, a tal fine, consapevole delle sanzioni penali previste dall'art. 76 del D.P.R. 445/2000 per le ipotesi di falsità in atti e dichiarazioni mendaci,
+  </p>
+
+  <h2>DICHIARA SOTTO LA PROPRIA RESPONSABILITÀ:</h2>
+  <ol style="padding-left: 20px; font-size: 10pt; line-height: 1.6;">
+    <li><strong>Accettazione Condizioni:</strong> di aver esaminato tutti gli atti di gara (Bando, Disciplinare, Capitolato Tecnico e relativi allegati) e di accettarne incondizionatamente e pienamente tutte le clausole e condizioni;</li>
+    <li><strong>Requisiti di Ordine Generale:</strong> che nei propri confronti e dei soggetti di cui all'art. 94 del D.Lgs. 36/2023 non sussistono cause di esclusione automatica (art. 94) né cause di esclusione non automatica (art. 95) né situazioni ostative ex art. 98 del Codice;</li>
+    <li><strong>Regolarità Fiscale e Contributiva:</strong> di essere in regola con gli obblighi relativi al pagamento delle imposte, tasse e dei contributi previdenziali e assistenziali (DURC regolare);</li>
+    <li><strong>Fascicolo Virtuale ANAC (FVOE 2.0):</strong> che il codice fascicolo virtuale generato sulla piattaforma BDNCP ANAC è: <strong>${escapeHtml(fvoe)}</strong>, mediante il quale la Stazione Appaltante è autorizzata ad acquisire d'ufficio le verifiche probatorie;</li>
+    <li><strong>Criteri Ambientali Minimi (CAM):</strong> di impegnarsi al rigoroso rispetto dei Criteri Ambientali Minimi ex art. 57 del D.Lgs. 36/2023 applicabili alla presente fornitura/servizio;</li>
+    <li><strong>Scorporo Manodopera e Sicurezza (art. 108 c. 9):</strong> 
+      ${fornituraSenzaPosa 
+        ? `che la presente fornitura ricade nella deroga espressa di cui al secondo periodo dell'art. 108 c.9 in quanto mera fornitura di beni senza posa in opera o servizio di natura intellettuale.`
+        : `che nell'offerta economica formulata i propri costi della manodopera ammontano ad <strong>€ ${formatMoney(manodopera)}</strong> e gli oneri aziendali della sicurezza ammontano ad <strong>€ ${formatMoney(sicurezza)}</strong>, entrambi calcolati in conformità al CCNL e al D.Lgs. 81/2008.`}
+    </li>
+    <li><strong>Tracciabilità dei Flussi Finanziari:</strong> di assumere tutti gli obblighi di tracciabilità dei flussi finanziari di cui alla Legge 13 agosto 2010, n. 136;</li>
+    <li><strong>Firma Digitale:</strong> che la presente istanza e tutti i documenti allegati alla Busta A, Busta B e Busta C vengono sottoscritti con firma digitale qualificata CAdES (.p7m).</li>
+  </ol>
+
+  <table class="sign-box">
+    <tr>
+      <td>
+        Data di redazione: ${escapeHtml(printDate)}
+      </td>
+      <td style="text-align: right;">
+        <strong>L'Impresa Concorrente</strong><br>
+        Firmato digitalmente (.p7m)<br>
+        <strong>${escapeHtml(rep)}</strong>
+      </td>
+    </tr>
+  </table>
+
+  <div class="footer">
+    <p>Documento generato per fascicolo d'appalto MePA & Consip Desk Pro in conformità al D.Lgs. 36/2023.</p>
+  </div>
+</body>
+</html>`;
+  }
+
+  /**
+   * Genera fascicolo operativo Markdown per la Fase 3 con checklist file .p7m e riepilogo buste
+   */
+  function generateFase3FascicoloMd(params) {
+    const p = params || {};
+    const cig = (p.cig || "N/D").trim().toUpperCase();
+    const title = (p.title || "Procedura di Gara").trim();
+    const authority = (p.authority || "Stazione Appaltante").trim();
+    const offeredPrice = Number(p.offered_price) || 0;
+    const discountPct = Number(p.discount_pct) || 0;
+    const manodopera = Number(p.manodopera) || 0;
+    const sicurezza = Number(p.sicurezza) || 0;
+    const fornituraSenzaPosa = Boolean(p.fornitura_senza_posa);
+    const fvoe = (p.fvoe || "FVOE-IN-ATTESA").trim();
+    const now = new Date();
+    const printDate = formatDateIt(now.toISOString());
+
+    return `# FASCICOLO OPERATIVO BUSTE TELEMATICHE (FASE 3)
+**Procedura CIG ANAC:** \`${cig}\`  
+**Oggetto:** ${title}  
+**Stazione Appaltante:** ${authority}  
+**Data Generazione Fascicolo:** ${printDate}  
+
+---
+
+## 📁 1. BUSTA A - Documentazione Amministrativa
+| Documento Richiesto | Stato Predisposizione | Nomenclatura File (.p7m) |
+| :--- | :--- | :--- |
+| **Domanda Partecipazione & Dichiarazione Integrativa** | ✓ Pronta da firmare | \`domanda_partecipazione_${cig}.pdf.p7m\` |
+| **DGUE Elettronico (ESPD)** | ${p.busta_a_dgue_ready ? "✓ Compilato e Validato" : "⏳ Da compilare su portale"} | \`dgue_${cig}.pdf.p7m\` |
+| **Garanzia Provvisoria Fideiussoria (art. 106)** | ${p.busta_a_fideiussione_ready ? "✓ Acquisita con sconti PMI/Digitale" : "⏳ Richiesta broker pendente"} | \`garanzia_provvisoria_${cig}.pdf.p7m\` |
+| **PassOE / Fascicolo FVOE 2.0 ANAC** | Codice: \`${fvoe}\` | \`fvoe_passoe_${cig}.pdf.p7m\` |
+
+---
+
+## 📁 2. BUSTA B - Progetto Tecnico & CAM
+> ⚠️ **ATTENZIONE TASSATIVA:** Nessun dato di prezzo o percentuale di ribasso deve comparire nella Busta Tecnica a pena di esclusione!
+
+| Elaborato Tecnico | Stato | Prescrizioni Disciplinare |
+| :--- | :--- | :--- |
+| **Relazione Descrittiva dell'Offerta** | ${p.busta_b_ready ? "✓ Completata e Impaginata" : "⏳ In stesura"} | Rispetto limite massimo pagine e font |
+| **Schede Tecniche & Criteri CAM (Art. 57)** | ${p.busta_b_criteri_cam ? "✓ Conformità CAM verificata" : "⏳ Schede produttori da allegare"} | Certificazioni Ecolabel / ISO 14001 |
+
+---
+
+## 📁 3. BUSTA C - Offerta Economica
+- **Prezzo Complessivo Netto Offerto:** **€ ${formatMoney(offeredPrice)}** (IVA esclusa)
+- **Ribasso Percentuale:** **${discountPct}%**
+- **Costi Manodopera ex art. 108 c. 9:** ${fornituraSenzaPosa ? "Esente per legge (fornitura senza posa)" : `€ ${formatMoney(manodopera)}`}
+- **Oneri Aziendali Sicurezza D.Lgs. 81/08:** ${fornituraSenzaPosa ? "Esente per legge" : `€ ${formatMoney(sicurezza)}`}
+- **File MePA:** \`offerta_economica_${cig}.pdf.p7m\`
+
+---
+*Fascicolo generato da MePA & Consip Desk Pro in conformità al D.Lgs. 36/2023.*
+`;
+  }
+
+  /**
+   * Genera un file CSV compatibile al 100% con Microsoft Excel (BOM UTF-8, ';') per il Computo Economico di Fase 3
+   */
+  function generateFase3ComputoCsv(params) {
+    const p = params || {};
+    const cig = (p.cig || "N/D").trim().toUpperCase();
+    const title = (p.title || "Procedura di Gara").replace(/[\r\n;]/g, " ").trim();
+    const authority = (p.authority || "Stazione Appaltante").replace(/[\r\n;]/g, " ").trim();
+    const baseAmount = Number(p.base_amount) || 0;
+    const discountPct = Number(p.discount_pct) || 0;
+    const offeredPrice = Number(p.offered_price) || (baseAmount * (1 - discountPct / 100));
+    const manodopera = Number(p.manodopera) || 0;
+    const sicurezza = Number(p.sicurezza) || 0;
+    const fornituraSenzaPosa = Boolean(p.fornitura_senza_posa);
+    const supplyNet = offeredPrice - manodopera - sicurezza;
+    const now = new Date();
+    const todayStr = `${String(now.getDate()).padStart(2, "0")}/${String(now.getMonth() + 1).padStart(2, "0")}/${now.getFullYear()}`;
+
+    const nFmt = n => String(Number(n || 0).toFixed(2)).replace(".", ",");
+
+    const lines = [
+      "COMPUTO DETTAGLIATO OFFERTA ECONOMICA E SCORPORO ART. 108 C.9;MePA & Consip Desk Pro",
+      `CIG ANAC;${cig}`,
+      `Oggetto Appalto;${title}`,
+      `Stazione Appaltante;${authority}`,
+      `Data Elaborazione;${todayStr}`,
+      "",
+      "PARAMETRO ECONOMICO;VALORE IN EURO;PERCENTUALE;RIFERIMENTO NORMATIVO D.LGS. 36/2023",
+      `Importo a Base di Gara;${nFmt(baseAmount)};100,00%;Base d'asta disciplinare`,
+      `Ribasso Percentuale Offerto;${nFmt(baseAmount - offeredPrice)};${nFmt(discountPct)}%;Sconto applicato dall'operatore economico`,
+      `PREZZO COMPLESSIVO NETTO OFFERTO;${nFmt(offeredPrice)};${nFmt(100 - discountPct)}%;Valore complessivo contrattuale (IVA esclusa)`,
+      `Costi della Manodopera Scorporati;${fornituraSenzaPosa ? "ESENTE (0,00)" : nFmt(manodopera)};${offeredPrice > 0 && !fornituraSenzaPosa ? nFmt((manodopera/offeredPrice)*100) : "0,00"}%;${fornituraSenzaPosa ? "Esente ex art. 108 c.9 secondo periodo" : "Art. 108 c.9 primo periodo (inderogabile)"}`,
+      `Oneri Aziendali della Sicurezza;${fornituraSenzaPosa ? "ESENTE (0,00)" : nFmt(sicurezza)};${offeredPrice > 0 && !fornituraSenzaPosa ? nFmt((sicurezza/offeredPrice)*100) : "0,00"}%;${fornituraSenzaPosa ? "Esente ex art. 108 c.9" : "D.Lgs. 81/2008 spese aziendali salute e sicurezza"}`,
+      `Valore Netto Fornitura / Materiali;${nFmt(supplyNet)};${offeredPrice > 0 ? nFmt((supplyNet/offeredPrice)*100) : "0,00"}%;Quota residua per beni, licenze, apparati e utile`,
+      "",
+      "ATTESTAZIONE DI CONGRUITA' (ART. 110 D.LGS. 36/2023)",
+      `Stato Offerta;${offeredPrice > 0 ? "OFFERTA CONGRUA E SOSTENIBILE" : "INCOMPLETA"};Costi del personale e della sicurezza pienamente garantiti`
+    ];
+
+    return "\uFEFF" + lines.join("\r\n");
+  }
+
+  /**
+   * Genera l'oggetto JSON strutturato per la Fase 3 (Buste Telematiche)
+   */
+  function generateFase3Json(params) {
+    const p = params || {};
+    return {
+      metadata: {
+        generator: "MePA & Consip Desk Pro - Workflow Deterministico",
+        version: "3.0",
+        generated_at: new Date().toISOString()
+      },
+      tender: {
+        cig: (p.cig || "N/D").trim().toUpperCase(),
+        title: p.title || "",
+        authority: p.authority || "",
+        rup: p.rup || "",
+        base_amount: Number(p.base_amount) || 0
+      },
+      busta_a_amministrativa: {
+        dgue_ready: Boolean(p.busta_a_dgue_ready),
+        fideiussione_ready: Boolean(p.busta_a_fideiussione_ready),
+        fvoe_code: p.fvoe || "",
+        files: p.busta_a_files || []
+      },
+      busta_b_tecnica: {
+        relazione_ready: Boolean(p.busta_b_ready),
+        criteri_cam: Boolean(p.busta_b_criteri_cam),
+        files: p.busta_b_files || []
+      },
+      busta_c_economica: {
+        base_amount: Number(p.base_amount) || 0,
+        discount_pct: Number(p.discount_pct) || 0,
+        offered_price: Number(p.offered_price) || 0,
+        manodopera: Number(p.manodopera) || 0,
+        sicurezza: Number(p.sicurezza) || 0,
+        fornitura_senza_posa: Boolean(p.fornitura_senza_posa),
+        offerta_inviata: Boolean(p.offerta_inviata),
+        files: p.busta_c_files || []
+      }
+    };
+  }
+
   return {
     generateQaRequestText,
     generateGuaranteeReleaseRequestText,
@@ -646,6 +900,11 @@ ${notes ? `### Note e Prescrizioni del Comitato\n${notes}\n` : ""}
     generateFase2VerbaleHtml,
     generateFase2VerbaleMd,
     generateFase2BusinessCaseCsv,
-    generateFase2Json
+    generateFase2Json,
+    generateFase3IstanzaHtml,
+    generateFase3FascicoloMd,
+    generateFase3ComputoCsv,
+    generateFase3Json
   };
 });
+

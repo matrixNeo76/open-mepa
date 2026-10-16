@@ -211,8 +211,111 @@ test("Fase 2: Genera JSON strutturato per fascicolo e agenti", () => {
   assert.strictEqual(json.business_case.target_sustainable, true);
 });
 
+// 8. Domanda Partecipazione & Dichiarazione Integrativa Fase 3 (Word HTML)
+test("Fase 3: Genera Domanda di Partecipazione Word con scorporo art. 108 c.9", () => {
+  const p = {
+    cig: "E556677889",
+    title: "Servizi di Connettività e Cybersecurity",
+    authority: "Città Metropolitana di Napoli",
+    rup: "Ing. De Luca",
+    companyName: "Cyber Defense S.r.l.",
+    piva: "08765432109",
+    legalRep: "Marco Esposito",
+    fvoe: "FVOE-NAP-2026-991",
+    base_amount: 120000,
+    discount_pct: 6.5,
+    offered_price: 112200,
+    manodopera: 28000,
+    sicurezza: 2200,
+    fornitura_senza_posa: false
+  };
+
+  const html = LegalTemplates.generateFase3IstanzaHtml(p);
+  assert.ok(html.includes("DOMANDA DI PARTECIPAZIONE E DICHIARAZIONE INTEGRATIVA"));
+  assert.ok(html.includes("E556677889"));
+  assert.ok(html.includes("Cyber Defense S.r.l."));
+  assert.ok(html.includes("Marco Esposito"));
+  assert.ok(html.includes("FVOE-NAP-2026-991"));
+  assert.ok(html.includes("28.000,00")); // Manodopera
+  assert.ok(html.includes("2.200,00")); // Sicurezza
+});
+
+// 9. Fascicolo Buste Markdown Fase 3
+test("Fase 3: Genera Fascicolo Buste Markdown con separazione e file .p7m", () => {
+  const p = {
+    cig: "F112233445",
+    title: "Manutenzione Impianti Tecnologici",
+    authority: "ASL Bari",
+    offered_price: 95000,
+    discount_pct: 5.0,
+    manodopera: 35000,
+    sicurezza: 1800,
+    fvoe: "FVOE-BARI-001",
+    busta_a_dgue_ready: true,
+    busta_a_fideiussione_ready: true,
+    busta_b_ready: true,
+    busta_b_criteri_cam: true
+  };
+
+  const md = LegalTemplates.generateFase3FascicoloMd(p);
+  assert.ok(md.includes("# FASCICOLO OPERATIVO BUSTE TELEMATICHE (FASE 3)"));
+  assert.ok(md.includes("F112233445"));
+  assert.ok(md.includes("BUSTA A - Documentazione Amministrativa"));
+  assert.ok(md.includes("BUSTA B - Progetto Tecnico & CAM"));
+  assert.ok(md.includes("BUSTA C - Offerta Economica"));
+  assert.ok(md.includes("Nessun dato di prezzo o percentuale di ribasso deve comparire nella Busta Tecnica"));
+});
+
+// 10. Computo Economico CSV per Microsoft Excel
+test("Fase 3: Genera CSV Computo Economico formattato con BOM UTF-8 e ';'", () => {
+  const p = {
+    cig: "G998877112",
+    title: "Fornitura Licenze Software e Supporto",
+    authority: "Regione Veneto",
+    base_amount: 80000,
+    discount_pct: 8.0,
+    offered_price: 73600,
+    manodopera: 15000,
+    sicurezza: 1000,
+    fornitura_senza_posa: false
+  };
+
+  const csv = LegalTemplates.generateFase3ComputoCsv(p);
+  assert.ok(csv.startsWith("\uFEFF"));
+  assert.ok(csv.includes("CIG ANAC;G998877112"));
+  assert.ok(csv.includes("PREZZO COMPLESSIVO NETTO OFFERTO;73600,00"));
+  assert.ok(csv.includes("Costi della Manodopera Scorporati;15000,00"));
+});
+
+// 11. Payload Buste JSON
+test("Fase 3: Genera Payload JSON completo per le 3 Buste", () => {
+  const p = {
+    cig: "H334455667",
+    title: "Arredi e Dotazioni Ufficio",
+    authority: "Università di Bologna",
+    base_amount: 50000,
+    discount_pct: 4.5,
+    offered_price: 47750,
+    busta_a_dgue_ready: true,
+    busta_a_fideiussione_ready: true,
+    busta_b_ready: true,
+    busta_b_criteri_cam: true,
+    fornitura_senza_posa: true,
+    offerta_inviata: true
+  };
+
+  const json = LegalTemplates.generateFase3Json(p);
+  assert.strictEqual(json.metadata.version, "3.0");
+  assert.strictEqual(json.tender.cig, "H334455667");
+  assert.strictEqual(json.busta_a_amministrativa.dgue_ready, true);
+  assert.strictEqual(json.busta_b_tecnica.relazione_ready, true);
+  assert.strictEqual(json.busta_c_economica.fornitura_senza_posa, true);
+  assert.strictEqual(json.busta_c_economica.offerta_inviata, true);
+});
+
 console.log(`\nRisultato: ${passedTests}/${totalTests} test superati con successo.\n`);
 if (passedTests !== totalTests) {
   process.exit(1);
 }
+
 
