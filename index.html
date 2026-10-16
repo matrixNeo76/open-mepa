@@ -218,247 +218,243 @@
       </div>
 
       <!-- SECTION 1: CRUSCOTTO GARE -->
-      <div id="view-cruscotto" class="section-view space-y-6">
+      <div id="view-cruscotto" class="section-view space-y-5">
         
-        <!-- KPI METRICS ROW: UI-Craft Tier 1 (Hero) + Tier 2 (Supporting) -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <!-- PIPELINE CICLO DI VITA D.LGS. 36/2023 (4 FASI INTERATTIVE) -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
           
-          <!-- Card 1 (Hero Metric): Primary focus with cyan glow & integrated SVG Sparkline -->
-          <div class="card-hero rounded-2xl p-4 sm:p-5 relative overflow-hidden flex flex-col justify-between">
-            <div class="flex items-start justify-between gap-2">
-              <div>
-                <span class="text-xs font-semibold text-cyan-300/90 tracking-wide flex items-center gap-1.5">
-                  <span class="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></span>
-                  Gare nel cruscotto
-                </span>
-                <div class="flex items-baseline gap-2 mt-2">
-                  <span id="statFiltered" class="text-3xl sm:text-4xl font-extrabold text-cyan-300 font-mono tracking-tight">0</span>
-                  <span id="statTotal" class="text-xs font-mono text-cyan-400/60">/ 0</span>
-                </div>
-              </div>
-              <div class="h-9 w-9 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 shrink-0">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-              </div>
+          <!-- Fase 1: Da Valutare -->
+          <button type="button" onclick="filterByPhase('Da Valutare')" class="text-left rounded-2xl p-4 bg-slate-900/80 border border-sky-500/30 hover:border-sky-400/80 hover:bg-sky-950/20 transition-all shadow-md group relative overflow-hidden" title="Clicca per visualizzare solo le gare in Fase 1 (Da Valutare)">
+            <div class="flex items-center justify-between text-xs font-semibold text-slate-400">
+              <span class="flex items-center gap-1.5 text-sky-300">
+                <span class="w-2 h-2 rounded-full bg-sky-400 animate-pulse"></span>
+                1. Da Valutare
+              </span>
+              <span class="text-[10px] font-mono uppercase text-sky-400/70 bg-sky-500/10 px-1.5 py-0.5 rounded">Triage / Go-NoGo</span>
             </div>
-            
-            <!-- Integrated SVG Sparkline -->
-            <div class="mt-3 pt-2 border-t border-cyan-500/20 flex items-center justify-between">
-              <span class="text-[11px] font-mono text-cyan-200/70 truncate">⚡ Motore SQLite 3</span>
-              <svg class="w-20 h-6 shrink-0" viewBox="0 0 80 24" fill="none" aria-hidden="true">
-                <defs>
-                  <linearGradient id="heroSparklineGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.4"/>
-                    <stop offset="100%" stop-color="#38bdf8" stop-opacity="0.0"/>
-                  </linearGradient>
-                </defs>
-                <path d="M 0 18 Q 15 14, 25 16 T 45 8 T 65 11 T 80 4 L 80 24 L 0 24 Z" fill="url(#heroSparklineGrad)"/>
-                <path d="M 0 18 Q 15 14, 25 16 T 45 8 T 65 11 T 80 4" stroke="#38bdf8" stroke-width="2" stroke-linecap="round" fill="none"/>
-              </svg>
+            <div class="mt-2.5 flex items-baseline justify-between">
+              <div id="statPhase1" class="text-2xl sm:text-3xl font-extrabold text-sky-400 font-mono tracking-tight">0</div>
+              <span class="text-[11px] text-slate-500 group-hover:text-sky-300 font-medium transition-colors">Filtra fase →</span>
             </div>
+            <div class="text-[10px] text-slate-400 mt-1 truncate">Verifica requisiti &amp; termini Q&amp;A</div>
+          </button>
+
+          <!-- Fase 2: In Lavorazione -->
+          <button type="button" onclick="filterByPhase('In Lavorazione')" class="text-left rounded-2xl p-4 bg-slate-900/80 border border-amber-500/30 hover:border-amber-400/80 hover:bg-amber-950/20 transition-all shadow-md group relative overflow-hidden" title="Clicca per visualizzare solo le gare in Fase 2 (In Lavorazione)">
+            <div class="flex items-center justify-between text-xs font-semibold text-slate-400">
+              <span class="flex items-center gap-1.5 text-amber-300">
+                <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+                2. In Lavorazione
+              </span>
+              <span class="text-[10px] font-mono uppercase text-amber-400/70 bg-amber-500/10 px-1.5 py-0.5 rounded">Buste A, B, C</span>
+            </div>
+            <div class="mt-2.5 flex items-baseline justify-between">
+              <div id="statPhase2" class="text-2xl sm:text-3xl font-extrabold text-amber-400 font-mono tracking-tight">0</div>
+              <span class="text-[11px] text-slate-500 group-hover:text-amber-300 font-medium transition-colors">Filtra fase →</span>
+            </div>
+            <div class="text-[10px] text-slate-400 mt-1 truncate">Documenti DGUE, cauzione e offerta</div>
+          </button>
+
+          <!-- Fase 3: Inviata -->
+          <button type="button" onclick="filterByPhase('Inviata')" class="text-left rounded-2xl p-4 bg-slate-900/80 border border-purple-500/30 hover:border-purple-400/80 hover:bg-purple-950/20 transition-all shadow-md group relative overflow-hidden" title="Clicca per visualizzare solo le gare in Fase 3 (Inviate)">
+            <div class="flex items-center justify-between text-xs font-semibold text-slate-400">
+              <span class="flex items-center gap-1.5 text-purple-300">
+                <span class="w-2 h-2 rounded-full bg-purple-400"></span>
+                3. Inviata
+              </span>
+              <span class="text-[10px] font-mono uppercase text-purple-400/70 bg-purple-500/10 px-1.5 py-0.5 rounded">Offerta a MePA</span>
+            </div>
+            <div class="mt-2.5 flex items-baseline justify-between">
+              <div id="statPhase3" class="text-2xl sm:text-3xl font-extrabold text-purple-400 font-mono tracking-tight">0</div>
+              <span class="text-[11px] text-slate-500 group-hover:text-purple-300 font-medium transition-colors">Filtra fase →</span>
+            </div>
+            <div class="text-[10px] text-slate-400 mt-1 truncate">In attesa apertura buste / seduta</div>
+          </button>
+
+          <!-- Fase 4: Concluse -->
+          <button type="button" onclick="filterByPhase('CONCLUSE')" class="text-left rounded-2xl p-4 bg-slate-900/80 border border-emerald-500/30 hover:border-emerald-400/80 hover:bg-emerald-950/20 transition-all shadow-md group relative overflow-hidden" title="Clicca per visualizzare tutte le gare Concluse (Vinte / Perse / Scartate)">
+            <div class="flex items-center justify-between text-xs font-semibold text-slate-400">
+              <span class="flex items-center gap-1.5 text-emerald-300">
+                <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                4. Concluse
+              </span>
+              <span class="text-[10px] font-mono uppercase text-emerald-400/70 bg-emerald-500/10 px-1.5 py-0.5 rounded">Esiti &amp; Archivio</span>
+            </div>
+            <div class="mt-2.5 flex items-baseline justify-between">
+              <div id="statPhase4" class="text-2xl sm:text-3xl font-extrabold text-emerald-400 font-mono tracking-tight">0</div>
+              <span class="text-[11px] text-slate-500 group-hover:text-emerald-300 font-medium transition-colors">Filtra fase →</span>
+            </div>
+            <div class="text-[10px] text-slate-400 mt-1 truncate">Aggiudicate, non vinte e archiviate</div>
+          </button>
+        </div>
+
+        <!-- BARRA METRICHE SINTETICA & KPI OPERATIVI -->
+        <div class="bg-slate-950/70 border border-slate-800/80 rounded-2xl p-3 sm:px-5 flex flex-wrap items-center justify-between gap-3 text-xs">
+          <div class="flex flex-wrap items-center gap-4 sm:gap-6">
+            <!-- Monte Valore Filtrato -->
+            <div class="flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+              <span class="text-slate-400 font-medium">Monte Valore:</span>
+              <span id="statTotalValue" class="text-sm font-bold text-emerald-400 font-mono tracking-tight">€ 0</span>
+            </div>
+            <!-- In Scadenza Imminente -->
+            <button type="button" onclick="applyFastFilter('expiring_soon', true)" class="flex items-center gap-2 hover:opacity-80 transition cursor-pointer" title="Filtra gare con scadenza entro 7 giorni">
+              <span class="w-2 h-2 rounded-full bg-rose-400 animate-ping"></span>
+              <span class="text-slate-400 font-medium">In scadenza (&lt; 7gg):</span>
+              <span id="statExpiring" class="text-sm font-bold text-rose-400 font-mono">0</span>
+            </button>
+            <!-- In Lavorazione / Inviate (Hidden retrocompatibilita') -->
+            <span id="statInProgress" class="hidden">0</span>
           </div>
 
-          <!-- Card 2 (Supporting Metric): In Scadenza Imminente -->
-          <div class="card-secondary rounded-2xl p-4 sm:p-5 flex flex-col justify-between">
-            <div class="flex items-start justify-between gap-2">
-              <div>
-                <span class="text-xs font-semibold text-amber-300/90 tracking-wide flex items-center gap-1.5">
-                  <span class="status-dot status-dot-amber"></span>
-                  In scadenza (&lt; 7gg)
-                </span>
-                <div id="statExpiring" class="text-2xl sm:text-3xl font-extrabold text-amber-300 font-mono tracking-tight mt-2">0</div>
-              </div>
-              <div class="h-9 w-9 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 shrink-0">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-              </div>
-            </div>
-            <div class="text-[11px] text-slate-400 font-mono mt-3 pt-2 border-t border-slate-800 flex items-center justify-between">
-              <span>Priorità immediata</span>
-              <span class="text-amber-400/90 font-medium">Buste A, B</span>
-            </div>
-          </div>
-
-          <!-- Card 3 (Supporting Metric): In Lavorazione & Inviate -->
-          <div class="card-secondary rounded-2xl p-4 sm:p-5 flex flex-col justify-between">
-            <div class="flex items-start justify-between gap-2">
-              <div>
-                <span class="text-xs font-semibold text-purple-300/90 tracking-wide flex items-center gap-1.5">
-                  <span class="status-dot status-dot-purple"></span>
-                  In lavorazione / Inviate
-                </span>
-                <div id="statInProgress" class="text-2xl sm:text-3xl font-extrabold text-purple-300 font-mono tracking-tight mt-2">0</div>
-              </div>
-              <div class="h-9 w-9 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400 shrink-0">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
-              </div>
-            </div>
-            <div class="text-[11px] text-slate-400 font-mono mt-3 pt-2 border-t border-slate-800 flex items-center justify-between">
-              <span>Fasi operative attive</span>
-              <span class="text-purple-400/90 font-medium">Fase 2 e 3</span>
-            </div>
-          </div>
-
-          <!-- Card 4 (Supporting Metric): Monte Valore Filtrato -->
-          <div class="card-secondary rounded-2xl p-4 sm:p-5 flex flex-col justify-between">
-            <div class="flex items-start justify-between gap-2">
-              <div>
-                <span class="text-xs font-semibold text-emerald-300/90 tracking-wide flex items-center gap-1.5">
-                  <span class="status-dot status-dot-green"></span>
-                  Monte valore filtrato
-                </span>
-                <div id="statTotalValue" class="text-xl sm:text-2xl font-extrabold text-emerald-400 font-mono tracking-tight mt-2 truncate">€ 0</div>
-              </div>
-              <div class="h-9 w-9 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 shrink-0">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-              </div>
-            </div>
-            <div class="text-[11px] text-slate-400 font-mono mt-3 pt-2 border-t border-slate-800 flex items-center justify-between">
-              <span>Base d'asta cumulativa</span>
-              <span class="text-emerald-400/90 font-medium">Bandi attivi</span>
-            </div>
+          <!-- Volume e Database Engine -->
+          <div class="flex items-center gap-2 font-mono text-[11px] text-slate-400">
+            <span>Visibili:</span>
+            <span id="statFiltered" class="text-cyan-400 font-bold text-xs">0</span>
+            <span id="statTotal" class="text-slate-500">/ 0</span>
+            <span class="text-slate-600">|</span>
+            <span class="text-cyan-300/80 flex items-center gap-1">⚡ SQLite 3</span>
           </div>
         </div>
 
-        <!-- FILTER & CONTROL PANEL -->
-        <div class="bg-slate-900/70 border border-slate-800/90 rounded-3xl p-5 shadow-lg space-y-4 text-xs">
+        <!-- CONTROL & FILTER BAR (OMNI-SEARCH + COMPACT CONTROLS) -->
+        <div class="bg-slate-900/80 border border-slate-800/90 rounded-2xl p-3.5 sm:p-4 shadow-lg space-y-3 text-xs">
           
-          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800/80 pb-3">
-            <div class="flex flex-wrap items-center gap-2">
-              <span class="text-[11px] font-mono text-cyan-400 font-bold uppercase flex items-center gap-1.5">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/></svg>
-                Filtri &amp; Ordinamento
-              </span>
-              <!-- Quick view presets -->
-              <div class="inline-flex rounded-xl bg-slate-950 p-1 border border-slate-800 text-xs">
-                <button id="tabPresetMyCategories" class="px-2.5 py-1 rounded-lg font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 transition">🎯 Mie Categorie</button>
-                <button id="tabPresetExpiring" class="px-2.5 py-1 rounded-lg font-semibold text-slate-400 hover:text-white transition">⏰ Imminenti</button>
-                <button id="tabPresetAll" class="px-2.5 py-1 rounded-lg font-semibold text-slate-400 hover:text-white transition">Tutte</button>
+          <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+            <!-- Omni-Search Bar in primo piano -->
+            <div class="relative flex-1 max-w-2xl">
+              <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+              </div>
+              <input id="searchInput" type="text" placeholder="Cerca per CIG, Stazione Appaltante, Oggetto o Responsabile..." class="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-14 py-2 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 text-xs transition">
+              <div class="absolute right-2.5 top-2 pointer-events-none flex items-center gap-1">
+                <kbd class="hidden sm:inline-block px-1.5 py-0.5 text-[9px] font-mono text-slate-400 bg-slate-800 border border-slate-700 rounded">Ctrl+K</kbd>
               </div>
             </div>
 
-            <div class="flex items-center gap-3">
-              <button id="btnResetFilters" class="text-slate-400 hover:text-rose-400 text-[11px] font-mono underline transition">Reimposta</button>
-              
+            <!-- Controlli: Switch Vista, Toggle Filtri Avanzati, Reset -->
+            <div class="flex items-center gap-2 self-end sm:self-auto shrink-0">
               <!-- Toggle View Mode (Table / Kanban) -->
               <div class="inline-flex rounded-xl bg-slate-950 p-1 border border-slate-800 text-xs">
                 <button id="btnViewTable" class="px-3 py-1 font-bold rounded-lg bg-cyan-500 text-slate-950 transition">Tabella</button>
                 <button id="btnViewKanban" class="px-3 py-1 font-semibold rounded-lg text-slate-400 hover:text-white transition">Kanban (4 Fasi)</button>
               </div>
+
+              <!-- Bottone Toggle Filtri Avanzati -->
+              <button id="btnToggleAdvancedFilters" type="button" onclick="toggleAdvancedFilters()" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium border border-slate-700 transition">
+                <svg class="w-3.5 h-3.5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/></svg>
+                <span>Filtri Avanzati</span>
+                <span id="badgeAdvancedFiltersActive" class="hidden w-2 h-2 rounded-full bg-cyan-400"></span>
+              </button>
+
+              <button id="btnResetFilters" class="text-slate-400 hover:text-rose-400 text-[11px] font-mono px-2 py-1 underline transition" title="Ripristina tutti i filtri">Reimposta</button>
             </div>
           </div>
 
-          <!-- Parameter grid -->
-          <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-            
-            <!-- Area Merceologica -->
-            <div>
-              <label class="block text-slate-400 font-semibold mb-1 text-[11px]">Area Merceologica:</label>
-              <select id="filterCategory" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-2.5 py-1.5 text-slate-200 focus:outline-none focus:border-cyan-400 text-xs font-medium">
-                <option value="ALL">Tutte le Aree</option>
-                <option value="IT">💻 Informatica &amp; TLC</option>
-                <option value="CANCELLERIA">📦 Cancelleria &amp; Carta</option>
-                <option value="ARREDI">🪑 Arredi &amp; Attrezzature</option>
-                <option value="SANITA">🏥 Sanità &amp; Dispositivi</option>
-                <option value="ENERGIA">⚡ Energia &amp; Utilities</option>
-                <option value="ALTRO">Altre Merceologie</option>
-              </select>
-            </div>
+          <!-- Quick Filter Chips: Accesso immediato a 1 click -->
+          <div class="flex flex-wrap items-center gap-1.5 pt-1 text-xs">
+            <span class="text-slate-500 font-mono text-[10px] uppercase font-semibold mr-1">Filtri Rapidi:</span>
+            <button id="chipActive" onclick="applyFastFilter('status', 'SOLO_ATTIVE')" class="chip-ghost active"><span>🟢</span> Solo Attive</button>
+            <button id="chipExpiring" onclick="applyFastFilter('expiring_soon', true)" class="chip-ghost"><span>⏰</span> Scadenza ≤ 7gg</button>
+            <button id="chipIT" onclick="applyFastFilter('category', 'IT')" class="chip-ghost"><span>💻</span> Informatica &amp; TLC</button>
+            <button id="chipPaper" onclick="applyFastFilter('category', 'CANCELLERIA')" class="chip-ghost"><span>📦</span> Cancelleria</button>
+            <button id="chipDual" onclick="applyFastFilter('category', 'DUAL_IT_PAPER')" class="chip-ghost"><span>⭐</span> IT + Cancelleria</button>
+            <button id="tabPresetAll" onclick="applyFastFilter('status', 'ALL')" class="chip-ghost"><span>📂</span> Tutte (Incluso Storico)</button>
+          </div>
 
-            <!-- Ordinamento per Data -->
-            <div>
-              <label class="block text-slate-400 font-semibold mb-1 text-[11px]">Ordina Per:</label>
-              <select id="sortTenders" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-2.5 py-1.5 text-amber-300 font-medium focus:outline-none focus:border-cyan-400 text-xs">
-                <option value="deadline_asc" selected>⏳ Scadenza Più Vicina</option>
-                <option value="deadline_desc">Scadenza Più Lontana</option>
-                <option value="amount_desc">Importo Decrescente (€ max)</option>
-                <option value="amount_asc">Importo Crescente (€ min)</option>
-                <option value="cig_asc">CIG Alfabetico</option>
-              </select>
-            </div>
+          <!-- PANNELLO FILTRI AVANZATI (COLLASSABILE A SCOMPARSA) -->
+          <div id="advancedFiltersPanel" class="hidden pt-3 border-t border-slate-800/80">
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+              <!-- Area Merceologica -->
+              <div>
+                <label class="block text-slate-400 font-semibold mb-1 text-[11px]">Area Merceologica:</label>
+                <select id="filterCategory" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-2.5 py-1.5 text-slate-200 focus:outline-none focus:border-cyan-400 text-xs font-medium">
+                  <option value="ALL">Tutte le Aree</option>
+                  <option value="IT">💻 Informatica &amp; TLC</option>
+                  <option value="CANCELLERIA">📦 Cancelleria &amp; Carta</option>
+                  <option value="ARREDI">🪑 Arredi &amp; Attrezzature</option>
+                  <option value="SANITA">🏥 Sanità &amp; Dispositivi</option>
+                  <option value="ENERGIA">⚡ Energia &amp; Utilities</option>
+                  <option value="ALTRO">Altre Merceologie</option>
+                </select>
+              </div>
 
-            <!-- Regione -->
-            <div>
-              <label class="block text-slate-400 font-semibold mb-1 text-[11px]">Regione PA:</label>
-              <select id="filterRegion" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-2.5 py-1.5 text-slate-200 focus:outline-none focus:border-cyan-400 text-xs font-medium">
-                <option value="ALL">Tutte le Regioni</option>
-                <option value="Nazionale">Nazionale / Centrale</option>
-                <option value="Abruzzo">Abruzzo</option>
-                <option value="Basilicata">Basilicata</option>
-                <option value="Calabria">Calabria</option>
-                <option value="Campania">Campania</option>
-                <option value="Emilia-Romagna">Emilia-Romagna</option>
-                <option value="Friuli-Venezia Giulia">Friuli-Venezia Giulia</option>
-                <option value="Lazio">Lazio</option>
-                <option value="Liguria">Liguria</option>
-                <option value="Lombardia">Lombardia</option>
-                <option value="Marche">Marche</option>
-                <option value="Molise">Molise</option>
-                <option value="Piemonte">Piemonte</option>
-                <option value="Puglia">Puglia</option>
-                <option value="Sardegna">Sardegna</option>
-                <option value="Sicilia">Sicilia</option>
-                <option value="Toscana">Toscana</option>
-                <option value="Trentino-Alto Adige">Trentino-Alto Adige</option>
-                <option value="Umbria">Umbria</option>
-                <option value="Valle d'Aosta">Valle d'Aosta</option>
-                <option value="Veneto">Veneto</option>
-              </select>
-              <label class="flex items-center gap-1.5 text-[11px] text-slate-400 mt-1.5 cursor-pointer select-none">
-                <input type="checkbox" id="filterIncludeNational" class="rounded bg-slate-900 border-slate-700 text-cyan-500 focus:ring-0 w-3.5 h-3.5 cursor-pointer">
-                <span>Includi anche bandi Nazionali</span>
-              </label>
-            </div>
+              <!-- Ordinamento -->
+              <div>
+                <label class="block text-slate-400 font-semibold mb-1 text-[11px]">Ordina Per:</label>
+                <select id="sortTenders" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-2.5 py-1.5 text-amber-300 font-medium focus:outline-none focus:border-cyan-400 text-xs">
+                  <option value="deadline_asc" selected>⏳ Scadenza Più Vicina</option>
+                  <option value="deadline_desc">Scadenza Più Lontana</option>
+                  <option value="amount_desc">Importo Decrescente (€ max)</option>
+                  <option value="amount_asc">Importo Crescente (€ min)</option>
+                  <option value="cig_asc">CIG Alfabetico</option>
+                </select>
+              </div>
 
-            <!-- Fonte Dataset -->
-            <div>
-              <label class="block text-slate-400 font-semibold mb-1 text-[11px]">Tipologia Gara:</label>
-              <select id="filterSource" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-2.5 py-1.5 text-slate-200 focus:outline-none focus:border-cyan-400 text-xs font-medium">
-                <option value="ALL">Tutte le Tipologie</option>
-                <option value="Accordo Quadro">Accordo Quadro Consip</option>
-                <option value="Convenzione">Convenzione Consip</option>
-                <option value="MePA">MePA (RdO / Trattative)</option>
-                <option value="SDA">SDA (Sistema Dinamico)</option>
-                <option value="Bandi e Gare">Convenzioni &amp; Accordi Quadro</option>
-                <option value="Manuale">Inserite Manualmente</option>
-              </select>
-            </div>
+              <!-- Regione PA -->
+              <div>
+                <label class="block text-slate-400 font-semibold mb-1 text-[11px]">Regione PA:</label>
+                <select id="filterRegion" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-2.5 py-1.5 text-slate-200 focus:outline-none focus:border-cyan-400 text-xs font-medium">
+                  <option value="ALL">Tutte le Regioni</option>
+                  <option value="Nazionale">Nazionale / Centrale</option>
+                  <option value="Abruzzo">Abruzzo</option>
+                  <option value="Basilicata">Basilicata</option>
+                  <option value="Calabria">Calabria</option>
+                  <option value="Campania">Campania</option>
+                  <option value="Emilia-Romagna">Emilia-Romagna</option>
+                  <option value="Friuli-Venezia Giulia">Friuli-Venezia Giulia</option>
+                  <option value="Lazio">Lazio</option>
+                  <option value="Liguria">Liguria</option>
+                  <option value="Lombardia">Lombardia</option>
+                  <option value="Marche">Marche</option>
+                  <option value="Molise">Molise</option>
+                  <option value="Piemonte">Piemonte</option>
+                  <option value="Puglia">Puglia</option>
+                  <option value="Sardegna">Sardegna</option>
+                  <option value="Sicilia">Sicilia</option>
+                  <option value="Toscana">Toscana</option>
+                  <option value="Trentino-Alto Adige">Trentino-Alto Adige</option>
+                  <option value="Umbria">Umbria</option>
+                  <option value="Valle d'Aosta">Valle d'Aosta</option>
+                  <option value="Veneto">Veneto</option>
+                </select>
+                <label class="flex items-center gap-1.5 text-[11px] text-slate-400 mt-1.5 cursor-pointer select-none">
+                  <input type="checkbox" id="filterIncludeNational" class="rounded bg-slate-900 border-slate-700 text-cyan-500 focus:ring-0 w-3.5 h-3.5 cursor-pointer">
+                  <span>Includi anche bandi Nazionali</span>
+                </label>
+              </div>
 
-            <!-- Stato / Fase -->
-            <div>
-              <label class="block text-slate-400 font-semibold mb-1 text-[11px]">Fase Ciclo di Vita:</label>
-              <select id="filterStatus" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-2.5 py-1.5 text-slate-200 focus:outline-none focus:border-cyan-400 text-xs font-medium">
-                <option value="ALL">Tutti gli Stati</option>
-                <option value="SOLO_ATTIVE" selected>Solo Attive (scadenza futura o inviate)</option>
-                <option value="SCADUTE">Scadute / Archivio</option>
-                <option value="Da Valutare">1. Da Valutare</option>
-                <option value="In Lavorazione">2. In Lavorazione</option>
-                <option value="Inviata">3. Inviata</option>
-                <option value="Vinta">4. Vinta</option>
-                <option value="Persa">4. Persa</option>
-                <option value="Scartata">Scartata</option>
-              </select>
-            </div>
+              <!-- Tipologia Gara / Dataset -->
+              <div>
+                <label class="block text-slate-400 font-semibold mb-1 text-[11px]">Tipologia Gara:</label>
+                <select id="filterSource" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-2.5 py-1.5 text-slate-200 focus:outline-none focus:border-cyan-400 text-xs font-medium">
+                  <option value="ALL">Tutte le Tipologie</option>
+                  <option value="MePA">MePA (RdO &amp; Trattative)</option>
+                  <option value="Bandi e Gare">Bandi Centralizzati Consip</option>
+                  <option value="Accordo Quadro">Accordo Quadro</option>
+                  <option value="Convenzione">Convenzione</option>
+                  <option value="SDA">SDA (Sistema Dinamico)</option>
+                  <option value="Manuale">Inserite Manualmente</option>
+                </select>
+              </div>
 
-            <!-- Ricerca Testuale -->
-            <div>
-              <label class="block text-slate-400 font-semibold mb-1 text-[11px]">Cerca Testo / CIG:</label>
-              <div class="relative">
-                <input id="searchInput" type="text" placeholder="CIG, Ente, Oggetto..." class="w-full bg-slate-950/90 border border-slate-800 rounded-xl pl-2.5 pr-12 py-1.5 text-slate-200 placeholder-slate-500 focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 text-xs transition">
-                <div class="absolute right-2 top-2 pointer-events-none flex items-center gap-1">
-                  <kbd class="hidden sm:inline-block px-1.5 py-0.5 text-[9px] font-mono text-slate-400 bg-slate-800 border border-slate-700 rounded">Ctrl+K</kbd>
-                </div>
+              <!-- Fase Operativa -->
+              <div>
+                <label class="block text-slate-400 font-semibold mb-1 text-[11px]">Fase Operativa:</label>
+                <select id="filterStatus" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-2.5 py-1.5 text-slate-200 focus:outline-none focus:border-cyan-400 text-xs font-medium">
+                  <option value="ALL">Tutti gli Stati</option>
+                  <option value="SOLO_ATTIVE" selected>Solo Attive (in corso)</option>
+                  <option value="CONCLUSE">Concluse (Storico)</option>
+                  <option value="SCADUTE">Scadute non Inviate</option>
+                  <option value="Da Valutare">1. Da Valutare</option>
+                  <option value="In Lavorazione">2. In Lavorazione</option>
+                  <option value="Inviata">3. Inviata</option>
+                  <option value="Vinta">4. Vinta (Aggiudicata)</option>
+                  <option value="Persa">4. Persa</option>
+                  <option value="Scartata">Scartata</option>
+                </select>
               </div>
             </div>
-
-          </div>
-
-          <!-- Quick Filter Chips: UI-Craft Ghost Pattern -->
-          <div class="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-800 text-xs">
-            <span class="text-slate-500 font-mono text-[10px] uppercase">Filtri rapidi:</span>
-            <button id="chipIT" onclick="applyFastFilter('category', 'IT')" class="chip-ghost"><span>💻</span> Informatica &amp; TLC</button>
-            <button id="chipPaper" onclick="applyFastFilter('category', 'CANCELLERIA')" class="chip-ghost"><span>📦</span> Cancelleria &amp; Carta</button>
-            <button id="chipDual" onclick="applyFastFilter('category', 'DUAL_IT_PAPER')" class="chip-ghost"><span>⭐</span> IT + Cancelleria</button>
-            <button id="chipExpiring" onclick="applyFastFilter('expiring_soon', true)" class="chip-ghost"><span>⏰</span> Scadenza in 7gg</button>
-            <button id="chipActive" onclick="applyFastFilter('status', 'SOLO_ATTIVE')" class="chip-ghost"><span>🟢</span> Solo attive</button>
           </div>
         </div>
 
@@ -468,17 +464,15 @@
             <table class="w-full text-left text-xs border-collapse">
               <thead class="table-sticky-head">
                 <tr class="border-b border-slate-800 text-slate-400 font-medium font-sans">
-                  <th scope="col" class="py-2.5 px-3.5 whitespace-nowrap">CIG e fonte</th>
-                  <th scope="col" class="py-2.5 px-3.5 whitespace-nowrap">Area merceologica</th>
-                  <th scope="col" class="py-2.5 px-3.5">Stazione appaltante</th>
-                  <th scope="col" class="py-2.5 px-3.5">Oggetto della fornitura</th>
-                  <th scope="col" class="py-2.5 px-3.5 text-right whitespace-nowrap">Base d'asta (€)</th>
+                  <th scope="col" class="py-2.5 px-3.5 whitespace-nowrap">CIG e Fonte</th>
+                  <th scope="col" class="py-2.5 px-3.5 whitespace-nowrap">Area</th>
+                  <th scope="col" class="py-2.5 px-3.5">Stazione Appaltante</th>
+                  <th scope="col" class="py-2.5 px-3.5">Oggetto della Fornitura</th>
+                  <th scope="col" class="py-2.5 px-3.5 text-right whitespace-nowrap">Base d'Asta (€)</th>
                   <th scope="col" class="py-2.5 px-3.5 cursor-pointer select-none text-slate-300 hover:text-cyan-300 transition-colors whitespace-nowrap" onclick="toggleSortDeadline()" title="Clicca per invertire l'ordinamento per scadenza">
-                    Scadenza ⥯
+                    Termine Scadenza ⥯
                   </th>
-                  <th scope="col" class="py-2.5 px-3.5 text-center whitespace-nowrap">Tempo residuo</th>
-                  <th scope="col" class="py-2.5 px-3.5 text-center whitespace-nowrap">Fase operativa</th>
-                  <th scope="col" class="py-2.5 px-3.5 whitespace-nowrap">Responsabile</th>
+                  <th scope="col" class="py-2.5 px-3.5 text-center whitespace-nowrap">Fase Operativa</th>
                   <th scope="col" class="py-2.5 px-3.5 text-center whitespace-nowrap">Azioni</th>
                 </tr>
               </thead>
@@ -551,7 +545,7 @@
           </div>
 
           <!-- Column 4: Concluse -->
-          <div class="bg-slate-950/70 border border-emerald-500/30 rounded-2xl p-4 flex flex-col h-full min-h-[460px] transition" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event, 'Vinta')">
+          <div class="bg-slate-950/70 border border-emerald-500/30 rounded-2xl p-4 flex flex-col h-full min-h-[460px] transition" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event, 'CONCLUSA_CHOOSE')">
             <div class="flex items-center justify-between pb-3 border-b border-slate-800">
               <div class="flex items-center gap-2">
                 <span class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
@@ -1882,19 +1876,19 @@ CREATE INDEX IF NOT EXISTS idx_deadline ON gare(deadline);</pre>
 
 
   <!-- Moduli Applicativi JavaScript (Zero-Build Vanilla Architecture) -->
-  <script defer src="js/utils.js?v=20261016_20"></script>
-  <script defer src="js/config.js?v=20261016_20"></script>
-  <script defer src="js/api.js?v=20261016_20"></script>
-  <script defer src="js/db-engine.js?v=20261016_20"></script>
-  <script defer src="js/importer.js?v=20261016_20"></script>
-  <script defer src="js/views/cruscotto.js?v=20261016_20"></script>
-  <script defer src="js/wizard-rules.js?v=20261016_20"></script>
-  <script defer src="js/legal-templates.js?v=20261016_20"></script>
-  <script defer src="js/views/wizard.js?v=20261016_20"></script>
-  <script defer src="js/views/cataloghi.js?v=20261016_20"></script>
-  <script defer src="js/views/amministrazioni.js?v=20261016_20"></script>
-  <script defer src="js/views/analytics.js?v=20261016_20"></script>
-  <script defer src="js/views/opendata.js?v=20261016_20"></script>
-  <script defer src="js/app.js?v=20261016_20"></script>
+  <script defer src="js/utils.js?v=20261016_21"></script>
+  <script defer src="js/config.js?v=20261016_21"></script>
+  <script defer src="js/api.js?v=20261016_21"></script>
+  <script defer src="js/db-engine.js?v=20261016_21"></script>
+  <script defer src="js/importer.js?v=20261016_21"></script>
+  <script defer src="js/views/cruscotto.js?v=20261016_21"></script>
+  <script defer src="js/wizard-rules.js?v=20261016_21"></script>
+  <script defer src="js/legal-templates.js?v=20261016_21"></script>
+  <script defer src="js/views/wizard.js?v=20261016_21"></script>
+  <script defer src="js/views/cataloghi.js?v=20261016_21"></script>
+  <script defer src="js/views/amministrazioni.js?v=20261016_21"></script>
+  <script defer src="js/views/analytics.js?v=20261016_21"></script>
+  <script defer src="js/views/opendata.js?v=20261016_21"></script>
+  <script defer src="js/app.js?v=20261016_21"></script>
 </body>
 </html>

@@ -82,6 +82,8 @@ function getFilteredAndSortedTenders() {
 
     if (st === "SOLO_ATTIVE") {
       if (!isTenderActive(t)) return false;
+    } else if (st === "CONCLUSE") {
+      if (!CONCLUDED_STATUSES.includes(t.status)) return false;
     } else if (st === "SCADUTE") {
       if (isTenderActive(t) || CONCLUDED_STATUSES.includes(t.status)) return false;
     } else if (st !== "ALL" && t.status !== st) {
@@ -121,6 +123,70 @@ window.toggleSortDeadline = function() {
   renderApp();
 };
 
+// Filtro istantaneo cliccando sulle card della Pipeline 4 Fasi
+window.filterByPhase = function(phase) {
+  const filterStatus = document.getElementById("filterStatus");
+  if (!filterStatus) return;
+
+  document.querySelectorAll(".chip-ghost").forEach(c => c.classList.remove("active"));
+  filterStatus.value = phase;
+  renderApp();
+  showNotification(`Filtro fase applicato: ${phase}`);
+};
+
+// Toggle del pannello Filtri Avanzati
+window.toggleAdvancedFilters = function() {
+  const panel = document.getElementById("advancedFiltersPanel");
+  const btn = document.getElementById("btnToggleAdvancedFilters");
+  if (!panel) return;
+
+  const isHidden = panel.classList.contains("hidden");
+  if (isHidden) {
+    panel.classList.remove("hidden");
+    btn?.classList.add("border-cyan-400", "bg-slate-800", "text-cyan-300");
+  } else {
+    panel.classList.add("hidden");
+    btn?.classList.remove("border-cyan-400", "bg-slate-800", "text-cyan-300");
+  }
+};
+
+// Copia CIG rapida con 1-click
+window.copyCigToClipboard = function(cig, event) {
+  if (event) {
+    event.stopPropagation();
+    event.preventDefault();
+  }
+  if (!cig) return;
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(cig).then(() => {
+      showNotification(`CIG ${cig} copiato negli appunti!`);
+    }).catch(() => {
+      fallbackCopyText(cig);
+    });
+  } else {
+    fallbackCopyText(cig);
+  }
+};
+
+function fallbackCopyText(text) {
+  const ta = document.createElement("textarea");
+  ta.value = text;
+  document.body.appendChild(ta);
+  ta.select();
+  try {
+    document.execCommand("copy");
+    showNotification(`CIG ${text} copiato!`);
+  } catch(e) {
+    prompt("Copia il CIG:", text);
+  }
+  document.body.removeChild(ta);
+}
+
+// Cambio rapido fase operativa direttamente dalla riga tabella a 1-click
+window.quickChangeTenderStatus = async function(id, newStatus) {
+  await updateTenderStatus(id, newStatus);
+};
+
 window.applyFastFilter = function(filterName, value) {
   const filterCategory = document.getElementById("filterCategory");
   const filterStatus = document.getElementById("filterStatus");
@@ -137,6 +203,7 @@ window.applyFastFilter = function(filterName, value) {
   } else if (filterName === "status" && filterStatus) {
     filterStatus.value = value;
     if (value === "SOLO_ATTIVE") document.getElementById("chipActive")?.classList.add("active");
+    if (value === "ALL") document.getElementById("tabPresetAll")?.classList.add("active");
   } else if (filterName === "expiring_soon") {
     if (sortTenders) sortTenders.value = "deadline_asc";
     if (filterStatus) filterStatus.value = "SOLO_ATTIVE";
@@ -145,10 +212,24 @@ window.applyFastFilter = function(filterName, value) {
   renderApp();
   showNotification(`Filtro applicato: ${value}`);
 };
-
 function renderApp() {
   const all = getAllTendersFromSQLite();
   const filtered = getFilteredAndSortedTenders();
+
+  // Calcolo Pipeline 4 Fasi (D.Lgs. 36/2023)
+  const p1Count = all.filter(t => t.status === "Da Valutare" || !t.status).length;
+  const p2Count = all.filter(t => t.status === "In Lavorazione").length;
+  const p3Count = all.filter(t => t.status === "Inviata").length;
+  const p4Count = all.filter(t => CONCLUDED_STATUSES.includes(t.status)).length;
+
+  const elP1 = document.getElementById("statPhase1");
+  const elP2 = document.getElementById("statPhase2");
+  const elP3 = document.getElementById("statPhase3");
+  const elP4 = document.getElementById("statPhase4");
+  if (elP1) elP1.textContent = p1Count;
+  if (elP2) elP2.textContent = p2Count;
+  if (elP3) elP3.textContent = p3Count;
+  if (elP4) elP4.textContent = p4Count;
 
   const statFiltered = document.getElementById("statFiltered");
   const statTotal = document.getElementById("statTotal");
@@ -166,7 +247,7 @@ function renderApp() {
 
   const expiringCount = all.filter(t => {
     const rem = calculateTimeRemaining(t.deadline);
-    return rem.days >= 0 && rem.days <= 7 && !["Vinta", "Persa", "Scartata"].includes(t.status);
+    return rem.days >= 0 && rem.days <= 7 && !CONCLUDED_STATUSES.includes(t.status);
   }).length;
 
   if (statExpiring) statExpiring.textContent = expiringCount;
@@ -213,27 +294,28 @@ function renderApp() {
     if (pageItems.length === 0) {
       tableBody.innerHTML = `
         <tr>
-          <td colspan="10" class="text-center py-12 text-slate-400 bg-slate-950/40">
+          <td colspan="8" class="text-center py-12 text-slate-400 bg-slate-950/40">
             <div class="text-sm font-semibold text-slate-300">Nessuna gara corrispondente ai filtri nel database.</div>
             <div class="text-xs text-slate-500 mt-1">Carica un file JSON/CSV da Consip o premi "Dati Demo".</div>
           </td>
         </tr>
       `;
     } else {
-      // Find max amount in visible page for proportion bars
-      const amounts = pageItems.map(t => parseNumericAmount(t.amount)).filter(a => a > 0);
-      const maxPageAmount = amounts.length > 0 ? Math.max(...amounts) : 1;
-
       tableBody.innerHTML = pageItems.map(t => {
         const rem = calculateTimeRemaining(t.deadline);
         const deadlineFormatted = t.deadline ? escapeHtml(t.deadline.replace("T", " ")) : "-";
-        const amtNum = parseNumericAmount(t.amount);
-        const amtPct = Math.max(5, Math.min(100, Math.round((amtNum / maxPageAmount) * 100)));
 
         return `
           <tr class="hover:bg-slate-800/40 transition-colors border-b border-slate-800/70 group">
             <td class="py-2.5 px-3.5 whitespace-nowrap">
-              <div class="font-mono font-bold text-cyan-400 text-xs tracking-tight">${escapeHtml(t.cig || '-')}</div>
+              <div class="flex items-center gap-1.5 font-mono font-bold text-cyan-400 text-xs tracking-tight">
+                <span>${escapeHtml(t.cig || '-')}</span>
+                ${t.cig ? `
+                  <button type="button" onclick="copyCigToClipboard('${escapeHtml(t.cig)}', event)" class="text-slate-500 hover:text-cyan-300 p-0.5 rounded transition" title="Copia CIG ${escapeHtml(t.cig)}">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                  </button>
+                ` : ''}
+              </div>
               <div class="mt-0.5">${getSourceBadge(t.source)}</div>
             </td>
             <td class="py-2.5 px-3.5 whitespace-nowrap">
@@ -250,35 +332,34 @@ function renderApp() {
               ${t.link ? `<a href="${escapeHtml(t.link)}" target="_blank" rel="noopener noreferrer" class="text-[10px] text-cyan-400 hover:text-cyan-300 hover:underline font-mono inline-flex items-center gap-1 mt-0.5">Apri Portale MePA ↗</a>` : ''}
             </td>
             <td class="py-2.5 px-3.5 text-right whitespace-nowrap">
-              <div class="flex flex-col items-end gap-1">
-                <span class="text-xs font-mono font-bold text-slate-100 tabular-nums">${formatEUR(t.amount)}</span>
-                <div class="proportion-track" title="Proporzione: ${amtPct}% del massimo visibile">
-                  <div class="proportion-fill" style="width: ${amtPct}%"></div>
-                </div>
-              </div>
+              <span class="text-xs font-mono font-bold text-slate-100 tabular-nums">${formatEUR(t.amount)}</span>
             </td>
-            <td class="py-2.5 px-3.5 font-mono text-xs text-slate-300 whitespace-nowrap">
-              <div class="${rem.days >= 0 && rem.days <= 3 ? 'text-rose-400 font-bold' : ''}">${deadlineFormatted}</div>
-            </td>
-            <td class="py-2.5 px-3.5 text-center whitespace-nowrap">
-              <span class="inline-block px-2.5 py-1 rounded-md text-[11px] font-mono ${rem.badgeBg} ${rem.colorClass}">
+            <td class="py-2.5 px-3.5 whitespace-nowrap">
+              <span class="inline-block px-2.5 py-0.5 rounded-md text-[11px] font-mono font-semibold ${rem.badgeBg} ${rem.colorClass}">
                 ${rem.text}
               </span>
+              <div class="text-[10px] font-mono text-slate-400 mt-0.5 ${rem.days >= 0 && rem.days <= 3 ? 'text-rose-400 font-semibold' : ''}">${deadlineFormatted}</div>
             </td>
             <td class="py-2.5 px-3.5 text-center whitespace-nowrap">
-              ${getStatusBadge(t.status)}
+              <select onchange="window.quickChangeTenderStatus('${escapeHtml(t.id)}', this.value)" class="text-[11px] font-mono font-bold rounded-lg px-2 py-1 bg-slate-900 border border-slate-700/80 hover:border-cyan-400 text-slate-200 cursor-pointer focus:outline-none focus:ring-1 focus:ring-cyan-400 transition" title="Cambia fase operativa">
+                <option value="Da Valutare" ${t.status === 'Da Valutare' ? 'selected' : ''}>📥 1. Da Valutare</option>
+                <option value="In Lavorazione" ${t.status === 'In Lavorazione' ? 'selected' : ''}>⚙️ 2. In Lavorazione</option>
+                <option value="Inviata" ${t.status === 'Inviata' ? 'selected' : ''}>📤 3. Inviata</option>
+                <option value="Vinta" ${t.status === 'Vinta' ? 'selected' : ''}>🏆 4. Vinta</option>
+                <option value="Persa" ${t.status === 'Persa' ? 'selected' : ''}>❌ 4. Persa</option>
+                <option value="Scartata" ${t.status === 'Scartata' ? 'selected' : ''}>⛔ Scartata</option>
+              </select>
             </td>
-            <td class="py-2.5 px-3.5 text-slate-400 font-mono text-xs whitespace-nowrap">${escapeHtml(t.owner || '-')}</td>
             <td class="py-2.5 px-3.5 text-center whitespace-nowrap">
-              <div class="inline-flex items-center gap-1 opacity-80 group-hover:opacity-100 transition-opacity">
-                <button onclick="window.openTenderWizard('${escapeHtml(t.id)}', 1)" aria-label="Apri Wizard 4 Fasi Gara CIG ${escapeHtml(t.cig || '')}" class="touch-target-action px-2 py-1.5 rounded-lg bg-cyan-950/60 hover:bg-cyan-900 text-cyan-300 font-mono text-[11px] font-bold border border-cyan-500/40 transition flex items-center gap-1 shadow-sm" title="Avvia Wizard Guidato 4 Fasi (MePA/Consip)">
-                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+              <div class="inline-flex items-center gap-1.5">
+                <button onclick="window.openTenderWizard('${escapeHtml(t.id)}', 1)" aria-label="Apri Wizard 4 Fasi Gara CIG ${escapeHtml(t.cig || '')}" class="px-2.5 py-1 rounded-lg bg-gradient-to-r from-cyan-500/20 to-blue-500/20 hover:from-cyan-500/30 hover:to-blue-500/30 text-cyan-300 font-mono text-[11px] font-bold border border-cyan-500/40 transition flex items-center gap-1 shadow-sm" title="Avvia Wizard Guidato 4 Fasi (MePA/Consip)">
+                  <svg class="w-3.5 h-3.5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
                   <span>Wizard</span>
                 </button>
-                <button onclick="editTender('${escapeHtml(t.id)}')" aria-label="Modifica Gara CIG ${escapeHtml(t.cig || '')}" class="touch-target-action p-1.5 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-cyan-300 border border-slate-700/60 transition" title="Modifica Gara">
+                <button onclick="editTender('${escapeHtml(t.id)}')" aria-label="Modifica Gara CIG ${escapeHtml(t.cig || '')}" class="p-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-cyan-300 border border-slate-700/60 transition" title="Modifica Gara">
                   <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                 </button>
-                <button onclick="deleteTender('${escapeHtml(t.id)}')" aria-label="Elimina Gara CIG ${escapeHtml(t.cig || '')}" class="touch-target-action p-1.5 rounded-lg bg-slate-800/80 hover:bg-rose-950 text-slate-400 hover:text-rose-400 border border-slate-700/60 transition" title="Rimuovi">
+                <button onclick="deleteTender('${escapeHtml(t.id)}')" aria-label="Elimina Gara CIG ${escapeHtml(t.cig || '')}" class="p-1 rounded-lg bg-slate-800 hover:bg-rose-950 text-slate-400 hover:text-rose-400 border border-slate-700/60 transition" title="Rimuovi">
                   <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                 </button>
               </div>
@@ -320,20 +401,35 @@ function renderKanbanColumns(items) {
     let html = visible.map(t => {
       const rem = calculateTimeRemaining(t.deadline);
       return `
-        <div draggable="true" ondragstart="handleDragStart(event, '${escapeHtml(t.id)}')" class="kanban-card bg-slate-900/90 border border-slate-800 hover:border-cyan-500/50 rounded-xl p-3 shadow-md space-y-2 cursor-grab active:cursor-grabbing transition">
+        <div draggable="true" ondragstart="handleDragStart(event, '${escapeHtml(t.id)}')" class="kanban-card group bg-slate-900/90 border border-slate-800 hover:border-cyan-500/50 rounded-xl p-3 shadow-md space-y-2.5 cursor-grab active:cursor-grabbing transition">
           <div class="flex items-center justify-between text-xs">
-            <span class="font-mono font-bold text-cyan-400 tracking-tight">${escapeHtml(t.cig || '-')}</span>
-            <span class="font-mono text-emerald-400 font-semibold tabular-nums">${formatEUR(t.amount)}</span>
+            <div class="flex items-center gap-1.5 min-w-0">
+              <span class="font-mono font-bold text-cyan-400 tracking-tight truncate">${escapeHtml(t.cig || '-')}</span>
+              ${t.cig ? `
+                <button onclick="window.copyCigToClipboard('${escapeHtml(t.cig)}', event)" class="text-slate-400 hover:text-cyan-300 p-0.5 rounded hover:bg-slate-800 transition" title="Copia CIG ${escapeHtml(t.cig)} negli appunti">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                </button>
+              ` : ''}
+            </div>
+            <span class="font-mono text-emerald-400 font-semibold tabular-nums text-xs">${formatEUR(t.amount)}</span>
           </div>
           <div class="flex items-center gap-1.5 flex-wrap">
             ${getCategoryBadge(t.category)}
             <span class="text-[10px] text-slate-400 font-mono truncate max-w-[140px]" title="${escapeHtml(t.region || 'Nazionale')}">📍 ${escapeHtml(t.region || 'Nazionale')}</span>
           </div>
-          <p class="text-xs text-slate-100 font-medium line-clamp-2 leading-relaxed">${escapeHtml(t.title || 'Senza descrizione')}</p>
+          <p class="text-xs text-slate-100 font-medium line-clamp-2 leading-relaxed group-hover:text-cyan-200 transition-colors">${escapeHtml(t.title || 'Senza descrizione')}</p>
           <div class="text-[11px] text-slate-400 truncate">${escapeHtml(t.authority || 'Ente PA')}</div>
-          <div class="flex items-center justify-between pt-2 border-t border-slate-800 text-[11px]">
-            <span class="px-2 py-0.5 rounded font-mono ${rem.badgeBg} ${rem.colorClass}">${rem.text}</span>
-            <button onclick="editTender('${escapeHtml(t.id)}')" class="text-slate-400 hover:text-cyan-400 font-medium transition">Modifica ✎</button>
+          <div class="flex items-center justify-between pt-2 border-t border-slate-800/80 text-[11px]">
+            <span class="px-2 py-0.5 rounded-md font-mono text-[10px] ${rem.badgeBg} ${rem.colorClass}">${rem.text}</span>
+            <div class="flex items-center gap-1.5">
+              <button onclick="window.openTenderWizard('${escapeHtml(t.id)}', 1)" aria-label="Wizard 4 Fasi" class="px-2 py-0.5 rounded-md bg-gradient-to-r from-cyan-500/20 to-blue-500/20 hover:from-cyan-500/30 hover:to-blue-500/30 text-cyan-300 font-mono text-[10px] font-bold border border-cyan-500/40 transition flex items-center gap-1 shadow-sm" title="Avvia Wizard 4 Fasi D.Lgs. 36/2023">
+                <svg class="w-3 h-3 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                <span>Wizard</span>
+              </button>
+              <button onclick="editTender('${escapeHtml(t.id)}')" aria-label="Modifica" class="p-1 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-cyan-300 border border-slate-700/60 transition" title="Modifica Gara">
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+              </button>
+            </div>
           </div>
         </div>
       `;
@@ -380,7 +476,23 @@ window.handleDrop = async function(e, targetStatus) {
   e.currentTarget.classList.remove("border-cyan-400", "bg-slate-900/90");
   const id = e.dataTransfer.getData("text/plain");
   if (!id) return;
-  await updateTenderStatus(id, targetStatus);
+
+  if (targetStatus === 'CONCLUSA_CHOOSE') {
+    const choice = prompt("Archiviazione Gara (Fase 4 Conclusa D.Lgs. 36/2023):\n\nScegli l'esito finale:\n1 = 🏆 Vinta (Aggiudicata)\n2 = ❌ Persa (Non aggiudicata)\n3 = ⛔ Scartata (Non partecipato)\n\nDigita 1, 2 o 3:", "1");
+    if (!choice) return;
+    let finalStatus = "Vinta";
+    const cleaned = choice.trim().toLowerCase();
+    if (cleaned === "1" || cleaned === "vinta") finalStatus = "Vinta";
+    else if (cleaned === "2" || cleaned === "persa") finalStatus = "Persa";
+    else if (cleaned === "3" || cleaned === "scartata") finalStatus = "Scartata";
+    else {
+      showNotification("Esito non valido. Operazione annullata.", "error");
+      return;
+    }
+    await updateTenderStatus(id, finalStatus);
+  } else {
+    await updateTenderStatus(id, targetStatus);
+  }
 };
 
 window.updateTenderStatus = async function(id, newStatus) {
