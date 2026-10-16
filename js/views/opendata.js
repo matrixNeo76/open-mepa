@@ -16,6 +16,8 @@ window.loadOpenDataHub = async function() {
 // Aggiorna metriche di sincronizzazione del database locale
 async function refreshOpenDataStats() {
   let gareCount = 0;
+  let negCount = 0;
+  let bandiCount = 0;
   let catCount = 0;
   let ammCount = 0;
   let operCount = 0;
@@ -26,6 +28,8 @@ async function refreshOpenDataStats() {
     try {
       const resp = await Api.getStatus();
       gareCount = resp.total_tenders || 0;
+      negCount = resp.total_negoziazioni || 0;
+      bandiCount = resp.total_bandiegare || 0;
       catCount = resp.total_cataloghi || 0;
       ammCount = resp.total_amministrazioni || 0;
       operCount = resp.total_operatori || 0;
@@ -38,7 +42,20 @@ async function refreshOpenDataStats() {
 
   // Fallback se disconnesso o valori nulli
   if (gareCount === 0 && typeof getAllTendersFromSQLite === "function") {
-    gareCount = getAllTendersFromSQLite().length;
+    const all = getAllTendersFromSQLite();
+    gareCount = all.length;
+    negCount = all.filter(t => {
+      const s = (t.source || "").toLowerCase().trim();
+      return s === "mepa" || s.startsWith("rdo") || s.includes("trattativa");
+    }).length;
+    bandiCount = Math.max(0, gareCount - negCount);
+  } else if (negCount === 0 && bandiCount === 0 && typeof getAllTendersFromSQLite === "function") {
+    const all = getAllTendersFromSQLite();
+    negCount = all.filter(t => {
+      const s = (t.source || "").toLowerCase().trim();
+      return s === "mepa" || s.startsWith("rdo") || s.includes("trattativa");
+    }).length;
+    bandiCount = Math.max(0, (gareCount || all.length) - negCount);
   }
 
   // Aggiorna elementi DOM KPI
@@ -54,6 +71,8 @@ async function refreshOpenDataStats() {
 
   window._opendataStats = { 
     gare: gareCount, 
+    negoziazioni: negCount,
+    bandiegare: bandiCount,
     cat: catCount, 
     amm: ammCount, 
     oper: operCount, 
@@ -69,7 +88,7 @@ function renderOpenDataCards() {
   if (!cardsContainer) return;
 
   const year = selectYear ? selectYear.value : "2026";
-  const stats = window._opendataStats || { gare: 1822, cat: 287536, amm: 20776, oper: 0, contr: 0 };
+  const stats = window._opendataStats || { gare: 1822, negoziazioni: 392, bandiegare: 1430, cat: 287536, amm: 20776, oper: 317026, contr: 0 };
 
   cardsContainer.innerHTML = consipDatasets.map(ds => {
     const ckanPage = ds.ckanUrl;
@@ -80,11 +99,18 @@ function renderOpenDataCards() {
     let syncBadge = "";
     let syncDetail = "";
 
-    if (ds.id === "negoziazioni" || ds.id === "bandiegare") {
-      syncBadge = `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Attivo nel DB (${Number(stats.gare).toLocaleString("it-IT")} record)
+    if (ds.id === "negoziazioni") {
+      const count = stats.negoziazioni !== undefined ? stats.negoziazioni : 392;
+      syncBadge = `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
+        <span class="w-1.5 h-1.5 rounded-full bg-cyan-400"></span> Attivo nel DB (${Number(count).toLocaleString("it-IT")} RdO MePA)
       </span>`;
-      syncDetail = `Tabella relazionale <code class="text-cyan-300 font-mono text-[11px]">${ds.tableName}</code> indicizzata per CIG e scadenze.`;
+      syncDetail = `Procedure negoziate (RdO, Trattative Dirette e Preventivi MePA) indicizzate per CIG.`;
+    } else if (ds.id === "bandiegare") {
+      const count = stats.bandiegare !== undefined ? stats.bandiegare : 1430;
+      syncBadge = `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20">
+        <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span> Attivo nel DB (${Number(count).toLocaleString("it-IT")} Bandi e Convenzioni)
+      </span>`;
+      syncDetail = `Accordi Quadro, Convenzioni Consip e Gare ASP centralizzate per conto di PA.`;
     } else if (ds.id === "amministrazioni") {
       syncBadge = `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-sky-500/10 text-sky-400 border border-sky-500/20">
         <span class="w-1.5 h-1.5 rounded-full bg-sky-400"></span> Anagrafica attiva (${Number(stats.amm).toLocaleString("it-IT")} PA)

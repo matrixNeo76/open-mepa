@@ -690,6 +690,8 @@ def stream_process_file_data(file_path, original_filename, target="gare", mode="
                 reg = detect_region(f"{title} {auth}")
                 gid = f"IMP_{cig}"
 
+                source_val = "MePA" if ("rdo" in fn_lower or "negoziaz" in fn_lower or "mepa" in fn_lower) else "Bandi e Gare"
+
                 cur.execute("""
                 INSERT INTO gare (id, cig, category, region, source, authority, title, amount, deadline, status, owner, link)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -698,7 +700,7 @@ def stream_process_file_data(file_path, original_filename, target="gare", mode="
                     title = CASE WHEN excluded.title != '' THEN excluded.title ELSE gare.title END,
                     authority = CASE WHEN excluded.authority != '' THEN excluded.authority ELSE gare.authority END,
                     deadline = CASE WHEN excluded.deadline != '' THEN excluded.deadline ELSE gare.deadline END
-                """, (gid, cig, cat, reg, "Bandi e Gare", auth, title, amount, dl, "Da Valutare", "Ufficio Gare", "https://www.acquistinretepa.it"))
+                """, (gid, cig, cat, reg, source_val, auth, title, amount, dl, "Da Valutare", "Ufficio Gare", "https://www.acquistinretepa.it"))
 
                 processed += 1
                 batch_count += 1
@@ -895,6 +897,10 @@ class MePAHandler(SimpleHTTPRequestHandler):
                 cur.execute("SELECT COUNT(*) FROM gare")
                 total_gare = cur.fetchone()[0]
 
+                cur.execute("SELECT COUNT(*) FROM gare WHERE source IN ('MePA', 'RdO', 'Trattativa Diretta', 'RdO MePA') OR source LIKE 'RdO %' OR source LIKE 'MePA %' OR source LIKE '%Trattativa%'")
+                total_neg = cur.fetchone()[0]
+                total_bandi = max(0, total_gare - total_neg)
+
                 cur.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='cataloghi'")
                 total_cat = 0
                 if cur.fetchone():
@@ -925,6 +931,8 @@ class MePAHandler(SimpleHTTPRequestHandler):
                     "database": DB_NAME,
                     "engine": "SQLite 3",
                     "total_tenders": total_gare,
+                    "total_negoziazioni": total_neg,
+                    "total_bandiegare": total_bandi,
                     "total_cataloghi": total_cat,
                     "total_amministrazioni": total_amm,
                     "total_operatori": total_oe,
