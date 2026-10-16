@@ -61,8 +61,10 @@ function renderOpenDataCards() {
   const stats = window._opendataStats || { gare: 1822, cat: 287536, amm: 20776 };
 
   cardsContainer.innerHTML = consipDatasets.map(ds => {
-    const ckanPage = typeof ds.ckanDatasetUrl === "function" ? ds.ckanDatasetUrl(year) : ds.ckanUrl;
-    
+    const ckanPage = ds.ckanUrl;
+    const slug = typeof ds.fileSlug === "function" ? ds.fileSlug(year) : "";
+    const csvDirectUrl = slug ? `https://dati.consip.it/download/dataset/${slug}.csv` : "";
+
     // Calcola stato di sincronizzazione locale
     let syncBadge = "";
     let syncDetail = "";
@@ -141,13 +143,20 @@ function renderOpenDataCards() {
         </div>
 
         <!-- Actions Footer -->
-        <div class="mt-5 pt-3.5 border-t border-slate-800 flex items-center justify-between gap-2">
-          <a href="${ckanPage}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-cyan-300 hover:text-cyan-200 text-xs font-semibold border border-slate-700 transition" title="Raggiungi la risorsa ufficiale sul portale Open Data Consip">
-            <span>Scheda CKAN Ufficiale</span>
-            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
-          </a>
+        <div class="mt-5 pt-3.5 border-t border-slate-800/80 flex flex-wrap items-center justify-between gap-2">
+          <div class="flex items-center gap-1.5">
+            <a href="${ckanPage}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-cyan-300 hover:text-cyan-200 text-xs font-semibold border border-slate-700 transition" title="Apri scheda ufficiale verificata sul portale dati.consip.it">
+              <span>Scheda CKAN ↗</span>
+            </a>
+            ${csvDirectUrl ? `
+            <a href="${csvDirectUrl}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs font-mono font-semibold transition" title="Scarica file CSV annuale (${year})">
+              <span>CSV (${year})</span>
+              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+            </a>
+            ` : ""}
+          </div>
 
-          <button type="button" onclick="triggerOpenDataUpload('${ds.id}')" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 text-xs font-semibold transition" title="Carica un file CSV/JSON scaricato per questo dataset">
+          <button type="button" onclick="triggerOpenDataUpload('${ds.id}')" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 text-xs font-semibold transition" title="Carica un file scaricato per questo dataset">
             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
             <span>Importa nel DB</span>
           </button>
