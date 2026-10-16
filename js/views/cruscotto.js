@@ -447,7 +447,12 @@ window.deleteTender = async function(id) {
   renderApp();
 };
 
+let cruscottoInitialized = false;
+
 function initCruscotto() {
+  if (cruscottoInitialized) return;
+  cruscottoInitialized = true;
+
   const btnViewTable = document.getElementById("btnViewTable");
   const btnViewKanban = document.getElementById("btnViewKanban");
   const tableView = document.getElementById("tableView");
@@ -732,3 +737,13 @@ window.exportAllActiveTendersIcs = function() {
   }
 };
 
+window.initCruscotto = initCruscotto;
+
+// Inizializzazione immediata o su DOMContentLoaded
+if (typeof document !== "undefined") {
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initCruscotto);
+  } else {
+    initCruscotto();
+  }
+}

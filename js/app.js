@@ -30,9 +30,13 @@ window.switchView = function(viewId) {
     if (viewId === "cruscotto") {
       topBarTitle.innerHTML = `<span>Cruscotto Operativo Gare</span><span class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 hidden sm:inline-flex">Motore SQLite 3 Attivo</span>`;
       topBarSubtitle.textContent = "Monitora le 4 fasi del ciclo di vita con scadenze a semaforo";
+      if (typeof renderApp === "function") renderApp();
     } else if (viewId === "wizard") {
       topBarTitle.innerHTML = `<span>Wizard Deterministico Partecipazione Gara</span><span class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 hidden sm:inline-flex">Dual-Handoff Agent Ready</span>`;
       topBarSubtitle.textContent = "Workflow guidato in 4 fasi con export payload per automazione browser-use";
+      if (!currentWizardGaraId && typeof window.openTenderWizard === "function") {
+        window.openTenderWizard(null, 1);
+      }
     } else if (viewId === "cataloghi") {
       topBarTitle.innerHTML = `<span>Cataloghi MePA &amp; Listini Prodotti</span><span class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-pink-500/10 text-pink-400 border border-pink-500/20 hidden sm:inline-flex">287.536 Articoli</span>`;
       topBarSubtitle.textContent = "Ricerca avanzata su tutti gli articoli merci, codici CPV e lotti fornitori";
@@ -377,5 +381,11 @@ document.addEventListener("DOMContentLoaded", () => {
 // Boot all'evento window.onload
 window.onload = async function() {
   updateDatasetLinks();
+  if (typeof initCruscotto === "function") {
+    initCruscotto();
+  }
   await initSQLite();
+  if (typeof renderApp === "function") {
+    renderApp();
+  }
 };
