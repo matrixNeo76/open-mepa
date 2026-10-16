@@ -139,6 +139,42 @@ def detect_category(txt):
         return "ENERGIA"
     return "ALTRO"
 
+import re
+
+REGION_MAP = {
+    "abruzzo": "Abruzzo",
+    "basilicata": "Basilicata",
+    "calabria": "Calabria",
+    "campania": "Campania",
+    "emilia": "Emilia-Romagna",
+    "emilia-romagna": "Emilia-Romagna",
+    "friuli": "Friuli-Venezia Giulia",
+    "lazio": "Lazio",
+    "liguria": "Liguria",
+    "lombardia": "Lombardia",
+    "marche": "Marche",
+    "molise": "Molise",
+    "piemonte": "Piemonte",
+    "puglia": "Puglia",
+    "sardegna": "Sardegna",
+    "sicilia": "Sicilia",
+    "toscana": "Toscana",
+    "trentino": "Trentino-Alto Adige",
+    "alto adige": "Trentino-Alto Adige",
+    "umbria": "Umbria",
+    "valle d'aosta": "Valle d'Aosta",
+    "veneto": "Veneto"
+}
+
+def detect_region(txt):
+    if not txt:
+        return "Nazionale"
+    t = str(txt).lower()
+    for key, reg in REGION_MAP.items():
+        if re.search(r'\b' + re.escape(key) + r'\b', t):
+            return reg
+    return "Nazionale"
+
 def reorganize_and_clean_database():
     """
     Riorganizza il database separando i dati:
@@ -172,6 +208,7 @@ def reorganize_and_clean_database():
             amount = clean_amount(item.get("Base_Asta"))
             deadline = clean_date(item.get("Data_Termine") or item.get("Data_Pubblicazione"))
             cat = detect_category(item.get("Categoria_Merceologica") or title)
+            reg = detect_region(f"{title} {item.get('#Denominazione_Bando', '')} {item.get('Categoria_Merceologica', '')}")
             source = item.get("Tipo_Strumento") or "Bandi e Gare"
 
             cur.execute("""
@@ -181,7 +218,7 @@ def reorganize_and_clean_database():
                 f"BG_{cig}",
                 cig.upper(),
                 cat,
-                "Nazionale",
+                reg,
                 source,
                 authority,
                 title,

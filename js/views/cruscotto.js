@@ -53,7 +53,14 @@ function getFilteredAndSortedTenders() {
       return false;
     }
 
-    if (reg !== "ALL" && t.region !== reg) return false;
+    if (reg !== "ALL") {
+      if (reg === "Nazionale") {
+        if (t.region !== "Nazionale") return false;
+      } else {
+        // Include sia i bandi specifici regionali sia le procedure a copertura Nazionale che le PA di tale regione possono stipulare
+        if (t.region !== reg && t.region !== "Nazionale") return false;
+      }
+    }
     if (src !== "ALL" && t.source !== src) return false;
 
     if (st === "SOLO_ATTIVE") {
