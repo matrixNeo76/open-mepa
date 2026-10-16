@@ -1,34 +1,65 @@
 /**
  * MePA & Consip Desk Pro - Amministrazioni View Controller
  * Gestione anagrafica stazioni appaltanti, codici fiscali, IPA e punti ordinanti PA.
- * Conforme alle specifiche di accessibilità WCAG e numeri tabellari.
+ * Conforme alle specifiche di accessibilità WCAG 2.1 AA, numeri tabellari e palette istituzionale.
  */
 
 let ammCurrentPage = 1;
 let ammTotalPages = 1;
 let ammFiltersLoaded = false;
 let ammSearchDebounceTimer = null;
+let currentAmmItemsCache = [];
 
+/**
+ * Caricamento asincrono paginato delle stazioni appaltanti dal backend SQLite
+ */
 async function loadAmministrazioni() {
   const q = document.getElementById("ammSearchInput") ? document.getElementById("ammSearchInput").value.trim() : "";
   const reg = document.getElementById("ammRegionSelect") ? document.getElementById("ammRegionSelect").value : "";
   const tipo = document.getElementById("ammTipologiaSelect") ? document.getElementById("ammTipologiaSelect").value : "";
+  const minPo = document.getElementById("ammPoFilterSelect") ? document.getElementById("ammPoFilterSelect").value : "0";
   const pageSize = document.getElementById("ammPageSizeSelect") ? parseInt(document.getElementById("ammPageSizeSelect").value) : 25;
+
   const tbody = document.getElementById("ammTableBody");
   const infoSpan = document.getElementById("ammResultsInfo");
+  const infoSpanBottom = document.getElementById("ammResultsInfoBottom");
   const paginationText = document.getElementById("ammPaginationText");
   const firstBtn = document.getElementById("ammFirstPageBtn");
   const prevBtn = document.getElementById("ammPrevPageBtn");
   const nextBtn = document.getElementById("ammNextPageBtn");
   const lastBtn = document.getElementById("ammLastPageBtn");
 
-  if (tbody) tbody.innerHTML = `<tr><td colspan="7" class="px-4 py-12 text-center text-slate-400 font-mono animate-pulse">Caricamento anagrafica amministrazioni dal database SQLite...</td></tr>`;
+  if (tbody) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="7" class="px-4 py-16 text-center text-slate-400 font-mono">
+          <div class="flex flex-col items-center justify-center gap-2">
+            <svg class="w-6 h-6 animate-spin text-sky-400" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+            </svg>
+            <span class="text-xs">Interrogazione anagrafica PA (20.776 stazioni appaltanti)...</span>
+          </div>
+        </td>
+      </tr>
+    `;
+  }
 
   try {
-    const origin = liveBackendUrl || (window.location.protocol.startsWith("http") ? window.location.origin : "http://127.0.0.1:8050");
-    const url = `${origin}/api/amministrazioni?page=${ammCurrentPage}&pageSize=${pageSize}&q=${encodeURIComponent(q)}&regione=${encodeURIComponent(reg)}&tipologia=${encodeURIComponent(tipo)}`;
-    const resp = await fetch(url);
-    if (!resp.ok) throw new Error("Server HTTP non raggiungibile");
+    const origin = (typeof liveBackendUrl !== "undefined" && liveBackendUrl) || 
+                   (window.location.protocol.startsWith("http") ? window.location.origin : "http://127.0.0.1:8050");
+    
+    const queryParams = new URLSearchParams({
+      page: ammCurrentPage.toString(),
+      pageSize: pageSize.toString(),
+      q: q,
+      regione: reg,
+      tipologia: tipo,
+      min_po: minPo
+    });
+
+    const resp = await fetch(`${origin}/api/amministrazioni?${queryParams.toString()}`);
+    if (!resp.ok) throw new Error("Server HTTP non raggiungibile o tabella non inizializzata");
     const data = await resp.json();
 
     // Popola filtri regione e tipologia al primo caricamento
@@ -37,6 +68,7 @@ async function loadAmministrazioni() {
         const selectReg = document.getElementById("ammRegionSelect");
         if (selectReg) {
           data.regions.forEach(r => {
+            if (!r) return;
             const opt = document.createElement("option");
             opt.value = r;
             opt.textContent = r;
@@ -48,6 +80,7 @@ async function loadAmministrazioni() {
         const selectTipo = document.getElementById("ammTipologiaSelect");
         if (selectTipo) {
           data.tipologie.forEach(t => {
+            if (!t) return;
             const opt = document.createElement("option");
             opt.value = t;
             opt.textContent = t;
@@ -61,8 +94,11 @@ async function loadAmministrazioni() {
     const total = data.total || 0;
     ammTotalPages = data.totalPages || 1;
     const items = data.items || [];
+    currentAmmItemsCache = items;
 
-    if (infoSpan) infoSpan.textContent = `Trovate ${total.toLocaleString('it-IT')} amministrazioni (Pagina ${ammCurrentPage} di ${ammTotalPages})`;
+    const infoText = `Trovate ${total.toLocaleString('it-IT')} stazioni appaltanti (Pagina ${ammCurrentPage} di ${ammTotalPages})`;
+    if (infoSpan) infoSpan.textContent = infoText;
+    if (infoSpanBottom) infoSpanBottom.textContent = infoText;
     if (paginationText) paginationText.textContent = `Pagina ${ammCurrentPage} di ${ammTotalPages}`;
     
     if (firstBtn) firstBtn.disabled = ammCurrentPage <= 1;
@@ -71,58 +107,530 @@ async function loadAmministrazioni() {
     if (lastBtn) lastBtn.disabled = ammCurrentPage >= ammTotalPages;
 
     if (items.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="7" class="px-4 py-12 text-center text-slate-500 font-mono">Nessuna amministrazione trovata con i filtri selezionati.</td></tr>`;
+      if (tbody) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="7" class="px-4 py-16 text-center text-slate-400 font-mono">
+              <div class="flex flex-col items-center justify-center gap-2">
+                <svg class="w-8 h-8 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                <span class="text-xs font-semibold text-slate-300">Nessuna stazione appaltante trovata con i filtri selezionati.</span>
+                <span class="text-[11px] text-slate-500">Prova a modificare il testo di ricerca (es. Codice Fiscale, IPA o Comune).</span>
+              </div>
+            </td>
+          </tr>
+        `;
+      }
       return;
     }
 
-    tbody.innerHTML = items.map(item => {
-      return `
-        <tr class="hover:bg-slate-900/60 transition group border-b border-slate-800/40">
-          <td class="px-4 py-3">
-            <div class="font-bold text-white text-xs">${escapeHtml(item.denominazione || 'Ente Pubblico')}</div>
-            <div class="text-[10px] text-slate-400 mt-0.5 truncate max-w-[280px]">${escapeHtml(item.tipologia || 'Pubblica Amministrazione')}</div>
-          </td>
-          <td class="px-4 py-3 font-mono tabular-nums text-[11px] text-cyan-400 font-semibold">
-            ${escapeHtml(item.codice_fiscale || '-')}
-          </td>
-          <td class="px-4 py-3 font-mono tabular-nums text-[11px] text-slate-300">
-            ${escapeHtml(item.ipa || '-')}
-          </td>
-          <td class="px-4 py-3">
-            <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] bg-slate-800 text-slate-300 font-mono">
-              ${escapeHtml(item.tipologia || '-')}
-            </span>
-          </td>
-          <td class="px-4 py-3 text-xs">
-            <div class="text-slate-200 font-semibold">${escapeHtml(item.regione || '-')}</div>
-            <div class="text-[10px] text-slate-400">${escapeHtml(item.comune || '')} ${item.provincia ? `(${escapeHtml(item.provincia)})` : ''}</div>
-          </td>
-          <td class="px-4 py-3 text-center">
-            <span class="inline-flex items-center justify-center px-2.5 py-0.5 rounded-full text-xs font-mono tabular-nums font-bold bg-sky-500/10 text-sky-400 border border-sky-500/20">
-              ${item.po_attivi || 0} PO
-            </span>
-          </td>
-          <td class="px-4 py-3 text-center">
-            <button onclick="filterGareByAuthority('${escapeHtml(item.denominazione)}')" aria-label="Cerca gare dell'ente ${escapeHtml(item.denominazione)}" class="touch-target-action px-2.5 py-1.5 rounded-lg bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 text-xs font-mono transition" title="Cerca gare bandite da questo ente">
-              Gare Ente →
-            </button>
+    if (tbody) {
+      tbody.innerHTML = items.map((item) => {
+        const poCount = item.po_attivi || 0;
+        
+        // Badge Punti Ordinanti con semaforo
+        let poBadge = `<span class="inline-flex items-center justify-center px-2 py-0.5 rounded-full text-xs font-mono tabular-nums font-bold bg-slate-800 text-slate-400 border border-slate-700/80" title="Nessun Punto Ordinante attivo segnalato su MePA">0 PO</span>`;
+        if (poCount >= 5) {
+          poBadge = `<span class="inline-flex items-center justify-center px-2 py-0.5 rounded-full text-xs font-mono tabular-nums font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" title="${poCount} Punti Ordinanti MePA abilitati (Alto volume)">${poCount} PO</span>`;
+        } else if (poCount > 0) {
+          poBadge = `<span class="inline-flex items-center justify-center px-2 py-0.5 rounded-full text-xs font-mono tabular-nums font-bold bg-sky-500/10 text-sky-400 border border-sky-500/20" title="${poCount} Punti Ordinanti MePA abilitati">${poCount} PO</span>`;
+        }
+
+        const cfFormatted = item.codice_fiscale && item.codice_fiscale.trim() !== '' 
+          ? `
+            <div class="flex items-center gap-1.5">
+              <span class="font-mono text-cyan-400 font-bold text-xs tracking-wider">${escapeHtml(item.codice_fiscale)}</span>
+              <button type="button" onclick="window.copyAmmValue('${escapeHtml(item.codice_fiscale)}', 'Codice Fiscale', event)" class="p-1 text-slate-400 hover:text-cyan-300 hover:bg-slate-800 rounded transition touch-target-action" title="Copia Codice Fiscale">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+              </button>
+            </div>
+          `
+          : `<span class="text-slate-500 font-mono text-[11px]">-</span>`;
+
+        const ipaFormatted = item.ipa && item.ipa.trim() !== ''
+          ? `
+            <div class="flex items-center gap-1.5">
+              <span class="font-mono text-sky-300 font-bold text-xs uppercase tracking-wider">${escapeHtml(item.ipa)}</span>
+              <button type="button" onclick="window.copyAmmValue('${escapeHtml(item.ipa)}', 'Codice IPA (SDI)', event)" class="p-1 text-slate-400 hover:text-sky-300 hover:bg-slate-800 rounded transition touch-target-action" title="Copia Codice IPA / SDI">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+              </button>
+            </div>
+          `
+          : `<span class="text-slate-500 font-mono text-[11px]">-</span>`;
+
+        return `
+          <tr onclick="window.openAmmItemModal(${item.id})" class="hover:bg-slate-900/80 transition group border-b border-slate-800/40 cursor-pointer">
+            <!-- Denominazione Ente & Tipologia -->
+            <td class="px-4 py-3.5">
+              <div class="font-bold text-white text-xs group-hover:text-sky-300 transition line-clamp-2">${escapeHtml(item.denominazione || 'Ente Pubblico')}</div>
+              <div class="text-[10px] text-slate-400 mt-0.5 truncate max-w-[280px]">${escapeHtml(item.tipologia || 'Pubblica Amministrazione')}</div>
+            </td>
+
+            <!-- Codice Fiscale -->
+            <td class="px-4 py-3.5">
+              ${cfFormatted}
+            </td>
+
+            <!-- Codice IPA (SDI) -->
+            <td class="px-4 py-3.5">
+              ${ipaFormatted}
+            </td>
+
+            <!-- Tipologia -->
+            <td class="px-4 py-3.5">
+              <span class="inline-flex items-center px-2 py-0.5 rounded-lg text-[10px] bg-slate-800/90 border border-slate-700/80 text-slate-300 max-w-[170px] truncate" title="${escapeHtml(item.tipologia || '-')}">
+                ${escapeHtml(item.tipologia || 'Ente Locale')}
+              </span>
+            </td>
+
+            <!-- Sede & Territorio -->
+            <td class="px-4 py-3.5 text-xs">
+              <div class="text-slate-200 font-semibold">${escapeHtml(item.regione || '-')}</div>
+              <div class="text-[10px] text-slate-400 mt-0.5">${escapeHtml(item.comune || '')} ${item.provincia ? `(${escapeHtml(item.provincia)})` : ''}</div>
+            </td>
+
+            <!-- Punti Ordinanti -->
+            <td class="px-4 py-3.5 text-center">
+              ${poBadge}
+            </td>
+
+            <!-- Azioni: Scheda & Bandi -->
+            <td class="px-4 py-3.5 text-center">
+              <div class="flex items-center justify-center gap-1.5" onclick="event.stopPropagation()">
+                <button type="button" onclick="window.openAmmItemModal(${item.id}); event.stopPropagation();" class="px-2 py-1 rounded-lg bg-slate-800 hover:bg-sky-950/80 hover:text-sky-300 border border-slate-700 hover:border-sky-500/40 text-[10px] font-semibold text-slate-300 transition" title="Visualizza Scheda Ente">
+                  Scheda
+                </button>
+                <button type="button" onclick="window.filterGareByAuthority('${escapeHtml(item.denominazione)}', '${escapeHtml(item.codice_fiscale || '')}'); event.stopPropagation();" class="px-2 py-1 rounded-lg bg-sky-500/10 hover:bg-sky-500/20 text-sky-400 border border-sky-500/30 text-[10px] font-semibold transition flex items-center gap-1" title="Cerca bandi di questa amministrazione">
+                  <span>Bandi</span>
+                  <span>&rarr;</span>
+                </button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+  } catch (err) {
+    console.error("Errore anagrafica PA:", err);
+    if (tbody) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="7" class="px-4 py-12 text-center text-rose-400 font-mono">
+            <div class="flex flex-col items-center justify-center gap-1">
+              <span>Errore nel caricamento dell'anagrafica stazioni appaltanti:</span>
+              <span class="text-xs text-slate-400">Verifica che il server Python locale (porta 8050) sia in esecuzione.</span>
+            </div>
           </td>
         </tr>
       `;
-    }).join('');
-  } catch (err) {
-    if (tbody) tbody.innerHTML = `<tr><td colspan="7" class="px-4 py-12 text-center text-rose-400 font-mono">Impossibile consultare l'anagrafica PA: avvia il server Python locale per interrogare la tabella su disco.</td></tr>`;
+    }
   }
 }
 
-window.filterGareByAuthority = function(authName) {
-  switchView("cruscotto");
-  const searchInput = document.getElementById("searchInput");
-  if (searchInput) {
-    searchInput.value = authName.slice(0, 25);
-    searchTerm = searchInput.value;
-    renderApp();
+/**
+ * Copia rapida negli appunti con feedback toast
+ */
+window.copyAmmValue = function(val, label, event) {
+  if (event) event.stopPropagation();
+  if (!val || val === '-') return;
+
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(val).then(() => {
+      if (typeof window.showNotification === "function") {
+        window.showNotification(`${label}: ${val} copiato negli appunti!`);
+      }
+    }).catch(() => {
+      fallbackCopy(val, label);
+    });
+  } else {
+    fallbackCopy(val, label);
   }
+
+  function fallbackCopy(text, lbl) {
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand("copy");
+    document.body.removeChild(ta);
+    if (typeof window.showNotification === "function") {
+      window.showNotification(`${lbl}: ${text} copiato negli appunti!`);
+    }
+  }
+};
+
+/**
+ * Apertura Modale Scheda Profilo Ente & Dati Fiscali
+ */
+window.openAmmItemModal = function(itemId) {
+  const item = currentAmmItemsCache.find(x => x.id === itemId);
+  if (!item) return;
+
+  let modal = document.getElementById("ammDetailModal");
+  if (!modal) {
+    modal = document.createElement("div");
+    modal.id = "ammDetailModal";
+    modal.setAttribute("role", "dialog");
+    modal.setAttribute("aria-modal", "true");
+    modal.className = "fixed inset-0 bg-slate-950/85 backdrop-blur-md z-50 flex items-center justify-center p-4 transition-all";
+    document.body.appendChild(modal);
+  }
+
+  const poCount = item.po_attivi || 0;
+
+  modal.innerHTML = `
+    <div class="bg-slate-900 border border-slate-700/80 rounded-3xl p-6 sm:p-8 max-w-2xl w-full shadow-2xl relative text-left space-y-6 max-h-[90vh] overflow-y-auto" onclick="event.stopPropagation()">
+      
+      <!-- Header -->
+      <div class="flex items-start justify-between gap-4 pb-4 border-b border-slate-800">
+        <div class="space-y-1">
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-sky-500/10 text-sky-400 border border-sky-500/20">
+              STAZIONE APPALTANTE MEPA
+            </span>
+            <span class="px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-slate-800 text-slate-300 border border-slate-700">
+              ${escapeHtml(item.regione || 'ITALIA')}
+            </span>
+          </div>
+          <h3 class="text-lg sm:text-xl font-extrabold text-white mt-2 leading-snug">
+            ${escapeHtml(item.denominazione || 'Ente Pubblico')}
+          </h3>
+          <p class="text-xs text-slate-400 font-mono">${escapeHtml(item.tipologia || 'Pubblica Amministrazione')}</p>
+        </div>
+        <button type="button" onclick="window.closeAmmDetailModal()" class="p-2 text-slate-400 hover:text-white rounded-xl bg-slate-800/80 hover:bg-slate-700 transition touch-target-action" title="Chiudi finestra">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <!-- Dati Fiscali & Sede -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <!-- Codice Fiscale -->
+        <div class="p-4 rounded-2xl bg-slate-950/80 border border-slate-800/80 space-y-1.5">
+          <span class="text-[10px] uppercase font-mono text-slate-400 block tracking-wider">Codice Fiscale Stazione Appaltante</span>
+          <div class="flex items-center gap-2">
+            <span class="font-mono text-base font-black text-cyan-400 tracking-wider">${escapeHtml(item.codice_fiscale || 'Non specificato')}</span>
+            ${item.codice_fiscale ? `
+              <button type="button" onclick="window.copyAmmValue('${escapeHtml(item.codice_fiscale)}', 'Codice Fiscale', event)" class="p-1 text-slate-400 hover:text-cyan-300 rounded hover:bg-slate-800 transition" title="Copia Codice Fiscale">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+              </button>
+            ` : ''}
+          </div>
+          <p class="text-[11px] text-slate-500">Indispensabile per Busta A, DGUE elettronico e garanzia fideiussoria.</p>
+        </div>
+
+        <!-- Codice IPA / SDI -->
+        <div class="p-4 rounded-2xl bg-slate-950/80 border border-slate-800/80 space-y-1.5">
+          <span class="text-[10px] uppercase font-mono text-slate-400 block tracking-wider">Codice Univoco IPA (Fatturazione SDI)</span>
+          <div class="flex items-center gap-2">
+            <span class="font-mono text-base font-black text-sky-400 tracking-wider uppercase">${escapeHtml(item.ipa || 'ND')}</span>
+            ${item.ipa ? `
+              <button type="button" onclick="window.copyAmmValue('${escapeHtml(item.ipa)}', 'Codice IPA', event)" class="p-1 text-slate-400 hover:text-sky-300 rounded hover:bg-slate-800 transition" title="Copia Codice IPA">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+              </button>
+            ` : ''}
+          </div>
+          <p class="text-[11px] text-slate-500">Codice Univoco Ufficio per l'invio della Fattura Elettronica PA.</p>
+        </div>
+
+        <!-- Sede Territoriale -->
+        <div class="p-4 rounded-2xl bg-slate-950/80 border border-slate-800/80 space-y-1">
+          <span class="text-[10px] uppercase font-mono text-slate-400 block tracking-wider">Sede Legale &amp; Territorio</span>
+          <div class="text-sm font-bold text-white">${escapeHtml(item.comune || '-')} ${item.provincia ? `(${escapeHtml(item.provincia)})` : ''}</div>
+          <div class="text-xs text-slate-400">Regione: ${escapeHtml(item.regione || 'Italia')}</div>
+        </div>
+
+        <!-- Punti Ordinanti (PO) -->
+        <div class="p-4 rounded-2xl bg-slate-950/80 border border-slate-800/80 space-y-1">
+          <span class="text-[10px] uppercase font-mono text-slate-400 block tracking-wider">Punti Ordinanti (Centri di Spesa MePA)</span>
+          <div class="text-sm font-bold text-emerald-400 font-mono">${poCount} Punti Ordinanti abilitati</div>
+          <div class="text-xs text-slate-400">Funzionari autorizzati a impegnare la spesa su Consip.</div>
+        </div>
+      </div>
+
+      <!-- Guida Operativa Appalti & Fatturazione -->
+      <div class="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-2">
+        <div class="flex items-center gap-2 text-sky-400 font-semibold text-xs">
+          <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          <span>Utilizzo Operativo nei Flussi MePA &amp; D.Lgs. 36/2023</span>
+        </div>
+        <p class="text-xs text-slate-400 leading-relaxed">
+          Usa questa scheda per accertare l'esatta denominazione giuridica e il Codice Fiscale dell'Ente prima di generare la <strong>Garanzia Provvisoria</strong> e il <strong>DGUE</strong> per la Busta A. Aggiudicata la gara, il <strong>Codice IPA</strong> permetterà al tuo ufficio contabilità di trasmettere immediatamente le fatture elettroniche tramite il Sistema di Interscambio (SDI) senza rischiare scarti formali.
+        </p>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-slate-800">
+        <div class="flex flex-wrap items-center gap-2">
+          <button type="button" onclick="window.filterGareByAuthority('${escapeHtml(item.denominazione)}', '${escapeHtml(item.codice_fiscale || '')}')" class="px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-semibold text-xs transition shadow-lg shadow-sky-900/30 flex items-center gap-1.5">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+            <span>Cerca Bandi Attivi dell'Ente</span>
+          </button>
+
+          <button type="button" onclick="window.copyAmmDatiCompleti(${item.id})" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs border border-slate-700 transition flex items-center gap-1.5">
+            <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/></svg>
+            <span>Copia Dati Fatturazione / DGUE</span>
+          </button>
+        </div>
+
+        <button type="button" onclick="window.closeAmmDetailModal()" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-xs transition">
+          Chiudi
+        </button>
+      </div>
+
+    </div>
+  `;
+
+  modal.classList.remove("hidden");
+};
+
+/**
+ * Chiusura modale dettaglio
+ */
+window.closeAmmDetailModal = function() {
+  const modal = document.getElementById("ammDetailModal");
+  if (modal) modal.classList.add("hidden");
+};
+
+/**
+ * Copia dell'anagrafica completa dell'ente
+ */
+window.copyAmmDatiCompleti = function(itemId) {
+  const item = currentAmmItemsCache.find(x => x.id === itemId);
+  if (!item) return;
+
+  const text = `
+ANAGRAFICA STAZIONE APPALTANTE / CLIENTE PA
+-------------------------------------------
+Denominazione:    ${item.denominazione || '-'}
+Codice Fiscale:   ${item.codice_fiscale || '-'}
+Codice IPA / SDI: ${item.ipa || '-'}
+Tipologia:        ${item.tipologia || '-'}
+Regione:          ${item.regione || '-'}
+Sede Territoriale: ${item.comune || ''} ${item.provincia ? `(${item.provincia})` : ''}
+Punti Ordinanti:  ${item.po_attivi || 0}
+Data Estrazione:  ${new Date().toLocaleDateString('it-IT')}
+-------------------------------------------
+  `.trim();
+
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(() => {
+      if (typeof window.showNotification === "function") {
+        window.showNotification("Dati anagrafici copiati per DGUE / Fatturazione!");
+      }
+    });
+  }
+};
+
+/**
+ * Ricerca incrociata delle gare nel Cruscotto senza troncamenti arbitrari
+ */
+window.filterGareByAuthority = function(authName, cf) {
+  window.closeAmmDetailModal();
+  if (typeof window.switchView === "function") {
+    window.switchView("cruscotto");
+  }
+
+  setTimeout(() => {
+    const searchInput = document.getElementById("searchInput");
+    if (searchInput) {
+      // Se è presente il Codice Fiscale, usalo come ricerca primaria, altrimenti usa le prime parole significative
+      let query = cf && cf.trim() !== '' ? cf.trim() : authName.trim();
+      
+      // Se il nome è molto lungo, prendi le parole più caratteristiche per non mancare match nei bandi
+      if (!cf && query.length > 30) {
+        const words = query.split(/\s+/).filter(w => w.length > 3 && !['DELLA', 'DELLE', 'DEGLI', 'ISTITUTO', 'COMPRENSIVO', 'COMUNE'].includes(w.toUpperCase()));
+        if (words.length > 0) query = words.slice(0, 3).join(' ');
+      }
+
+      searchInput.value = query;
+      searchInput.dispatchEvent(new Event("input", { bubbles: true }));
+      
+      if (typeof window.showNotification === "function") {
+        window.showNotification(`Ricerca bandi nel Cruscotto per: ${query}`);
+      }
+    }
+  }, 100);
+};
+
+/**
+ * Modale di Guida Informativa Semplice ("In parole povere")
+ */
+window.showAmmHelpModal = function(topic) {
+  let modal = document.getElementById("ammHelpModal");
+  if (!modal) {
+    modal = document.createElement("div");
+    modal.id = "ammHelpModal";
+    modal.setAttribute("role", "dialog");
+    modal.setAttribute("aria-modal", "true");
+    modal.className = "fixed inset-0 bg-slate-950/85 backdrop-blur-md z-50 flex items-center justify-center p-4 transition-all";
+    document.body.appendChild(modal);
+  }
+
+  let title = "Guida Anagrafica Clienti PA & Stazioni Appaltanti";
+  let content = "";
+
+  if (topic === 'cf') {
+    title = "Codice Fiscale della Stazione Appaltante";
+    content = `
+      <div class="space-y-4 text-xs text-slate-300">
+        <div class="p-3.5 rounded-2xl bg-sky-950/30 border border-sky-800/50">
+          <h4 class="font-bold text-sky-300 mb-1">💡 In parole povere:</h4>
+          <p class="leading-relaxed">
+            È l'identificativo tributario univoco dell'Ente Pubblico. A differenza della denominazione (che può variare, es. "Comune di Milano" vs "Città di Milano"), il Codice Fiscale è <strong>unico e inequivocabile</strong>.
+          </p>
+        </div>
+
+        <div class="space-y-2">
+          <h4 class="font-bold text-white text-sm">Perché è fondamentale per l'operatore economico?</h4>
+          <ul class="list-disc list-inside space-y-1.5 text-slate-400 pl-1">
+            <li><strong>Intestazione Cauzione Provvisoria:</strong> La polizza fideiussoria emessa dalla compagnia o dal broker deve essere intestata all'esatto C.F. della Stazione Appaltante beneficiaria, pena il soccorso istruttorio o l'esclusione.</li>
+            <li><strong>Compilazione DGUE elettronico:</strong> Nella Busta A, il modulo DGUE richiede l'indicazione precisa del C.F. dell'amministrazione aggiudicatrice.</li>
+          </ul>
+        </div>
+      </div>
+    `;
+  } else if (topic === 'ipa') {
+    title = "Codice IPA e Codice Univoco Ufficio (Fattura SDI)";
+    content = `
+      <div class="space-y-4 text-xs text-slate-300">
+        <div class="p-3.5 rounded-2xl bg-sky-950/30 border border-sky-800/50">
+          <h4 class="font-bold text-sky-300 mb-1">💡 In parole povere:</h4>
+          <p class="leading-relaxed">
+            L'IPA (<strong>Indice delle Pubbliche Amministrazioni</strong>) è il registro ufficiale di tutti gli uffici pubblici italiani. Il codice IPA corrisponde al <strong>Codice Univoco Ufficio (CUU)</strong> a 6 o 7 caratteri.
+          </p>
+        </div>
+
+        <div class="space-y-2">
+          <h4 class="font-bold text-white text-sm">A cosa serve dopo aver vinto la gara?</h4>
+          <p class="text-slate-400 leading-relaxed">
+            Quando emetti la <strong>Fattura Elettronica PA</strong> verso il Sistema di Interscambio (SDI), devi inserire obbligatoriamente il Codice IPA dell'ufficio destinatario insieme al <strong>CIG</strong> e al <strong>CUP</strong>. Se il codice è errato, la fattura viene scartata e il pagamento bloccato.
+          </p>
+        </div>
+      </div>
+    `;
+  } else if (topic === 'po') {
+    title = "Punti Ordinanti (PO) e Punti Istruttori (PI) MePA";
+    content = `
+      <div class="space-y-4 text-xs text-slate-300">
+        <div class="p-3.5 rounded-2xl bg-sky-950/30 border border-sky-800/50">
+          <h4 class="font-bold text-sky-300 mb-1">💡 In parole povere:</h4>
+          <p class="leading-relaxed">
+            Sul portale MePA/Consip le persone fisiche della Pubblica Amministrazione hanno ruoli precisi:
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 gap-3">
+          <div class="p-3 rounded-xl bg-slate-950 border border-slate-800">
+            <span class="text-emerald-400 font-bold font-mono">Punto Ordinante (PO)</span>
+            <p class="text-slate-400 mt-1 leading-relaxed">
+              È il <strong>Dirigente</strong> o funzionario con poteri di spesa e firma digitale. Solo il PO può formalizzare ordini (OdA), stipulare trattative dirette e aggiudicare gare (RdO).
+            </p>
+          </div>
+
+          <div class="p-3 rounded-xl bg-slate-950 border border-slate-800">
+            <span class="text-sky-400 font-bold font-mono">Punto Istruttore (PI)</span>
+            <p class="text-slate-400 mt-1 leading-relaxed">
+              È il collaboratore amministrativo che predispone la gara, analizza le offerte e carica i documenti, ma sottopone poi il contratto alla firma del Punto Ordinante.
+            </p>
+          </div>
+        </div>
+
+        <div class="text-[11px] text-slate-400 mt-1">
+          <strong>Regola commerciale:</strong> Più alto è il numero di PO attivi presso un ente, maggiore è la capillarità dei suoi centri di costo autorizzati ad acquistare autonomamente dal tuo catalogo MePA!
+        </div>
+      </div>
+    `;
+  } else {
+    title = "Come utilizzare l'Anagrafica Clienti PA";
+    content = `
+      <div class="space-y-4 text-xs text-slate-300">
+        <div class="p-3.5 rounded-2xl bg-sky-950/30 border border-sky-800/50">
+          <h4 class="font-bold text-sky-300 mb-1">💡 In parole povere:</h4>
+          <p class="leading-relaxed">
+            Questa sezione raccoglie oltre <strong>20.000 enti pubblici italiani</strong> censiti nel database Open Data di Consip.
+          </p>
+        </div>
+
+        <div class="space-y-2">
+          <h4 class="font-bold text-white text-sm">Le 3 funzioni chiave per la tua azienda:</h4>
+          <ol class="list-decimal list-inside space-y-2 text-slate-400 pl-1">
+            <li><strong>Verifica Anagrafica Fiscale:</strong> Recupera con un click Codice Fiscale, IPA e indirizzo legale per compilare velocemente la Busta A e il DGUE.</li>
+            <li><strong>Ricerca Bandi dell'Ente:</strong> Clicca su "Bandi &rarr;" per scoprire all'istante tutte le gare bandite da quella specifica amministrazione nel Cruscotto.</li>
+            <li><strong>Export per Mappatura Clienti:</strong> Esporta in Excel i contatti delle stazioni appaltanti della tua regione per pianificare le attività commerciali e le risposte a RdO e Trattative Dirette.</li>
+          </ol>
+        </div>
+      </div>
+    `;
+  }
+
+  modal.innerHTML = `
+    <div class="bg-slate-900 border border-slate-700/80 rounded-3xl p-6 sm:p-8 max-w-xl w-full shadow-2xl relative text-left space-y-5" onclick="event.stopPropagation()">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+        <h3 class="text-base sm:text-lg font-bold text-white flex items-center gap-2">
+          <span class="w-6 h-6 rounded-full bg-sky-500/20 text-sky-300 text-xs font-bold flex items-center justify-center">?</span>
+          <span>${title}</span>
+        </h3>
+        <button type="button" onclick="window.closeAmmHelpModal()" class="p-1.5 text-slate-400 hover:text-white rounded-lg bg-slate-800 hover:bg-slate-700 transition touch-target-action" title="Chiudi">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <div>
+        ${content}
+      </div>
+
+      <div class="pt-3 border-t border-slate-800 flex justify-end">
+        <button type="button" onclick="window.closeAmmHelpModal()" class="px-5 py-2 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-semibold text-xs transition">
+          Ho capito, grazie
+        </button>
+      </div>
+    </div>
+  `;
+
+  modal.classList.remove("hidden");
+};
+
+/**
+ * Chiusura modale aiuto
+ */
+window.closeAmmHelpModal = function() {
+  const modal = document.getElementById("ammHelpModal");
+  if (modal) modal.classList.add("hidden");
+};
+
+/**
+ * Esportazione Dati Filtrati (Excel CSV con UTF-8 BOM oppure JSON)
+ */
+window.exportAmmData = function(fmt) {
+  const q = document.getElementById("ammSearchInput") ? document.getElementById("ammSearchInput").value.trim() : "";
+  const reg = document.getElementById("ammRegionSelect") ? document.getElementById("ammRegionSelect").value : "";
+  const tipo = document.getElementById("ammTipologiaSelect") ? document.getElementById("ammTipologiaSelect").value : "";
+  const minPo = document.getElementById("ammPoFilterSelect") ? document.getElementById("ammPoFilterSelect").value : "0";
+
+  const origin = (typeof liveBackendUrl !== "undefined" && liveBackendUrl) || 
+                 (window.location.protocol.startsWith("http") ? window.location.origin : "http://127.0.0.1:8050");
+
+  const queryParams = new URLSearchParams({
+    format: fmt,
+    limit: "2000",
+    q: q,
+    regione: reg,
+    tipologia: tipo,
+    min_po: minPo
+  });
+
+  const exportUrl = `${origin}/api/amministrazioni/export?${queryParams.toString()}`;
+
+  if (typeof window.showNotification === "function") {
+    window.showNotification(`Download anagrafica PA in formato ${fmt.toUpperCase()} avviato...`);
+  }
+
+  // Trigger download via elemento anchor
+  const a = document.createElement("a");
+  a.href = exportUrl;
+  a.download = `amministrazioni_consip_${fmt}_${new Date().toISOString().substring(0, 10)}.${fmt}`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
 };
 
 // Inizializzazione listener di Amministrazioni
@@ -154,6 +662,14 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  const ammPo = document.getElementById("ammPoFilterSelect");
+  if (ammPo) {
+    ammPo.addEventListener("change", () => {
+      ammCurrentPage = 1;
+      loadAmministrazioni();
+    });
+  }
+
   const ammPageSize = document.getElementById("ammPageSizeSelect");
   if (ammPageSize) {
     ammPageSize.addEventListener("change", () => {
@@ -168,8 +684,12 @@ document.addEventListener("DOMContentLoaded", () => {
       if (ammSearch) ammSearch.value = "";
       if (ammReg) ammReg.value = "";
       if (ammTipo) ammTipo.value = "";
+      if (ammPo) ammPo.value = "0";
       ammCurrentPage = 1;
       loadAmministrazioni();
+      if (typeof window.showNotification === "function") {
+        window.showNotification("Filtri dell'anagrafica PA reimpostati.");
+      }
     });
   }
 
@@ -212,4 +732,12 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
   }
+
+  // Tasto Escape per chiudere le modali
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") {
+      window.closeAmmDetailModal();
+      window.closeAmmHelpModal();
+    }
+  });
 });

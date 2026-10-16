@@ -664,6 +664,7 @@ class MePAHandler(SimpleHTTPRequestHandler):
                 q = qs.get("q", [""])[0].strip()
                 regione = qs.get("regione", [""])[0].strip().upper()
                 tipologia = qs.get("tipologia", [""])[0].strip()
+                min_po = int(qs.get("min_po", ["0"])[0].strip() or 0)
                 page = max(1, int(qs.get("page", ["1"])[0]))
                 page_size = max(5, min(100, int(qs.get("pageSize", ["25"])[0])))
                 offset = (page - 1) * page_size
@@ -674,21 +675,24 @@ class MePAHandler(SimpleHTTPRequestHandler):
                 cur.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='amministrazioni'")
                 if not cur.fetchone():
                     conn.close()
-                    self.send_json_response({"items": [], "total": 0, "regions": [], "message": "Tabella amministrazioni non presente"})
+                    self.send_json_response({"items": [], "total": 0, "regions": [], "tipologie": [], "message": "Tabella amministrazioni non presente"})
                     return
 
                 conditions = []
                 params = []
                 if q:
                     like_term = f"%{q}%"
-                    conditions.append("(denominazione LIKE ? OR codice_fiscale LIKE ? OR ipa LIKE ? OR comune LIKE ?)")
-                    params.extend([like_term, like_term, like_term, like_term])
+                    conditions.append("(denominazione LIKE ? OR codice_fiscale LIKE ? OR ipa LIKE ? OR comune LIKE ? OR provincia LIKE ? OR regione LIKE ?)")
+                    params.extend([like_term, like_term, like_term, like_term, like_term, like_term])
                 if regione:
                     conditions.append("regione = ?")
                     params.append(regione)
                 if tipologia:
                     conditions.append("tipologia LIKE ?")
                     params.append(f"%{tipologia}%")
+                if min_po > 0:
+                    conditions.append("po_attivi >= ?")
+                    params.append(min_po)
 
                 where_clause = " WHERE " + " AND ".join(conditions) if conditions else ""
 
@@ -698,12 +702,12 @@ class MePAHandler(SimpleHTTPRequestHandler):
                 cur.execute(f"SELECT * FROM amministrazioni{where_clause} ORDER BY po_attivi DESC, denominazione ASC LIMIT ? OFFSET ?", params + [page_size, offset])
                 rows = [dict(row) for row in cur.fetchall()]
 
-                # Ottieni le regioni per il filtro
+                # Ottieni le regioni uniche per il filtro
                 cur.execute("SELECT DISTINCT regione FROM amministrazioni WHERE regione != '' ORDER BY regione ASC")
                 regions = [r[0] for r in cur.fetchall()]
 
                 # Ottieni tipologie principali
-                cur.execute("SELECT DISTINCT tipologia FROM amministrazioni WHERE tipologia != '' ORDER BY tipologia ASC LIMIT 25")
+                cur.execute("SELECT DISTINCT tipologia FROM amministrazioni WHERE tipologia != '' ORDER BY tipologia ASC")
                 tipologie = [r[0] for r in cur.fetchall()]
 
                 conn.close()
@@ -716,6 +720,66 @@ class MePAHandler(SimpleHTTPRequestHandler):
                     "regions": regions,
                     "tipologie": tipologie
                 })
+            except Exception as e:
+                self.send_json_response({"error": str(e)}, 500)
+            return
+
+        # API: Export Anagrafica Amministrazioni Pubbliche (CSV Excel con BOM UTF-8 o JSON)
+        if path == "/api/amministrazioni/export":
+            try:
+                qs = parse_qs(parsed.query)
+                q = qs.get("q", [""])[0].strip()
+                regione = qs.get("regione", [""])[0].strip().upper()
+                tipologia = qs.get("tipologia", [""])[0].strip()
+                min_po = int(qs.get("min_po", ["0"])[0].strip() or 0)
+                fmt = qs.get("format", ["csv"])[0].strip().lower()
+                limit = min(5000, max(1, int(qs.get("limit", ["1000"])[0])))
+
+                conn = get_db_connection()
+                cur = conn.cursor()
+
+                conditions = []
+                params = []
+                if q:
+                    like_term = f"%{q}%"
+                    conditions.append("(denominazione LIKE ? OR codice_fiscale LIKE ? OR ipa LIKE ? OR comune LIKE ? OR provincia LIKE ? OR regione LIKE ?)")
+                    params.extend([like_term, like_term, like_term, like_term, like_term, like_term])
+                if regione:
+                    conditions.append("regione = ?")
+                    params.append(regione)
+                if tipologia:
+                    conditions.append("tipologia LIKE ?")
+                    params.append(f"%{tipologia}%")
+                if min_po > 0:
+                    conditions.append("po_attivi >= ?")
+                    params.append(min_po)
+
+                where_clause = " WHERE " + " AND ".join(conditions) if conditions else ""
+                cur.execute(f"SELECT id, ipa, codice_fiscale, denominazione, tipologia, regione, provincia, comune, po_attivi FROM amministrazioni{where_clause} ORDER BY po_attivi DESC, denominazione ASC LIMIT ?", params + [limit])
+                rows = [dict(row) for row in cur.fetchall()]
+                conn.close()
+
+                if fmt == "json":
+                    self.send_json_response({"items": rows, "count": len(rows)})
+                    return
+
+                import io, csv
+                output = io.StringIO()
+                output.write('\ufeff')  # UTF-8 BOM per Excel
+                writer = csv.writer(output, delimiter=';', quoting=csv.QUOTE_MINIMAL)
+                writer.writerow(["ID", "CODICE_IPA", "CODICE_FISCALE", "DENOMINAZIONE_ENTE", "TIPOLOGIA", "REGIONE", "PROVINCIA", "COMUNE", "PUNTI_ORDINANTI_ATTIVI"])
+                for r in rows:
+                    writer.writerow([r["id"], r["ipa"], r["codice_fiscale"], r["denominazione"], r["tipologia"], r["regione"], r["provincia"], r["comune"], r["po_attivi"]])
+
+                csv_bytes = output.getvalue().encode('utf-8')
+                self.send_response(200)
+                self.send_header("Content-Type", "text/csv; charset=utf-8")
+                self.send_header("Content-Disposition", 'attachment; filename="export_amministrazioni_consip.csv"')
+                self.send_header("Access-Control-Allow-Origin", "*")
+                self.send_header("Content-Length", str(len(csv_bytes)))
+                self.end_headers()
+                self.wfile.write(csv_bytes)
+                return
             except Exception as e:
                 self.send_json_response({"error": str(e)}, 500)
             return
