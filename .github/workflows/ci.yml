@@ -52,6 +52,7 @@ jobs:
               'js/db-engine.js',
               'js/importer.js',
               'js/app.js',
+              'js/wizard-rules.js',
               'js/views/cruscotto.js',
               'js/views/wizard.js',
               'js/views/cataloghi.js',
@@ -63,3 +64,15 @@ jobs:
               assert os.path.getsize(f) > 0, f'Empty file: {f}'
           print('All web assets verified successfully.')
           "
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Run Wizard Unit Tests & Syntax Checks
+        run: |
+          node --check js/wizard-rules.js
+          node --check js/views/wizard.js
+          node test_wizard_rules.js
+

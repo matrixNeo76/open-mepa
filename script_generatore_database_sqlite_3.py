@@ -20,6 +20,8 @@ from urllib.parse import urlparse, parse_qs
 DB_NAME = "gare_consip.db"
 HTML_FILE = "index.html" if os.path.exists("index.html") else "gestionale_bandi_mepa_open_data_consip.html"
 DEFAULT_PORT = 8050
+DEFAULT_HOST = "127.0.0.1"
+VALID_STATUSES = ("Da Valutare", "In Lavorazione", "Inviata", "Vinta", "Persa", "Scartata")
 
 SAMPLE_RECORDS = [
     (
@@ -186,17 +188,40 @@ def init_database(force_recreate=False):
 def get_db_connection():
     conn = sqlite3.connect(DB_NAME)
     conn.row_factory = sqlite3.Row
+    conn.execute("PRAGMA foreign_keys = ON")
     return conn
+
+def is_local_origin(origin):
+    """True se l'header Origin proviene da una pagina servita da localhost/127.0.0.1."""
+    if not origin:
+        return False
+    try:
+        host = urlparse(origin).hostname
+    except ValueError:
+        return False
+    return host in ("127.0.0.1", "localhost", "::1")
 
 class MePAHandler(SimpleHTTPRequestHandler):
     """Gestore HTTP con supporto per servire l'app web e le API REST SQLite 3."""
 
     def end_headers(self):
-        # Abilita CORS per sviluppo e chiamate API locali
-        self.send_header('Access-Control-Allow-Origin', '*')
+        # CORS: riflette solo origini locali (mai '*'), cosi' un sito esterno
+        # aperto nel browser non puo' leggere/scrivere sul database locale.
+        origin = self.headers.get('Origin')
+        if is_local_origin(origin):
+            self.send_header('Access-Control-Allow-Origin', origin)
+            self.send_header('Vary', 'Origin')
         self.send_header('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS')
-        self.send_header('Access-Control-Allow-Headers', 'Content-Type')
+        self.send_header('Access-Control-Allow-Headers', 'Content-Type, X-Confirm-Reset')
         super().end_headers()
+
+    def write_forbidden(self):
+        """Blocca scritture (POST/DELETE) provenienti da origini non locali."""
+        origin = self.headers.get('Origin')
+        if origin and not is_local_origin(origin):
+            self.send_json_response({"status": "error", "message": "Origine non consentita"}, 403)
+            return True
+        return False
 
     def do_OPTIONS(self):
         self.send_response(200)
@@ -513,49 +538,6 @@ class MePAHandler(SimpleHTTPRequestHandler):
                 self.send_json_response({"error": str(e)}, 500)
             return
 
-        # API: Recupero stato workflow / wizard di una gara
-        if path == "/api/workflow":
-            try:
-                query_params = parse_qs(parsed.query)
-                gara_id = query_params.get('gara_id', [None])[0]
-                if not gara_id:
-                    self.send_json_response({"error": "gara_id obbligatorio"}, 400)
-                    return
-
-                conn = get_db_connection()
-                cur = conn.cursor()
-                cur.execute("""
-                    SELECT gara_id, current_step, step1_data, step2_data, step3_data, step4_data, updated_at
-                    FROM gare_workflow WHERE gara_id = ?
-                """, (gara_id,))
-                row = cur.fetchone()
-                conn.close()
-
-                if row:
-                    res = {
-                        "gara_id": row[0],
-                        "current_step": row[1],
-                        "step1_data": json.loads(row[2]) if row[2] else {},
-                        "step2_data": json.loads(row[3]) if row[3] else {},
-                        "step3_data": json.loads(row[4]) if row[4] else {},
-                        "step4_data": json.loads(row[5]) if row[5] else {},
-                        "updated_at": row[6]
-                    }
-                else:
-                    res = {
-                        "gara_id": gara_id,
-                        "current_step": 1,
-                        "step1_data": {},
-                        "step2_data": {},
-                        "step3_data": {},
-                        "step4_data": {},
-                        "is_new": True
-                    }
-                self.send_json_response(res)
-            except Exception as e:
-                self.send_json_response({"error": str(e)}, 500)
-            return
-
         # API: Download diretto del file binario gare_consip.db
         if path == "/api/export/db":
             if os.path.exists(DB_NAME):
@@ -575,6 +557,8 @@ class MePAHandler(SimpleHTTPRequestHandler):
         super().do_GET()
 
     def do_POST(self):
+        if self.write_forbidden():
+            return
         parsed = urlparse(self.path)
         path = parsed.path
 
@@ -655,14 +639,19 @@ class MePAHandler(SimpleHTTPRequestHandler):
                     updated_at = excluded.updated_at
                 """, (gara_id, current_step, step1_data, step2_data, step3_data, step4_data, now_iso))
 
-                # Opzionale: allinea lo stato della tabella principale gare alla fase
-                status_map = {1: "Da Valutare", 2: "In Lavorazione", 3: "Inviata"}
-                if current_step in status_map:
-                    cur.execute("UPDATE gare SET status = ? WHERE id = ?", (status_map[current_step], gara_id))
+                # Lo stato della gara cambia SOLO se il client lo chiede esplicitamente
+                # (calcolato dalle regole deterministiche del Wizard) e se e' un valore valido.
+                gara_status = data.get("gara_status")
+                if gara_status:
+                    if gara_status not in VALID_STATUSES:
+                        conn.close()
+                        self.send_json_response({"status": "error", "message": "gara_status non valido"}, 400)
+                        return
+                    cur.execute("UPDATE gare SET status = ? WHERE id = ?", (gara_status, gara_id))
 
                 conn.commit()
                 conn.close()
-                self.send_json_response({"status": "success", "gara_id": gara_id, "current_step": current_step})
+                self.send_json_response({"status": "success", "gara_id": gara_id, "current_step": current_step, "gara_status": gara_status})
             except Exception as e:
                 self.send_json_response({"status": "error", "message": str(e)}, 400)
             return
@@ -677,7 +666,12 @@ class MePAHandler(SimpleHTTPRequestHandler):
                 conn = get_db_connection()
                 cur = conn.cursor()
 
+                saved_workflows = []
                 if mode == "replace":
+                    # Con le FK attive il DELETE cancellerebbe a cascata anche i workflow:
+                    # li salvo e li ripristino per le gare che compaiono ancora nel nuovo import.
+                    saved_workflows = [tuple(r) for r in cur.execute(
+                        "SELECT gara_id, current_step, step1_data, step2_data, step3_data, step4_data, updated_at FROM gare_workflow")]
                     cur.execute("DELETE FROM gare")
 
                 cur.execute("BEGIN TRANSACTION;")
@@ -714,6 +708,13 @@ class MePAHandler(SimpleHTTPRequestHandler):
                     inserted += 1
 
                 conn.commit()
+                restored = 0
+                for wf in saved_workflows:
+                    cur.execute("SELECT 1 FROM gare WHERE id = ?", (wf[0],))
+                    if cur.fetchone():
+                        cur.execute("INSERT OR REPLACE INTO gare_workflow (gara_id, current_step, step1_data, step2_data, step3_data, step4_data, updated_at) VALUES (?,?,?,?,?,?,?)", wf)
+                        restored += 1
+                conn.commit()
                 cur.execute("SELECT COUNT(*) FROM gare")
                 total = cur.fetchone()[0]
                 conn.close()
@@ -725,6 +726,9 @@ class MePAHandler(SimpleHTTPRequestHandler):
 
         # API: Reset completo del database
         if path == "/api/reset":
+            if self.headers.get("X-Confirm-Reset") != "yes":
+                self.send_json_response({"status": "error", "message": "Conferma esplicita richiesta (header X-Confirm-Reset: yes)"}, 403)
+                return
             try:
                 conn = get_db_connection()
                 cur = conn.cursor()
@@ -739,6 +743,8 @@ class MePAHandler(SimpleHTTPRequestHandler):
         self.send_json_response({"error": "Endpoint POST sconosciuto"}, 404)
 
     def do_DELETE(self):
+        if self.write_forbidden():
+            return
         parsed = urlparse(self.path)
         path = parsed.path
         qs = parse_qs(parsed.query)
@@ -764,12 +770,12 @@ class MePAHandler(SimpleHTTPRequestHandler):
 
         self.send_json_response({"error": "ID gara non fornito per la cancellazione"}, 400)
 
-def run_server(port=DEFAULT_PORT):
-    server_address = ('', port)
+def run_server(port=DEFAULT_PORT, host=DEFAULT_HOST):
+    server_address = (host, port)
     httpd = HTTPServer(server_address, MePAHandler)
     print("================================================================")
     print("   MEPA & CONSIP DESK PRO - BACKEND SQLITE 3 SERVER ATTIVO      ")
-    print(f"   URL Applicativo:  http://127.0.0.1:{port}/                   ")
+    print(f"   URL Applicativo:  http://{host}:{port}/                   ")
     print(f"   Database File:    {os.path.abspath(DB_NAME)}                 ")
     print("   Premi Ctrl + C per arrestare il server                       ")
     print("================================================================")
@@ -787,6 +793,13 @@ if __name__ == "__main__":
     else:
         init_database(force_recreate=False)
         port = DEFAULT_PORT
-        if len(sys.argv) > 1 and sys.argv[1].isdigit():
-            port = int(sys.argv[1])
-        run_server(port=port)
+        host = DEFAULT_HOST
+        args = sys.argv[1:]
+        if "--host" in args:
+            host = args[args.index("--host") + 1]
+            if host not in ("127.0.0.1", "localhost"):
+                print("[ATTENZIONE] Server esposto sulla rete: le API non hanno autenticazione.")
+        for a in args:
+            if a.isdigit():
+                port = int(a)
+        run_server(port=port, host=host)

@@ -220,3 +220,90 @@ function hideProgress() {
   const fill = document.getElementById("progressBarFill");
   if (fill) fill.style.width = "0%";
 }
+
+/**
+ * Dialogo modale accessibile (role=dialog, focus trap, Esc) che sostituisce alert()/confirm().
+ * Il testo e' inserito con textContent: nessun rischio XSS.
+ * Restituisce una Promise con il valore del pulsante scelto (Esc = valore dell'ultimo ghost/false).
+ */
+function _mepaDialog({ title, message, buttons, escValue = false }) {
+  return new Promise(resolve => {
+    const previouslyFocused = document.activeElement;
+    const overlay = document.createElement("div");
+    overlay.className = "fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-[70] flex items-center justify-center p-4";
+
+    const box = document.createElement("div");
+    box.setAttribute("role", "alertdialog");
+    box.setAttribute("aria-modal", "true");
+    const titleId = "mepaDlgTitle" + Date.now();
+    const msgId = titleId + "Msg";
+    box.setAttribute("aria-labelledby", titleId);
+    box.setAttribute("aria-describedby", msgId);
+    box.className = "bg-slate-900 border border-slate-700 rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4";
+
+    const h = document.createElement("h3");
+    h.id = titleId;
+    h.className = "text-base font-bold text-white";
+    h.textContent = title;
+    const p = document.createElement("p");
+    p.id = msgId;
+    p.className = "text-sm text-slate-300 leading-relaxed whitespace-pre-line";
+    p.textContent = message;
+
+    const row = document.createElement("div");
+    row.className = "flex items-center justify-end gap-2 pt-2";
+    const kinds = {
+      ghost: "bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700",
+      primary: "bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold",
+      danger: "bg-rose-600 hover:bg-rose-500 text-white font-bold"
+    };
+    const btnEls = buttons.map(b => {
+      const el = document.createElement("button");
+      el.type = "button";
+      el.textContent = b.label;
+      el.className = "px-4 py-2 rounded-xl text-xs transition " + (kinds[b.kind] || kinds.ghost);
+      el.addEventListener("click", () => close(b.value));
+      row.appendChild(el);
+      return el;
+    });
+
+    function close(value) {
+      document.removeEventListener("keydown", onKey, true);
+      overlay.remove();
+      if (previouslyFocused && previouslyFocused.focus) previouslyFocused.focus();
+      resolve(value);
+    }
+    function onKey(e) {
+      if (e.key === "Escape") { e.preventDefault(); close(escValue); }
+      if (e.key === "Tab") {
+        const i = btnEls.indexOf(document.activeElement);
+        e.preventDefault();
+        const next = e.shiftKey ? (i <= 0 ? btnEls.length - 1 : i - 1) : (i + 1) % btnEls.length;
+        btnEls[next].focus();
+      }
+    }
+    document.addEventListener("keydown", onKey, true);
+
+    box.append(h, p, row);
+    overlay.appendChild(box);
+    document.body.appendChild(overlay);
+    // Per azioni distruttive il focus iniziale e' su "Annulla" (primo pulsante)
+    btnEls[0].focus();
+  });
+}
+
+function showConfirmDialog(message, opts = {}) {
+  const { title = "Conferma operazione", confirmLabel = "Conferma", cancelLabel = "Annulla", danger = false } = opts;
+  return _mepaDialog({
+    title, message, escValue: false,
+    buttons: [
+      { label: cancelLabel, value: false, kind: "ghost" },
+      { label: confirmLabel, value: true, kind: danger ? "danger" : "primary" }
+    ]
+  });
+}
+
+function showInfoDialog(message, opts = {}) {
+  const { title = "Informazione", okLabel = "Ho capito" } = opts;
+  return _mepaDialog({ title, message, escValue: true, buttons: [{ label: okLabel, value: true, kind: "primary" }] });
+}

@@ -74,11 +74,19 @@ assert 'selectPageSize' in html_content
 assert 'handleDragOver' in html_content
 print(f'HTML served correctly, size: {len(html_content)} bytes')
 
-# Test 7: POST /api/workflow
+# Test 7: POST /api/workflow con gara_status esplicito
+conn = sqlite3.connect('gare_consip.db')
+cur = conn.cursor()
+cur.execute("SELECT id, cig FROM gare LIMIT 1")
+sample_row = cur.fetchone()
+sample_id = sample_row[0]
+sample_cig = sample_row[1]
+
 wf_payload = {
-    'gara_id': 'T1',
+    'gara_id': sample_id,
     'current_step': 2,
-    'step1_data': {'cig': 'A045B891C1', 'ente': 'Comune di Bologna', 'oggetto': 'Fornitura server'},
+    'gara_status': 'In Lavorazione',
+    'step1_data': {'cig': sample_cig, 'ente': 'Comune di Bologna', 'oggetto': 'Fornitura server'},
     'step2_data': {'decision': 'GO', 'margin': 15.0},
     'step3_data': {'bustaA': {'dgue': True}},
     'step4_data': {'outcome': 'In attesa'}
@@ -88,14 +96,46 @@ wf_req = urllib.request.Request(f'{base}/api/workflow', data=wf_data, headers={'
 wf_res = json.loads(urllib.request.urlopen(wf_req).read().decode())
 print('POST /api/workflow result:', wf_res)
 assert wf_res['status'] == 'success'
-assert wf_res['gara_id'] == 'T1'
+assert wf_res['gara_id'] == sample_id
+assert wf_res['gara_status'] == 'In Lavorazione'
+
+# Verifica che gare.status sia stato aggiornato a 'In Lavorazione'
+cur.execute("SELECT status FROM gare WHERE id=?", (sample_id,))
+sample_status = cur.fetchone()[0]
+conn.close()
+print(f'{sample_id} status in SQLite:', sample_status)
+assert sample_status == 'In Lavorazione'
 
 # Test 8: GET /api/workflow
-wf_get_req = urllib.request.urlopen(f'{base}/api/workflow?gara_id=T1')
+wf_get_req = urllib.request.urlopen(f'{base}/api/workflow?gara_id={sample_id}')
 wf_get_res = json.loads(wf_get_req.read().decode())
 print('GET /api/workflow result:', wf_get_res)
-assert wf_get_res['gara_id'] == 'T1'
+assert wf_get_res['gara_id'] == sample_id
 assert wf_get_res['current_step'] == 2
 assert wf_get_res['step2_data']['decision'] == 'GO'
 
+# Test 9: Sicurezza CSRF - Rifiuto richieste con Origin esterno non autorizzato
+try:
+    evil_req = urllib.request.Request(
+        f'{base}/api/workflow',
+        data=wf_data,
+        headers={'Content-Type': 'application/json', 'Origin': 'http://malicious-site.example.com'},
+        method='POST'
+    )
+    urllib.request.urlopen(evil_req)
+    assert False, "Dovrebbe sollevare HTTPError 403 Forbidden per Origin non autorizzato"
+except urllib.error.HTTPError as e:
+    print('CSRF blocked external Origin:', e.code)
+    assert e.code == 403
+
+# Test 10: Sicurezza Reset - POST /api/reset richiede header X-Confirm-Reset: yes
+try:
+    reset_req = urllib.request.Request(f'{base}/api/reset', data=b'{}', headers={'Content-Type': 'application/json'}, method='POST')
+    urllib.request.urlopen(reset_req)
+    assert False, "Dovrebbe sollevare HTTPError 403 per header X-Confirm-Reset mancante"
+except urllib.error.HTTPError as e:
+    print('Reset blocked missing header:', e.code)
+    assert e.code == 403
+
 print('\n*** TUTTI I TEST SONO PASSATI CON SUCCESSO! ***')
+

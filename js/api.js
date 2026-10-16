@@ -57,7 +57,7 @@ const Api = {
   },
 
   async resetGare() {
-    const resp = await fetch(`${this.getBaseUrl()}/api/reset`, { method: "POST" });
+    const resp = await fetch(`${this.getBaseUrl()}/api/reset`, { method: "POST", headers: { "X-Confirm-Reset": "yes" } });
     if (!resp.ok) throw new Error("Errore svuotamento gare");
     return await resp.json();
   },

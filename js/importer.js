@@ -139,12 +139,20 @@ async function handleFileUpload(file) {
 
   // Check for Catalog Big Data file (prevent browser memory freeze)
   if (fileNameLower.includes("catalog")) {
-    alert("Attenzione: il file selezionato appartiene ai Cataloghi Consip (~600MB / ~300.000 righe di articoli merci).\n\nQuesto dataset viene importato nello storage dedicato 'cataloghi' su SQLite tramite il motore di streaming asincrono Python:\npython consip_stream_ingestion.py\n\nIn questo modo il browser rimane fluido a 60 FPS e il cruscotto gare non viene intasato da prodotti a listino.");
+    await showInfoDialog(
+      "Il file selezionato appartiene ai Cataloghi Consip (~600 MB / ~300.000 righe di articoli).\n\n"
+      + "Questo dataset va importato nello storage dedicato 'cataloghi' con il motore di streaming Python:\n"
+      + "python consip_stream_ingestion.py\n\n"
+      + "Così il browser resta fluido e il cruscotto gare non viene intasato dai listini.",
+      { title: "Dataset troppo grande per il browser" });
     return;
   }
 
   if (file.size > 25 * 1024 * 1024) {
-    alert(`Il file selezionato è di ${(file.size / (1024 * 1024)).toFixed(1)} MB. Il caricamento diretto nel browser rischia di congelare la pagina.\n\nPer file oltre i 25 MB, utilizza lo script di ingestione in background 'consip_stream_ingestion.py' collegato al database SQLite 3.`);
+    await showInfoDialog(
+      `Il file selezionato pesa ${(file.size / (1024 * 1024)).toFixed(1)} MB: caricarlo direttamente nel browser rischia di bloccare la pagina.\n\n`
+      + "Per file oltre i 25 MB usa lo script di ingestione 'consip_stream_ingestion.py' collegato al database SQLite 3.",
+      { title: "File troppo grande" });
     return;
   }
 

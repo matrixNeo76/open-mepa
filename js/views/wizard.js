@@ -4,10 +4,12 @@
  * 
  * Include:
  * - Guida operativa contestuale su ogni singolo campo e fase (pulsanti interattivi '?')
- * - Modalità guidata con banner operativo chiaro "Cosa fare in questa fase"
- * - Calcoli automatici (scadenze, ribasso %, manodopera art. 108, garanzie art. 106)
- * - Dual hand-off: copia negli appunti formattata per portale Consip & JSON payload per agenti
- * - Persistenza su SQLite 3 (tabella gare_workflow)
+ * - Validazione deterministica e Gating tra le fasi (WizardRules)
+ * - Calcolo cauzione provvisoria ex art. 106 c.8 (ISO 9001 -30%, PMI -50%, fideiussione digitale -10%)
+ * - Scorporo costi manodopera e oneri aziendali ex art. 108 c.9 con eccezione per fornitura senza posa
+ * - Monitoraggio marginalita' e prezzi netti con verifica rischio anomalia ex art. 110
+ * - Dual hand-off: copia negli appunti formattata per portale Consip & JSON payload arricchito per agenti
+ * - Sincronizzazione automatica dello stato gara su SQLite 3 (tabella gare_workflow e gare)
  */
 
 // Stato locale del Wizard
@@ -16,6 +18,7 @@ let currentWizardStep = 1;
 let currentWizardData = {
   gara_id: null,
   current_step: 1,
+  gara_status: null,
   step1_data: {},
   step2_data: {},
   step3_data: {},
@@ -23,13 +26,13 @@ let currentWizardData = {
 };
 
 /**
- * Dizionario enciclopedico di supporto interattivo per ogni funzionalità e campo del Wizard
+ * Dizionario enciclopedico di supporto interattivo per ogni funzionalita' e campo del Wizard
  */
 const WIZARD_HELP_GUIDE = {
   general_wizard: {
     category: "GUIDA GENERALE AL WORKFLOW",
     title: "Come Funziona il Wizard Deterministico MePA",
-    what: "Il Wizard è una pipeline operativa in 4 fasi che traduce le regole di partecipazione del Nuovo Codice degli Appalti (D.Lgs. 36/2023) e del portale AcquistinretePA in un flusso sequenziale a prova di errore.",
+    what: "Il Wizard e' una pipeline operativa deterministica in 4 fasi che traduce le regole di partecipazione del Nuovo Codice degli Appalti (D.Lgs. 36/2023) e del portale AcquistinretePA in un flusso sequenziale a prova di errore.",
     portal_location: "Portale www.acquistinretepa.it -> Sezione 'Gare e RdO' -> Gestione Partecipazione.",
     what_to_do: "Segui le 4 fasi in ordine: 1) Registra gli identificativi e verifica i termini di chiarimento. 2) Esegui la delibera Go/No-Go per non sprecare risorse. 3) Prepara e firma le 3 Buste (Amministrativa, Tecnica, Economica). 4) Traccia l'esito e richiedi lo svincolo fideiussione.",
     legal_tip: "Il rispetto rigoroso della separazione delle buste e dei termini perentori di invio offerta e quesiti previene il 100% dei motivi di esclusione formale."
@@ -37,18 +40,18 @@ const WIZARD_HELP_GUIDE = {
   cig: {
     category: "FASE 1: IDENTIFICAZIONE",
     title: "Codice Identificativo Gara (CIG)",
-    what: "È il codice alfanumerico univoco di 10 caratteri rilasciato da ANAC che individua l'appalto pubblico in tutta la documentazione ufficiale e nei registri contabili.",
+    what: "E' il codice alfanumerico univoco di 10 caratteri rilasciato da ANAC tramite le Piattaforme di Approvvigionamento Digitale (PAD) certificate interoperabili con la PCP ANAC.",
     portal_location: "In cima alla scheda bando su acquistinretepa.it, sotto il titolo della RdO o nel disciplinare di gara.",
     what_to_do: "Verifica che il CIG corrisponda esattamente a quello del bando. Usa il pulsante 'Copia' per cercarlo all'interno di ANAC FVOE 2.0 o sul portale Consip.",
-    legal_tip: "Nelle procedure sotto i 5.000€ o micro-acquisti può presentarsi come SmartCIG. Il CIG ordinario di 10 caratteri è obbligatorio per l'emissione del PassOE/FVOE 2.0."
+    legal_tip: "ATTENZIONE: dal 1 gennaio 2024 il sistema SIMOG e lo SmartCIG sono stati definitivamente aboliti per effetto della digitalizzazione integrale (art. 25 D.Lgs. 36/2023). Tutte le procedure, compresi i micro-affidamenti sotto i 5.000€, utilizzano esclusivamente CIG ordinari di 10 caratteri."
   },
   qa_deadline: {
     category: "FASE 1: IDENTIFICAZIONE",
     title: "Termine per Richiesta Chiarimenti (Q&A)",
-    what: "È la data e ora limite entro cui i concorrenti possono porre quesiti alla Stazione Appaltante su clausole oscure, incongruenze o richieste tecniche.",
+    what: "E' la data e ora limite entro cui i concorrenti possono porre quesiti alla Stazione Appaltante su clausole oscure, incongruenze o richieste tecniche.",
     portal_location: "Scheda 'Date della Procedura' della RdO su AcquistinretePA o capitolo 'Chiarimenti' del Disciplinare.",
-    what_to_do: "Imposta la data. Se mancano meno di 3 giorni, invia immediatamente i quesiti tramite il portale Consip (sezione Chiarimenti). I chiarimenti inviati via PEC o fuori termine vengono dichiarati inammissibili.",
-    legal_tip: "Ai sensi dell'art. 88 D.Lgs. 36/2023, le risposte ai chiarimenti della PA diventano parte integrante della lex specialis di gara."
+    what_to_do: "Imposta la data. Se mancano pochi giorni, invia immediatamente i quesiti tramite il portale Consip (sezione Chiarimenti). I chiarimenti inviati via PEC o fuori termine vengono dichiarati inammissibili.",
+    legal_tip: "Ai sensi dell'art. 92, comma 2, lett. a) del D.Lgs. 36/2023, la Stazione Appaltante deve pubblicare le risposte almeno 6 giorni prima della scadenza delle offerte (ridotti a 4 giorni nelle procedure d'urgenza). Il termine per la presentazione dei quesiti da parte dei concorrenti scade pertanto con congruo anticipo stabilito nel bando."
   },
   deadline: {
     category: "FASE 1: IDENTIFICAZIONE",
@@ -56,47 +59,47 @@ const WIZARD_HELP_GUIDE = {
     what: "La scadenza improrogabile di sistema entro cui tutte e 3 le buste devono essere caricate, firmate digitalmente e inviate a sistema MePA.",
     portal_location: "Evidenziata in rosso su acquistinretepa.it e all'art. 1 del Disciplinare.",
     what_to_do: "Pianifica l'invio finale almeno 24-48 ore prima della scadenza. I blocchi dei server Consip o rallentamenti della connessione nell'ultima ora non giustificano la riammissione.",
-    legal_tip: "Il termine di scadenza offerta è perentorio a pena di decadenza automatica stabilito dall'art. 92 D.Lgs. 36/2023."
+    legal_tip: "Il termine di scadenza offerta e' perentorio a pena di decadenza automatica stabilito dall'art. 92 D.Lgs. 36/2023."
   },
   authority: {
     category: "FASE 1: IDENTIFICAZIONE",
     title: "Stazione Appaltante / Ente Pubblico",
-    what: "L'amministrazione pubblica (Comune, Ministero, ASL, Università) che ha indetto la procedura concorsuale.",
+    what: "L'amministrazione pubblica (Comune, Ministero, ASL, Universita') che ha indetto la procedura concorsuale.",
     portal_location: "Intestazione della scheda bando su MePA.",
-    what_to_do: "Verifica che l'ente rientri tra le amministrazioni verso cui l'azienda può emettere fattura elettronica e non abbia contenziosi aperti.",
-    legal_tip: "Verifica nel disciplinare se l'ente appalta per sé o come centrale di committenza qualificata ex art. 62 D.Lgs. 36/2023."
+    what_to_do: "Verifica che l'ente rientri tra le amministrazioni verso cui l'azienda puo' emettere fattura elettronica e non abbia contenziosi aperti.",
+    legal_tip: "Verifica nel disciplinare se l'ente appalta per se' o come centrale di committenza qualificata ex art. 62 D.Lgs. 36/2023."
   },
   rup_name: {
     category: "FASE 1: IDENTIFICAZIONE",
     title: "Responsabile Unico del Progetto (RUP)",
     what: "Il funzionario pubblico nominato dalla Stazione Appaltante responsabile di tutte le fasi dell'appalto.",
     portal_location: "Disciplinare di gara, art. 'Responsabile del Progetto' o 'Contatti'.",
-    what_to_do: "Inserisci il nome e la qualifica del RUP. Ti servirà per intestare eventuali comunicazioni formali, istanze di soccorso istruttorio o PEC di richiesta svincolo polizze.",
-    legal_tip: "Ai sensi dell'art. 15 D.Lgs. 36/2023, il RUP è l'unico interlocutore istituzionale per la procedura."
+    what_to_do: "Inserisci il nome e la qualifica del RUP. Ti servira' per intestare eventuali comunicazioni formali, istanze di chiarimento o PEC di richiesta svincolo polizze.",
+    legal_tip: "Ai sensi dell'art. 15 D.Lgs. 36/2023, il RUP e' l'unico interlocutore istituzionale per la procedura."
   },
   title: {
     category: "FASE 1: IDENTIFICAZIONE",
     title: "Oggetto della Fornitura / Servizio",
     what: "Descrizione sintetica delle prestazioni richieste dalla PA (beni, servizi informatici, manutenzione, lavori).",
     portal_location: "Titolo principale del bando o art. 'Oggetto dell'Appalto' nel Disciplinare.",
-    what_to_do: "Leggilo con attenzione per verificare la compatibilità con i codici ATECO e l'oggetto sociale della tua azienda.",
+    what_to_do: "Leggilo con attenzione per verificare la compatibilita' con i codici ATECO e l'oggetto sociale della tua azienda.",
     legal_tip: "L'offerta tecnica ed economica deve corrispondere fedelmente all'oggetto; varianti non ammesse portano all'esclusione."
   },
   check_fatturato: {
     category: "FASE 2: QUALIFICAZIONE",
     title: "Fatturato Specifico nel Settore",
-    what: "Requisito di capacità economico-finanziaria: la stazione appaltante può richiedere un fatturato minimo maturato negli ultimi 3 esercizi finanziari.",
+    what: "Requisito di capacita' economico-finanziaria: la stazione appaltante puo' richiedere un fatturato minimo maturato negli ultimi 3 esercizi finanziari.",
     portal_location: "Disciplinare di Gara -> Sezione 'Requisiti di partecipazione economico-finanziari'.",
-    what_to_do: "Controlla i bilanci approvati dell'azienda. Se il fatturato aziendale non è sufficiente, valuta se partecipare in Raggruppamento Temporaneo di Imprese (RTI) o ricorrere all'Avvalimento.",
-    legal_tip: "L'art. 100 del D.Lgs. 36/2023 stabilisce che il fatturato specifico richiesto non può superare il doppio del valore stimato dell'appalto."
+    what_to_do: "Controlla i bilanci approvati dell'azienda. Se il fatturato aziendale non e' sufficiente, valuta se partecipare in Raggruppamento Temporaneo di Imprese (RTI) o ricorrere all'Avvalimento.",
+    legal_tip: "L'art. 100 del D.Lgs. 36/2023 stabilisce che il fatturato specifico richiesto non puo' superare il doppio del valore stimato dell'appalto."
   },
   check_iso: {
     category: "FASE 2: QUALIFICAZIONE",
-    title: "Certificazioni di Qualità e CAM",
-    what: "Certificati aziendali (ISO 9001, ISO 27001, ISO 14001) e rispetto dei Criteri Ambientali Minimi (CAM) previsti per legge.",
-    portal_location: "Disciplinare di Gara -> Sezione 'Requisiti di idoneità professionale e CAM'.",
-    what_to_do: "Verifica che i certificati siano in corso di validità e intestati alla ragione sociale partecipante. La certificazione ISO 9001 dà diritto allo sconto del 50% sulla cauzione provvisoria!",
-    legal_tip: "I Criteri Ambientali Minimi (art. 57 D.Lgs. 36/2023) sono obbligatori per legge per tutte le forniture della Pubblica Amministrazione."
+    title: "Certificazioni di Qualita' (ISO 9001 / CAM)",
+    what: "Certificati aziendali di gestione qualita' (UNI EN ISO 9001, ISO 27001, ISO 14001) e rispetto dei Criteri Ambientali Minimi (CAM).",
+    portal_location: "Disciplinare di Gara -> Sezione 'Requisiti di idoneita' professionale e CAM'.",
+    what_to_do: "Verifica che i certificati siano in corso di validita' e intestati alla ragione sociale partecipante. La certificazione ISO 9001 conferisce il diritto a una riduzione del 30% sull'importo della cauzione provvisoria!",
+    legal_tip: "Ai sensi dell'art. 106 c. 8 D.Lgs. 36/2023, la riduzione per ISO 9001 e' del 30% (nel vecchio D.Lgs. 50/2016 era del 50%). Per le Micro, Piccole e Medie Imprese (PMI) si applica invece la riduzione del 50%, non cumulabile con la riduzione per ISO 9001 (si applica la riduzione maggiore)."
   },
   check_sopralluogo: {
     category: "FASE 2: QUALIFICAZIONE",
@@ -109,25 +112,25 @@ const WIZARD_HELP_GUIDE = {
   check_garanzie: {
     category: "FASE 2: QUALIFICAZIONE",
     title: "Castelletto Garanzie Fideiussorie",
-    what: "Verifica della disponibilità del fido presso la banca o compagnia assicurativa per emettere la Garanzia Provvisoria (1-2% dell'importo).",
+    what: "Verifica della disponibilita' del fido presso la banca o compagnia assicurativa per emettere la Garanzia Provvisoria (1-4% dell'importo).",
     portal_location: "Contatto con il proprio broker o istituto bancario convenzionato.",
-    what_to_do: "Spunta solo se hai già confermato con la compagnia garante che il massimale è capiente e che la polizza digitale conforme allo schema tipo ANAC può essere rilasciata in tempo.",
+    what_to_do: "Spunta solo se hai gia' confermato con la compagnia garante che il massimale e' capiente e che la polizza digitale conforme allo schema tipo ANAC puo' essere rilasciata in tempo.",
     legal_tip: "La polizza fideiussoria deve contenere espressamente l'impegno a rilasciare la cauzione definitiva in caso di aggiudicazione (art. 106 c. 5)."
   },
   margin_pct: {
     category: "FASE 2: QUALIFICAZIONE",
     title: "Margine Operativo Netto Stimato (%)",
-    what: "Percentuale di utile lordo/netto che l'azienda intende ricavare dalla commessa detratte tutte le spese vive di acquisto e manodopera.",
+    what: "Percentuale di utile netto target che l'azienda intende ricavare dalla commessa detratte tutte le spese di fornitura, manodopera e generali.",
     portal_location: "Calcolo interno dell'ufficio gare / Business Plan di commessa.",
-    what_to_do: "Imposta il margine desiderato. Un margine sotto l'8% in appalti complessi aumenta il rischio di anomalia o di perdite operative durante l'esecuzione.",
-    legal_tip: "Le offerte con marginalità eccessivamente compressa rischiano di incorrere nella verifica di anomalia dell'offerta ex art. 110 D.Lgs. 36/2023."
+    what_to_do: "Imposta il margine desiderato. Un margine sotto l'8% in appalti complessi aumenta il rischio di offerta anomala o di perdite operative durante l'esecuzione.",
+    legal_tip: "Le offerte con marginalita' eccessivamente compressa rischiano di incorrere nella verifica di anomalia dell'offerta ex art. 110 D.Lgs. 36/2023."
   },
   go_decision: {
     category: "FASE 2: QUALIFICAZIONE",
     title: "Delibera Strategica Go / No-Go",
     what: "La decisione formale dell'ufficio gare: investire tempo ed energie per partecipare (GO), scartare la procedura (NO-GO), oppure attendere risposta ai chiarimenti (PENDING).",
     portal_location: "Decisione interna aziendale da registrare nel gestionale.",
-    what_to_do: "Seleziona 'GO' solo se tutti i requisiti sono soddisfatti e il margine è sostenibile. Se mancano requisiti insuperabili, seleziona 'NO-GO' per archiviare la gara ed evitare sprechi.",
+    what_to_do: "Seleziona 'GO' solo se tutti i requisiti sono soddisfatti e il margine e' sostenibile. Se mancano requisiti insuperabili, seleziona 'NO-GO' per archiviare la gara ed evitare sprechi. Con delibera NO-GO il sistema blocca deterministamente l'avanzamento alla Fase 3.",
     legal_tip: "Il filtro Go/No-Go riduce del 40% i costi amministrativi dell'ufficio gare massimizzando la percentuale di successo (win rate)."
   },
   step2_notes: {
@@ -136,7 +139,7 @@ const WIZARD_HELP_GUIDE = {
     what: "Spazio per annotare accordi con partner per RTI (Raggruppamento Temporaneo), contratti di avvalimento o quote di subappalto da indicare.",
     portal_location: "Archivio interno gare.",
     what_to_do: "Scrivi gli estremi delle quote percentuali di fornitura tra mandataria e mandante o note sul fornitore principale.",
-    legal_tip: "Nel nuovo codice 36/2023 non vi è più il tetto rigido del 30% per il subappalto, ma la stazione appaltante può indicare prestazioni non subappaltabili."
+    legal_tip: "Nel nuovo codice 36/2023 non vi e' piu' il tetto rigido del 30% per il subappalto, ma la stazione appaltante puo' indicare prestazioni non subappaltabili."
   },
   buste_overview: {
     category: "FASE 3: LE 3 BUSTE TELEMATICHE",
@@ -149,7 +152,7 @@ const WIZARD_HELP_GUIDE = {
   busta_a_dgue: {
     category: "FASE 3: BUSTA A AMMINISTRATIVA",
     title: "DGUE Elettronico (ESPD XML/PDF)",
-    what: "Il Documento di Gara Unico Europeo è l'autodichiarazione con cui l'operatore economico attesta il possesso dei requisiti di ordine generale (assenza di reati, regolarità fiscale e contributiva DURC).",
+    what: "Il Documento di Gara Unico Europeo e' l'autodichiarazione con cui l'operatore economico attesta il possesso dei requisiti di ordine generale (assenza di reati, regolarita' fiscale e contributiva DURC).",
     portal_location: "Compilabile direttamente online nella sezione 'Busta Amministrativa' di AcquistinretePA oppure su portale ANAC.",
     what_to_do: "Compila tutti i quadri del DGUE sul portale, scarica il PDF generato, apponi la firma digitale CAdES del legale rappresentante (.pdf.p7m) e ricaricalo a sistema.",
     legal_tip: "La falsa dichiarazione nel DGUE comporta la segnalazione all'ANAC con annotazione nel Casellario Informatico e interdizione dalle gare."
@@ -157,18 +160,18 @@ const WIZARD_HELP_GUIDE = {
   busta_a_fideiussione: {
     category: "FASE 3: BUSTA A AMMINISTRATIVA",
     title: "Garanzia Provvisoria (art. 106 D.Lgs. 36/2023)",
-    what: "Fideiussione bancaria o assicurativa a garanzia della serietà dell'offerta, pari di norma all'1% o 2% del valore dell'appalto.",
+    what: "Fideiussione bancaria o assicurativa a garanzia della serieta' dell'offerta, pari di norma al 2% (modulabile dalla PA tra 1% e 4%) del valore a base d'asta.",
     portal_location: "Da allegare come file firmato digitalmente dal garante nella Busta Amministrativa su MePA.",
-    what_to_do: "Verifica che la polizza contenga: 1) Rinuncia al beneficio della preventiva escussione; 2) Rinuncia all'eccezione ex art. 1957 c.c.; 3) Pagamento entro 15 giorni su richiesta della PA; 4) Impegno a rilasciare la cauzione definitiva in caso di vincita.",
-    legal_tip: "Se possiedi la certificazione ISO 9001 hai diritto a ridurre l'importo della garanzia del 50%! Se hai anche ISO 14001, puoi cumulare un'ulteriore riduzione."
+    what_to_do: "Calcola l'importo ridotto con il calcolatore integrato e richiedi la polizza digitale. Verifica: 1) Rinuncia al beneficio della preventiva escussione; 2) Rinuncia all'eccezione ex art. 1957 c.c.; 3) Pagamento entro 15 giorni; 4) Impegno a rilasciare la cauzione definitiva.",
+    legal_tip: "RIDUZIONI EX ART. 106 C.8: 50% per Micro, Piccole e Medie Imprese (PMI); 30% per certificazione ISO 9001 (non cumulabile con la riduzione PMI: prevale la maggiore, 50%); ulteriore 10% per fideiussione digitale verificabile telematicamente (cumulabile)."
   },
   fvoe_passoe: {
     category: "FASE 3: BUSTA A AMMINISTRATIVA",
-    title: "Fascicolo Virtuale FVOE 2.0 / PassOE ANAC",
+    title: "Fascicolo Virtuale FVOE 2.0 ANAC",
     what: "Il codice generato sulla piattaforma ANAC (FVOE 2.0) che consente alla Stazione Appaltante di verificare i requisiti generali (DURC, casellario giudiziale, antimafia).",
     portal_location: "Portale dei Servizi ANAC -> Fascicolo Virtuale dell'Operatore Economico (FVOE 2.0).",
     what_to_do: "Inserisci il CIG su FVOE 2.0, associa la tua azienda e genera il documento di partecipazione. Incolla il codice identificativo in questo campo e allega il PDF nella Busta A.",
-    legal_tip: "Dal 2024 il FVOE 2.0 ha sostituito completamente il vecchio PassOE cartaceo. Il codice deve essere attivo prima della scadenza del bando."
+    legal_tip: "Dal 2024 il FVOE 2.0 e' obbligatorio ed e' interconnesso con la Banca Dati Nazionale dei Contratti Pubblici (BDNCP). Il fascicolo deve essere perfezionato prima della scadenza del bando."
   },
   busta_a_files: {
     category: "FASE 3: BUSTA A AMMINISTRATIVA",
@@ -183,16 +186,16 @@ const WIZARD_HELP_GUIDE = {
     title: "Relazione Tecnica Descrittiva",
     what: "Il documento principale in cui l'azienda illustra le caratteristiche qualitative dei beni o servizi offerti, il piano organizzativo e le migliorie.",
     portal_location: "Caricamento nella sezione 'Busta Tecnica' su AcquistinretePA.",
-    what_to_do: "Spunta quando la relazione tecnica è stata redatta e impaginata rispettando rigorosamente il numero massimo di facciate (pagine) e la dimensione carattere imposti dal disciplinare.",
+    what_to_do: "Spunta quando la relazione tecnica e' stata redatta e impaginata rispettando rigorosamente il numero massimo di facciate (pagine) e la dimensione carattere imposti dal disciplinare.",
     legal_tip: "Le pagine eccedenti il limite stabilito dal disciplinare non vengono lette dalla Commissione Giudicatrice o possono portare all'esclusione."
   },
   busta_b_cam: {
     category: "FASE 3: BUSTA B TECNICA",
     title: "Criteri Ambientali Minimi (CAM) & Punteggio Tecnico",
-    what: "Dichiarazioni e schede tecniche dei produttori attestanti la conformità del prodotto ai criteri ecologici ministeriali.",
+    what: "Dichiarazioni e schede tecniche dei produttori attestanti la conformita' del prodotto ai criteri ecologici ministeriali.",
     portal_location: "Allegati tecnici Busta B su MePA.",
-    what_to_do: "Allega schede tecniche ufficiali, marchi ecolabel o dichiarazioni di conformità per ottenere il massimo punteggio tecnico discrezionale o tabellare.",
-    legal_tip: "I CAM consentono di accumulare premialità decisive per vincere l'appalto con criterio dell'offerta economicamente più vantaggiosa (OEPV)."
+    what_to_do: "Allega schede tecniche ufficiali, marchi ecolabel o dichiarazioni di conformita' per ottenere il massimo punteggio tecnico discrezionale o tabellare.",
+    legal_tip: "I Criteri Ambientali Minimi (art. 57 D.Lgs. 36/2023) sono obbligatori per legge per tutte le forniture della Pubblica Amministrazione."
   },
   busta_b_files: {
     category: "FASE 3: BUSTA B TECNICA",
@@ -207,7 +210,7 @@ const WIZARD_HELP_GUIDE = {
     title: "Base d'Asta (€)",
     what: "L'importo economico massimo stimato dalla Stazione Appaltante a base di gara su cui formulare il ribasso percentuale.",
     portal_location: "Scheda economica della RdO su MePA o bando di gara.",
-    what_to_do: "È precaricata in automatico dal gestionale. Qualsiasi offerta economica con valore superiore alla base d'asta viene esclusa automaticamente.",
+    what_to_do: "E' precaricata in automatico dal gestionale. Qualsiasi offerta economica con valore superiore alla base d'asta viene esclusa automaticamente.",
     legal_tip: "Ai sensi dell'art. 108, le offerte in rialzo rispetto alla base d'asta sono inammissibili per legge."
   },
   busta_c_discount: {
@@ -215,8 +218,8 @@ const WIZARD_HELP_GUIDE = {
     title: "Ribasso Percentuale Offerto (%)",
     what: "La percentuale di sconto che l'azienda offre rispetto all'importo a base di gara.",
     portal_location: "Campo 'Ribasso Percentuale' o 'Prezzo a Corpo' nel form economico di AcquistinretePA.",
-    what_to_do: "Digita la percentuale (es. 6.50). Il Wizard ricalcola istantaneamente il Prezzo Netto Offerto in euro senza che tu debba fare calcoli manuali.",
-    legal_tip: "Nei bandi con criterio del prezzo più basso viene applicata l'esclusione automatica delle offerte anomale secondo i metodi di calcolo dell'allegato II.2 al Codice."
+    what_to_do: "Digita la percentuale (es. 6.50). Il Wizard ricalcola istantaneamente il Prezzo Netto Offerto in euro e verifica l'impatto sul margine.",
+    legal_tip: "Nei bandi con criterio del prezzo piu' basso viene applicata l'esclusione automatica delle offerte anomale secondo i metodi di calcolo dell'allegato II.2 al Codice."
   },
   busta_c_price: {
     category: "FASE 3: BUSTA C ECONOMICA",
@@ -231,8 +234,8 @@ const WIZARD_HELP_GUIDE = {
     title: "Costi della Manodopera (art. 108 c. 9)",
     what: "La quota del prezzo totale offerto che l'azienda destina ai costi del personale impiegato per l'esecuzione della commessa.",
     portal_location: "Campo obbligatorio nel modello di offerta economica su MePA.",
-    what_to_do: "Inserisci l'importo della manodopera calcolato sulle tabelle ministeriali del costo orario del lavoro. Non può essere pari a zero!",
-    legal_tip: "La mancata indicazione dei costi della manodopera comporta l'esclusione automatica della gara (art. 108 c. 9 D.Lgs. 36/2023) non sanabile con soccorso istruttorio!"
+    what_to_do: "Inserisci l'importo della manodopera calcolato sulle tabelle ministeriali del costo orario del lavoro. Deve essere > 0, a meno che non si tratti di fornitura senza posa.",
+    legal_tip: "La mancata indicazione dei costi della manodopera comporta l'esclusione automatica della gara (art. 108 c. 9 D.Lgs. 36/2023) non sanabile con soccorso istruttorio, salvo che si tratti di sole forniture senza posa in opera o servizi di natura intellettuale."
   },
   busta_c_sicurezza: {
     category: "FASE 3: BUSTA C ECONOMICA",
@@ -241,6 +244,22 @@ const WIZARD_HELP_GUIDE = {
     portal_location: "Campo dedicato nel form dell'offerta economica MePA.",
     what_to_do: "Inserisci la stima dei costi aziendali della sicurezza. Attenzione: non confonderli con i 'costi della sicurezza da interferenze (DUVRI)' che sono stabiliti dalla PA!",
     legal_tip: "La mancata indicazione degli oneri aziendali di sicurezza comporta l'esclusione insanabile ex art. 108 c. 9."
+  },
+  fornitura_senza_posa: {
+    category: "FASE 3: BUSTA C ECONOMICA",
+    title: "Esclusione Obbligo Manodopera (art. 108 c. 9)",
+    what: "Deroga espressa di legge all'obbligo di indicare separatamente i costi della manodopera e della sicurezza.",
+    portal_location: "Disciplinare di Gara -> Oggetto della prestazione.",
+    what_to_do: "Spunta questa opzione SOLTANTO se la gara ha per oggetto la mera fornitura di beni materiali senza posa in opera, oppure servizi di natura puramente intellettuale.",
+    legal_tip: "L'art. 108 c. 9 secondo periodo stabilisce: 'I costi di cui al primo periodo non possono essere modificati in diminuzione. Le disposizioni di cui al primo periodo non si applicano alle forniture senza posa in opera e ai servizi di natura intellettuale'."
+  },
+  offerta_inviata: {
+    category: "FASE 3: BUSTA C ECONOMICA",
+    title: "Conferma Trasmissione Offerta su MePA",
+    what: "Dichiarazione formale che tutte e 3 le buste sono state caricate, firmate digitalmente e trasmesse con successo attraverso il portale www.acquistinretepa.it.",
+    portal_location: "Riepilogo finale di partecipazione su MePA con ricevuta di protocollazione / timestamp.",
+    what_to_do: "Spunta questa casella dopo aver ricevuto la ricevuta di invio della RdO. E' il requisito deterministico obbligatorio per sbloccare la Fase 4 (Esito e Svincolo).",
+    legal_tip: "Conserva il file di ricevuta con marca temporale emesso da Consip come prova opponibile ai terzi del tempestivo invio."
   },
   busta_c_files: {
     category: "FASE 3: BUSTA C ECONOMICA",
@@ -255,15 +274,15 @@ const WIZARD_HELP_GUIDE = {
     title: "Stato Aggiudicazione ed Esito Gara",
     what: "Registrazione ufficiale dell'esito della procedura (Vinta, Persa, o In Valutazione durante la seduta di gara).",
     portal_location: "Verbale di gara pubblicato su AcquistinretePA o comunicazione PEC della Stazione Appaltante.",
-    what_to_do: "Aggiorna lo stato nel menu a tendina. Questo aggiornerà automaticamente anche il Cruscotto KPI e il database SQLite.",
-    legal_tip: "Se la gara è vinta, la Stazione Appaltante chiederà la costituzione della Garanzia Definitiva (art. 117 D.Lgs. 36/2023)."
+    what_to_do: "Aggiorna lo stato nel menu a tendina. Questo aggiornera' automaticamente anche il Cruscotto KPI e il database SQLite.",
+    legal_tip: "Se la gara e' vinta, la Stazione Appaltante chiedera' la costituzione della Garanzia Definitiva (art. 117 D.Lgs. 36/2023)."
   },
   fase4_svincolo: {
     category: "FASE 4: ESITO & POST-GARA",
     title: "Lettera di Svincolo Cauzione Provvisoria",
     what: "La dichiarazione liberatoria che la Stazione Appaltante deve rilasciare ai concorrenti non aggiudicatari per estinguere la polizza fideiussoria.",
     portal_location: "Richiesta da inviare via PEC al RUP indicato nella Fase 1.",
-    what_to_do: "Se la gara non è stata vinta o sono trascorsi i termini di validità dell'offerta, invia una PEC al RUP richiedendo lo svincolo formale della garanzia per ripristinare il castelletto assicurativo.",
+    what_to_do: "Se la gara non e' stata vinta o sono trascorsi i termini di validita' dell'offerta, invia una PEC al RUP richiedendo lo svincolo formale della garanzia per ripristinare il castelletto assicurativo.",
     legal_tip: "Ai sensi dell'art. 106 c. 10, la garanzia cessa automaticamente con l'aggiudicazione definitiva, ma gli istituti bancari esigono la quietanza scritta o PEC del RUP."
   },
   fase4_notes: {
@@ -276,7 +295,7 @@ const WIZARD_HELP_GUIDE = {
   },
   dock_copy_portal: {
     category: "SISTEMA DUAL HAND-OFF",
-    title: "Copia Dati per Portale Consip (Modalità Manuale)",
+    title: "Copia Dati per Portale Consip (Modalita' Manuale)",
     what: "Estrae tutti i parametri elaborati nella fase corrente e li copia negli appunti di sistema in un formato compatto.",
     portal_location: "Da incollare direttamente nei campi corrispondenti di www.acquistinretepa.it.",
     what_to_do: "Clicca il pulsante quando stai compilando manualmente la procedura sul sito Consip. Incolla i valori con Ctrl+V senza dover riscrivere cifre o codici a mano.",
@@ -284,19 +303,19 @@ const WIZARD_HELP_GUIDE = {
   },
   dock_agent_payload: {
     category: "SISTEMA DUAL HAND-OFF",
-    title: "Payload Agente Autonomo (Modalità Browser-Use)",
-    what: "Genera un oggetto JSON standardizzato contenente l'intero stato della procedura di gara, le credenziali dei file e i parametri economici.",
+    title: "Payload Agente Autonomo (Modalita' Browser-Use)",
+    what: "Genera un oggetto JSON standardizzato contenente l'intero stato della procedura di gara, le istruzioni operative e i parametri normativi.",
     portal_location: "Utilizzato da agenti AI autonomi (script Python con libreria browser-use, Playwright o Puppeteer).",
-    what_to_do: "Clicca per aprire la finestra di anteprima. Puoi copiare il JSON o scaricare il file .json per passarlo direttamente all'agente che compilerà il portale Consip automaticamente.",
-    legal_tip: "Conforme agli standard di interoperabilità per automazione d'ufficio gare."
+    what_to_do: "Clicca per aprire la finestra di anteprima. Puoi copiare il JSON o scaricare il file .json per passarlo direttamente all'agente che compilera' il portale Consip automaticamente.",
+    legal_tip: "Conforme agli standard di interoperabilita' per automazione d'ufficio gare e audit log."
   },
   dock_save: {
     category: "PERSISTENZA SQLITE 3",
     title: "Salvataggio Avanzamento nel Database",
-    what: "Memorizza lo stato di tutte e 4 le fasi nella tabella relazionale 'gare_workflow' del database locale 'gare_consip.db'.",
+    what: "Memorizza lo stato di tutte e 4 le fasi nella tabella relazionale 'gare_workflow' del database locale 'gare_consip.db' e aggiorna lo stato della gara.",
     portal_location: "Server locale SQLite 3 (porta 8050).",
     what_to_do: "Clicca in qualsiasi momento per essere certo che i dati inseriti non vadano persi alla chiusura del browser. Anche il pulsante 'Conferma & Avanza' esegue il salvataggio automatico.",
-    legal_tip: "Garantisce conformità alle direttive di conservazione del fascicolo di gara aziendale."
+    legal_tip: "Garantisce conformita' alle direttive di conservazione del fascicolo di gara aziendale."
   }
 };
 
@@ -321,7 +340,7 @@ window.showWizardHelpModal = function(key) {
   const item = WIZARD_HELP_GUIDE[key] || {
     category: "GUIDA OPERATIVA",
     title: "Informazione di Dettaglio",
-    what: "Funzionalità o campo del Wizard di partecipazione gara.",
+    what: "Funzionalita' o campo del Wizard di partecipazione gara.",
     portal_location: "Portale www.acquistinretepa.it",
     what_to_do: "Verifica e compila il campo con i dati ufficiali di gara.",
     legal_tip: "Segui le prescrizioni del disciplinare di gara."
@@ -398,7 +417,6 @@ window.openTenderWizard = async function(garaId = null, forcedStep = 1) {
     tender = all.find(t => t.id === garaId || t.cig === garaId);
   }
   if (!tender) {
-    // Preferisci una gara attiva (con scadenza futura) o la demo T1, altrimenti la prima disponibile
     tender = all.find(t => t.id === 'T1') || all.find(t => new Date(t.deadline) > new Date()) || all[0];
   }
 
@@ -407,7 +425,6 @@ window.openTenderWizard = async function(garaId = null, forcedStep = 1) {
 
   await loadWizardData(currentWizardGaraId, tender);
 
-  // Garantisce che il Wizard parta sempre dalla Fase 1 (o dal passo richiesto)
   if (forcedStep !== null && forcedStep !== undefined) {
     currentWizardStep = forcedStep;
   } else {
@@ -421,19 +438,33 @@ window.openTenderWizard = async function(garaId = null, forcedStep = 1) {
  * Carica lo stato del workflow dal backend o da cache locale
  */
 async function loadWizardData(garaId, tender) {
+  const tenderAmount = Number(tender.amount) || 0;
+  const defQa = typeof WizardRules !== "undefined" && tender.deadline
+    ? WizardRules.defaultQaDeadline(tender.deadline)
+    : (tender.deadline ? tender.deadline.split("T")[0] : "");
+
+  const initialGuarantee = typeof WizardRules !== "undefined"
+    ? WizardRules.computeGuarantee({ base: tenderAmount, ratePct: 2, pmi: true })
+    : { amount: Math.round(tenderAmount * 0.01), gross: Math.round(tenderAmount * 0.02), mainReductionPct: 50 };
+
+  const initialEcon = typeof WizardRules !== "undefined"
+    ? WizardRules.computeEconomics({ base: tenderAmount, discountPct: 5.5 })
+    : { offered: tenderAmount * (1 - 0.055) };
+
   currentWizardData = {
     gara_id: garaId,
     current_step: 1,
+    gara_status: tender.status || "Da Valutare",
     step1_data: {
       cig: tender.cig || "",
       authority: tender.authority || "",
       title: tender.title || "",
       category: tender.category || "IT",
       region: tender.region || "Nazionale",
-      amount: tender.amount || 0,
+      amount: tenderAmount,
       deadline: tender.deadline || "",
       rup_name: "",
-      qa_deadline: tender.deadline ? tender.deadline.split("T")[0] : "",
+      qa_deadline: defQa,
       link: tender.link || "https://www.acquistinretepa.it"
     },
     step2_data: {
@@ -449,7 +480,10 @@ async function loadWizardData(garaId, tender) {
       active_busta: "A",
       busta_a_dgue_ready: false,
       busta_a_fideiussione_ready: false,
-      busta_a_fideiussione_importo: Math.round((tender.amount || 0) * 0.01),
+      garanzia_rate_pct: 2.0,
+      garanzia_pmi: true,
+      garanzia_riduzione_extra_pct: 0,
+      busta_a_fideiussione_importo: initialGuarantee.amount,
       busta_a_fvoe_passoe: "",
       busta_a_files: [
         `CIG_${tender.cig || 'BANDO'}_BustaA_DGUE.pdf.p7m`,
@@ -463,11 +497,13 @@ async function loadWizardData(garaId, tender) {
         `CIG_${tender.cig || 'BANDO'}_BustaB_SchedeProdotti.pdf.p7m`
       ],
       busta_c_ready: false,
-      busta_c_base_amount: tender.amount || 0,
+      busta_c_base_amount: tenderAmount,
       busta_c_discount_pct: 5.5,
-      busta_c_offered_price: (tender.amount || 0) * (1 - 0.055),
-      busta_c_manodopera: Math.round((tender.amount || 0) * 0.25),
-      busta_c_sicurezza: Math.round((tender.amount || 0) * 0.02),
+      busta_c_offered_price: initialEcon.offered,
+      fornitura_senza_posa: false,
+      busta_c_manodopera: Math.round(tenderAmount * 0.25),
+      busta_c_sicurezza: Math.round(tenderAmount * 0.02),
+      offerta_inviata: false,
       busta_c_files: [
         `CIG_${tender.cig || 'BANDO'}_BustaC_OffertaEconomica.pdf.p7m`
       ]
@@ -484,10 +520,11 @@ async function loadWizardData(garaId, tender) {
       const remote = await Api.getWorkflow(garaId);
       if (remote && remote.gara_id) {
         currentWizardData.current_step = remote.current_step || 1;
-        if (remote.step1_data && Object.keys(remote.step1_data).length > 0) currentWizardData.step1_data = remote.step1_data;
-        if (remote.step2_data && Object.keys(remote.step2_data).length > 0) currentWizardData.step2_data = remote.step2_data;
-        if (remote.step3_data && Object.keys(remote.step3_data).length > 0) currentWizardData.step3_data = remote.step3_data;
-        if (remote.step4_data && Object.keys(remote.step4_data).length > 0) currentWizardData.step4_data = remote.step4_data;
+        if (remote.gara_status) currentWizardData.gara_status = remote.gara_status;
+        if (remote.step1_data && Object.keys(remote.step1_data).length > 0) currentWizardData.step1_data = { ...currentWizardData.step1_data, ...remote.step1_data };
+        if (remote.step2_data && Object.keys(remote.step2_data).length > 0) currentWizardData.step2_data = { ...currentWizardData.step2_data, ...remote.step2_data };
+        if (remote.step3_data && Object.keys(remote.step3_data).length > 0) currentWizardData.step3_data = { ...currentWizardData.step3_data, ...remote.step3_data };
+        if (remote.step4_data && Object.keys(remote.step4_data).length > 0) currentWizardData.step4_data = { ...currentWizardData.step4_data, ...remote.step4_data };
       }
     } catch (e) {
       console.warn("Nessun workflow salvato nel backend, uso defaults:", e);
@@ -503,6 +540,21 @@ async function loadWizardData(garaId, tender) {
 window.saveCurrentWizardState = async function() {
   readInputsFromWizardDOM();
 
+  const tender = getAllTendersFromSQLite().find(t => t.id === currentWizardGaraId) || {};
+  
+  // Derivazione deterministica dello stato della gara
+  let derivedStatus = tender.status;
+  if (typeof WizardRules !== "undefined") {
+    derivedStatus = WizardRules.deriveGaraStatus(currentWizardData, tender.status);
+    currentWizardData.gara_status = derivedStatus;
+    if (tender.status !== derivedStatus) {
+      tender.status = derivedStatus;
+      if (typeof updateTenderInSQLite === "function") {
+        updateTenderInSQLite(tender);
+      }
+    }
+  }
+
   currentWizardData.current_step = currentWizardStep;
   currentWizardData.updated_at = new Date().toISOString();
 
@@ -514,7 +566,32 @@ window.saveCurrentWizardState = async function() {
     }
   }
 
-  showNotification("Avanzamento del Workflow memorizzato in SQLite 3.");
+  showNotification("Avanzamento del Workflow memorizzato in SQLite 3 (Stato: " + (derivedStatus || 'Invariato') + ")");
+};
+
+/**
+ * Mostra dialogo accessibile di blocco transizione se una fase precedente e' incompleta o NO-GO
+ */
+window.showStepBlockedModal = function(targetStep, errors) {
+  const errorItems = (errors || []).map(e => `<li class="flex items-start gap-2"><span>⚠️</span><span>${escapeHtml(e.msg || e)}</span></li>`).join('');
+  const msgHtml = `
+    <div class="space-y-3 text-xs leading-relaxed">
+      <p class="text-rose-300 font-semibold">Non e' possibile accedere alla Fase ${targetStep} finche' le fasi precedenti non sono state completate correttamente:</p>
+      <ul class="space-y-1.5 p-3 rounded-2xl bg-rose-950/40 border border-rose-800/60 text-rose-200">
+        ${errorItems || '<li>Verifica i dati della fase precedente.</li>'}
+      </ul>
+      <p class="text-slate-400">Risolvi le criticita' segnalate prima di avanzare nel workflow deterministico.</p>
+    </div>
+  `;
+
+  if (typeof window.showInfoDialog === "function") {
+    window.showInfoDialog({
+      title: `Accesso Bloccato alla Fase ${targetStep}`,
+      message: msgHtml
+    });
+  } else {
+    alert(`Fase ${targetStep} bloccata: ` + (errors || []).map(e => e.msg).join('\n'));
+  }
 };
 
 /**
@@ -526,15 +603,20 @@ function renderWizardView(tender) {
 
   const rem = calculateTimeRemaining(tender.deadline);
   
-  // Step definitions con stato calcolato
-  const s2 = currentWizardData.step2_data;
-  const s3 = currentWizardData.step3_data;
-  const s4 = currentWizardData.step4_data;
+  const s2 = currentWizardData.step2_data || {};
+  const s3 = currentWizardData.step3_data || {};
+  const s4 = currentWizardData.step4_data || {};
 
+  // Validazione dello step corrente tramite WizardRules
+  const valResult = typeof WizardRules !== "undefined"
+    ? WizardRules.validateStep(currentWizardStep, currentWizardData)
+    : { errors: [], warnings: [], ok: true };
+
+  // Definizione degli step e dei loro vincoli di accesso (gating)
   const stepStatus = [
     { num: 1, title: "1. Identificazione", sub: "CIG & Scadenze Portale", statusText: currentWizardStep > 1 ? "Completato" : "In compilazione", badge: "bg-cyan-500/10 text-cyan-400" },
-    { num: 2, title: "2. Qualificazione", sub: "Idoneità Go / No-Go", statusText: s2.go_decision === 'GO' ? "Deliberato: GO" : (s2.go_decision === 'NO_GO' ? "Scartata: NO-GO" : "Da valutare"), badge: s2.go_decision === 'GO' ? "bg-emerald-500/10 text-emerald-400" : "bg-amber-500/10 text-amber-400" },
-    { num: 3, title: "3. Le 3 Buste", sub: "Busta A, B & C", statusText: s3.busta_a_dgue_ready ? "Buste avviate" : "Bozza da firmare", badge: "bg-purple-500/10 text-purple-400" },
+    { num: 2, title: "2. Qualificazione", sub: "Idoneita' Go / No-Go", statusText: s2.go_decision === 'GO' ? "Deliberato: GO" : (s2.go_decision === 'NO_GO' ? "Scartata: NO-GO" : "Da valutare"), badge: s2.go_decision === 'GO' ? "bg-emerald-500/10 text-emerald-400" : (s2.go_decision === 'NO_GO' ? "bg-rose-500/10 text-rose-400" : "bg-amber-500/10 text-amber-400") },
+    { num: 3, title: "3. Le 3 Buste", sub: "Busta A, B & C", statusText: s3.offerta_inviata ? "Offerta Inviata" : (s3.busta_a_dgue_ready ? "Buste avviate" : "Bozza da firmare"), badge: s3.offerta_inviata ? "bg-emerald-500/10 text-emerald-400" : "bg-purple-500/10 text-purple-400" },
     { num: 4, title: "4. Esito & Svincolo", sub: "Chiusura & Polizze", statusText: s4.outcome || "In attesa", badge: "bg-slate-500/10 text-slate-400" }
   ];
 
@@ -552,6 +634,9 @@ function renderWizardView(tender) {
             <div class="flex flex-wrap items-center gap-2">
               <span class="text-[10px] font-mono uppercase tracking-wider text-cyan-400 font-bold bg-cyan-950/60 border border-cyan-800/80 px-2 py-0.5 rounded-md">WIZARD DETERMINISTICO MEPA</span>
               <span class="text-xs font-mono font-bold text-white bg-slate-950 px-2.5 py-0.5 rounded-md border border-slate-800">${escapeHtml(tender.cig || 'CIG N/D')}</span>
+              <span class="text-[11px] font-mono font-bold px-2 py-0.5 rounded-md ${tender.status === 'Vinta' ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40' : (tender.status === 'Scartata' ? 'bg-rose-500/20 text-rose-300 border border-rose-500/40' : 'bg-slate-800 text-cyan-300 border border-slate-700')}">
+                ${escapeHtml(tender.status || 'Da Valutare')}
+              </span>
               <button onclick="window.showWizardHelpModal('general_wizard')" class="px-2 py-0.5 rounded-md bg-slate-800 hover:bg-cyan-500 hover:text-slate-950 text-cyan-400 text-[11px] font-semibold border border-slate-700 transition flex items-center gap-1">
                 <span>Come funziona?</span>
                 <span class="font-bold">?</span>
@@ -584,12 +669,19 @@ function renderWizardView(tender) {
         </div>
       </div>
 
-      <!-- STEPPER ORIZZONTALE CON STATO E FEEDBACK VISIVO -->
+      <!-- STEPPER ORIZZONTALE CON STATO, GATING E FEEDBACK VISIVO -->
       <div class="bg-slate-900/80 border border-slate-800 rounded-3xl p-3 sm:p-4 shadow-md">
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
           ${stepStatus.map(s => {
             const isCompleted = s.num < currentWizardStep;
             const isCurrent = s.num === currentWizardStep;
+            
+            // Verifica di gating per determinare se lo step e' accessibile
+            const canEnter = typeof WizardRules !== "undefined"
+              ? WizardRules.canEnterStep(s.num, currentWizardData)
+              : { ok: true, errors: [] };
+
+            const isLocked = !canEnter.ok && s.num > currentWizardStep;
             
             let cardBg = "bg-slate-950/60 border-slate-800/80 text-slate-400 hover:border-slate-700";
             let badgeBg = "bg-slate-800 text-slate-400";
@@ -600,17 +692,22 @@ function renderWizardView(tender) {
             } else if (isCompleted) {
               cardBg = "bg-emerald-950/20 border-emerald-500/40 text-emerald-200";
               badgeBg = "bg-emerald-500 text-slate-950 font-bold";
+            } else if (isLocked) {
+              cardBg = "bg-slate-950/30 border-slate-900 text-slate-600 opacity-60";
+              badgeBg = "bg-slate-900 text-slate-600";
             }
 
             return `
-              <button type="button" onclick="window.setWizardStep(${s.num})" class="text-left p-3.5 rounded-2xl border ${cardBg} transition flex items-center justify-between gap-3 group">
+              <button type="button" 
+                      onclick="${isLocked ? `window.showStepBlockedModal(${s.num}, ${escapeHtml(JSON.stringify(canEnter.errors))})` : `window.setWizardStep(${s.num})`}" 
+                      class="text-left p-3.5 rounded-2xl border ${cardBg} transition flex items-center justify-between gap-3 group cursor-pointer">
                 <div class="flex items-center gap-3 min-w-0">
                   <div class="w-8 h-8 rounded-xl flex items-center justify-center font-mono text-xs ${badgeBg} shrink-0 transition-transform group-hover:scale-105">
-                    ${isCompleted ? '✓' : s.num}
+                    ${isLocked ? '🔒' : (isCompleted ? '✓' : s.num)}
                   </div>
                   <div class="truncate">
-                    <div class="text-xs font-bold leading-tight truncate text-white">${s.title}</div>
-                    <div class="text-[10px] text-slate-400 truncate mt-0.5">${s.sub}</div>
+                    <div class="text-xs font-bold leading-tight truncate ${isCurrent ? 'text-white' : (isLocked ? 'text-slate-500' : 'text-slate-200')}">${s.title}</div>
+                    <div class="text-[10px] ${isLocked ? 'text-slate-600' : 'text-slate-400'} truncate mt-0.5">${s.sub}</div>
                   </div>
                 </div>
                 <span class="text-[10px] font-mono px-2 py-0.5 rounded-full ${s.badge} shrink-0 hidden md:inline-block">
@@ -622,6 +719,35 @@ function renderWizardView(tender) {
         </div>
       </div>
 
+      <!-- BANNER ERRORI E AVVISI DETERMINISTICI DELLO STEP CORRENTE -->
+      ${valResult.errors.length > 0 || valResult.warnings.length > 0 ? `
+        <div class="space-y-2">
+          ${valResult.errors.length > 0 ? `
+            <div class="p-4 rounded-3xl bg-rose-950/30 border border-rose-500/40 text-rose-200 text-xs space-y-1.5 shadow-lg shadow-rose-950/20">
+              <div class="flex items-center gap-2 font-bold text-rose-300">
+                <span class="text-base">🚫</span>
+                <span>Elementi Bloccanti per la Fase ${currentWizardStep} (D.Lgs. 36/2023):</span>
+              </div>
+              <ul class="list-disc list-inside space-y-1 pl-1 text-[11px] text-rose-200/90 font-mono">
+                ${valResult.errors.map(e => `<li><strong>${escapeHtml(e.msg)}</strong></li>`).join('')}
+              </ul>
+            </div>
+          ` : ''}
+
+          ${valResult.warnings.length > 0 ? `
+            <div class="p-3.5 rounded-3xl bg-amber-950/20 border border-amber-500/30 text-amber-200 text-xs space-y-1">
+              <div class="flex items-center gap-2 font-bold text-amber-300">
+                <span>⚠️</span>
+                <span>Avvertenze Operative Ufficio Gare:</span>
+              </div>
+              <ul class="list-disc list-inside space-y-0.5 pl-1 text-[11px] text-amber-300/80 font-mono">
+                ${valResult.warnings.map(w => `<li>${escapeHtml(w.msg)}</li>`).join('')}
+              </ul>
+            </div>
+          ` : ''}
+        </div>
+      ` : ''}
+
       <!-- WORK AREA DELLO STEP CORRENTE CON GUIDA OPERATIVA INTEGRATA -->
       <div id="wizardStepContent" class="space-y-6">
         ${renderCurrentStepContent(tender)}
@@ -632,11 +758,11 @@ function renderWizardView(tender) {
         
         <!-- Pulsanti Spostamento Step -->
         <div class="flex items-center gap-2 w-full sm:w-auto">
-          <button onclick="window.setWizardStep(${Math.max(1, currentWizardStep - 1)})" ${currentWizardStep === 1 ? 'disabled' : ''} class="px-4 py-2.5 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-200 disabled:opacity-30 disabled:cursor-not-allowed font-semibold text-xs transition border border-slate-700 flex items-center gap-1.5">
+          <button onclick="window.setWizardStep(${Math.max(1, currentWizardStep - 1)})" ${currentWizardStep === 1 ? 'disabled' : ''} class="px-4 py-2.5 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-200 disabled:opacity-30 disabled:cursor-not-allowed font-semibold text-xs transition border border-slate-700 flex items-center gap-1.5 cursor-pointer">
             <span>← Fase Precedente</span>
           </button>
           
-          <button onclick="window.setWizardStep(${Math.min(4, currentWizardStep + 1)})" ${currentWizardStep === 4 ? 'disabled' : ''} class="px-4 py-2.5 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-200 disabled:opacity-30 disabled:cursor-not-allowed font-semibold text-xs transition border border-slate-700 flex items-center gap-1.5">
+          <button onclick="window.setWizardStep(${Math.min(4, currentWizardStep + 1)})" ${currentWizardStep === 4 ? 'disabled' : ''} class="px-4 py-2.5 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-200 disabled:opacity-30 disabled:cursor-not-allowed font-semibold text-xs transition border border-slate-700 flex items-center gap-1.5 cursor-pointer">
             <span>Fase Successiva →</span>
           </button>
         </div>
@@ -646,7 +772,7 @@ function renderWizardView(tender) {
           
           <!-- Copia Rapida Portale (Manuale) con info -->
           <div class="flex items-center">
-            <button onclick="window.copyStepValuesForPortal()" class="px-3.5 py-2.5 rounded-2xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 hover:text-cyan-300 font-mono text-xs font-semibold transition flex items-center gap-2 shadow-sm" title="Copia negli appunti i parametri pronti per acquistinretepa.it">
+            <button onclick="window.copyStepValuesForPortal()" class="px-3.5 py-2.5 rounded-2xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 hover:text-cyan-300 font-mono text-xs font-semibold transition flex items-center gap-2 shadow-sm cursor-pointer" title="Copia negli appunti i parametri pronti per acquistinretepa.it">
               <svg class="w-3.5 h-3.5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/></svg>
               <span id="btnCopyStepLabel">Copia Dati per Portale Consip</span>
             </button>
@@ -655,7 +781,7 @@ function renderWizardView(tender) {
 
           <!-- Payload Agente (Browser-Use) con info -->
           <div class="flex items-center">
-            <button onclick="window.openAgentExportModal()" class="px-3.5 py-2.5 rounded-2xl bg-gradient-to-r from-purple-900/50 to-indigo-900/50 hover:from-purple-900/70 hover:to-indigo-900/70 border border-purple-500/40 text-purple-200 font-mono text-xs font-semibold transition flex items-center gap-2 shadow-sm" title="Esporta JSON strutturato per automazione web">
+            <button onclick="window.openAgentExportModal()" class="px-3.5 py-2.5 rounded-2xl bg-gradient-to-r from-purple-900/50 to-indigo-900/50 hover:from-purple-900/70 hover:to-indigo-900/70 border border-purple-500/40 text-purple-200 font-mono text-xs font-semibold transition flex items-center gap-2 shadow-sm cursor-pointer" title="Esporta JSON strutturato per automazione web">
               <svg class="w-3.5 h-3.5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
               <span>Payload Agente (Browser-Use)</span>
             </button>
@@ -663,7 +789,7 @@ function renderWizardView(tender) {
           </div>
 
           <!-- Conferma & Salva -->
-          <button onclick="window.advanceStepAndSave()" class="px-5 py-2.5 rounded-2xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-bold text-xs transition flex items-center gap-2 shadow-lg shadow-cyan-500/25">
+          <button onclick="window.advanceStepAndSave()" class="px-5 py-2.5 rounded-2xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-bold text-xs transition flex items-center gap-2 shadow-lg shadow-cyan-500/25 cursor-pointer">
             <span>Conferma &amp; Avanza →</span>
           </button>
         </div>
@@ -683,6 +809,10 @@ function renderCurrentStepContent(tender) {
   // FASE 1: IDENTIFICAZIONE E PRESA IN CARICO
   // -------------------------------------------------------------
   if (currentWizardStep === 1) {
+    const cigValidation = typeof WizardRules !== "undefined"
+      ? WizardRules.validateCig(d.step1_data.cig)
+      : { ok: !!d.step1_data.cig, msg: "" };
+
     return `
       <!-- BANNER GUIDA DELLA FASE 1 -->
       <div class="bg-gradient-to-br from-cyan-950/50 via-slate-900 to-slate-950 border border-cyan-500/40 rounded-3xl p-5 sm:p-6 shadow-xl space-y-3">
@@ -704,11 +834,11 @@ function renderCurrentStepContent(tender) {
         <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs pt-1">
           <div class="bg-slate-950/80 p-3 rounded-2xl border border-slate-800">
             <strong class="text-cyan-400 block font-mono text-[11px] mb-1">Passo 1.1: Verifica il CIG</strong>
-            <p class="text-slate-300 leading-relaxed">Controlla che il codice CIG a 10 caratteri corrisponda esattamente al bando pubblicato su MePA. Ti servirà per il FVOE 2.0 e la fideiussione.</p>
+            <p class="text-slate-300 leading-relaxed">Controlla che il codice CIG a 10 caratteri corrisponda esattamente al bando pubblicato su MePA. Ti servira' per il FVOE 2.0 e la fideiussione.</p>
           </div>
           <div class="bg-slate-950/80 p-3 rounded-2xl border border-slate-800">
             <strong class="text-amber-400 block font-mono text-[11px] mb-1">Passo 1.2: Termine Quesiti (Q&A)</strong>
-            <p class="text-slate-300 leading-relaxed">Verifica quando scadono le richieste di chiarimento. Invia subito eventuali quesiti tecnici su MePA prima che scada il termine!</p>
+            <p class="text-slate-300 leading-relaxed">Verifica quando scadono le richieste di chiarimento (art. 92 c.2). Invia subito eventuali quesiti tecnici su MePA prima del termine!</p>
           </div>
           <div class="bg-slate-950/80 p-3 rounded-2xl border border-slate-800">
             <strong class="text-emerald-400 block font-mono text-[11px] mb-1">Passo 1.3: Assegna il RUP</strong>
@@ -732,20 +862,25 @@ function renderCurrentStepContent(tender) {
               ${renderHelpBtn('cig')}
             </label>
             <div class="flex gap-1.5">
-              <input id="w_cig" type="text" value="${escapeHtml(d.step1_data.cig)}" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-cyan-400 font-mono font-bold text-xs focus:border-cyan-400">
+              <input id="w_cig" type="text" maxlength="10" value="${escapeHtml(d.step1_data.cig)}" oninput="this.value = this.value.toUpperCase();" class="w-full bg-slate-900 border ${cigValidation.ok ? 'border-slate-800 focus:border-cyan-400' : 'border-rose-500/80 focus:border-rose-400'} rounded-xl px-3 py-2 text-cyan-400 font-mono font-bold text-xs uppercase">
               <button type="button" onclick="navigator.clipboard.writeText(document.getElementById('w_cig').value); showNotification('CIG copiato negli appunti!');" class="px-2.5 py-1 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-mono text-[11px] shrink-0" title="Copia CIG">Copia</button>
             </div>
-            <span class="text-[10px] text-slate-500 font-mono">Univoco ANAC per FVOE e cauzione</span>
+            <span class="text-[10px] ${cigValidation.ok ? 'text-slate-500' : 'text-rose-400'} font-mono">
+              ${cigValidation.ok ? 'Esattamente 10 caratteri alfanumerici (ANAC BDNCP)' : escapeHtml(cigValidation.msg)}
+            </span>
           </div>
 
           <!-- Termine Domande Q&A -->
           <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-1.5">
-            <label class="flex items-center text-slate-300 font-semibold">
-              <span>Scadenza Chiarimenti (Q&A):</span>
-              ${renderHelpBtn('qa_deadline')}
-            </label>
+            <div class="flex items-center justify-between">
+              <label class="flex items-center text-slate-300 font-semibold">
+                <span>Scadenza Chiarimenti (Q&A):</span>
+                ${renderHelpBtn('qa_deadline')}
+              </label>
+              <button type="button" onclick="window.autoSuggestQaDeadline()" class="text-[10px] text-cyan-400 hover:underline font-mono" title="Calcola 10 giorni prima della scadenza offerta">Auto (-10gg)</button>
+            </div>
             <input id="w_qa_deadline" type="date" value="${escapeHtml(d.step1_data.qa_deadline)}" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-amber-300 font-mono text-xs focus:border-cyan-400">
-            <span class="text-[10px] text-slate-500 font-mono">Quesiti oltre termine = inammissibili</span>
+            <span class="text-[10px] text-slate-500 font-mono">Art. 92 c.2: risposte PA almeno 6gg prima</span>
           </div>
 
           <!-- Scadenza Presentazione -->
@@ -785,7 +920,7 @@ function renderCurrentStepContent(tender) {
               ${renderHelpBtn('title')}
             </label>
             <textarea id="w_title" rows="2" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-slate-200 text-xs focus:border-cyan-400 leading-relaxed">${escapeHtml(d.step1_data.title)}</textarea>
-            <span class="text-[10px] text-slate-500 font-mono">Verifica piena conformità con i tuoi codici ATECO</span>
+            <span class="text-[10px] text-slate-500 font-mono">Verifica piena conformita' con i tuoi codici ATECO</span>
           </div>
         </div>
       </div>
@@ -793,10 +928,10 @@ function renderCurrentStepContent(tender) {
   }
 
   // -------------------------------------------------------------
-  // FASE 2: VALUTAZIONE IDONEITÀ & DELIBERA GO / NO-GO
+  // FASE 2: VALUTAZIONE IDONEITA' & DELIBERA GO / NO-GO
   // -------------------------------------------------------------
   if (currentWizardStep === 2) {
-    const s2 = d.step2_data;
+    const s2 = d.step2_data || {};
     return `
       <!-- BANNER GUIDA DELLA FASE 2 -->
       <div class="bg-gradient-to-br from-amber-950/50 via-slate-900 to-slate-950 border border-amber-500/40 rounded-3xl p-5 sm:p-6 shadow-xl space-y-3">
@@ -805,7 +940,7 @@ function renderCurrentStepContent(tender) {
             <span class="w-7 h-7 rounded-lg bg-amber-500 text-slate-950 font-black text-xs flex items-center justify-center">2</span>
             <div>
               <h3 class="text-sm sm:text-base font-bold text-white flex items-center gap-2">
-                <span>🎯 Cosa devi fare in questa Fase 2: Valutazione Idoneità &amp; Delibera Go / No-Go</span>
+                <span>🎯 Cosa devi fare in questa Fase 2: Valutazione Idoneita' &amp; Delibera Go / No-Go</span>
               </h3>
               <span class="text-[11px] text-amber-300 font-mono">Analisi di Convenienza &bull; Checklist Requisiti Giuridici ed Economici</span>
             </div>
@@ -818,15 +953,15 @@ function renderCurrentStepContent(tender) {
         <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs pt-1">
           <div class="bg-slate-950/80 p-3 rounded-2xl border border-slate-800">
             <strong class="text-amber-400 block font-mono text-[11px] mb-1">Passo 2.1: Spunta la Checklist</strong>
-            <p class="text-slate-300 leading-relaxed">Verifica se hai il fatturato triennale, le certificazioni ISO, se è obbligatorio il sopralluogo e se hai fido per la fideiussione.</p>
+            <p class="text-slate-300 leading-relaxed">Verifica fatturato triennale, certificazioni ISO (riduzione 30% cauzione), sopralluogo e capienza castelletto garanzie.</p>
           </div>
           <div class="bg-slate-950/80 p-3 rounded-2xl border border-slate-800">
-            <strong class="text-emerald-400 block font-mono text-[11px] mb-1">Passo 2.2: Stima la Marginalità</strong>
-            <p class="text-slate-300 leading-relaxed">Imposta il margine operativo netto stimato. Un margine sotto l'8% è ad alto rischio di perdita o anomalia dell'offerta.</p>
+            <strong class="text-emerald-400 block font-mono text-[11px] mb-1">Passo 2.2: Stima la Marginalita'</strong>
+            <p class="text-slate-300 leading-relaxed">Imposta il margine operativo netto stimato. Un margine sotto l'8% e' ad alto rischio di perdita o anomalia dell'offerta.</p>
           </div>
           <div class="bg-slate-950/80 p-3 rounded-2xl border border-slate-800">
             <strong class="text-cyan-400 block font-mono text-[11px] mb-1">Passo 2.3: Delibera Strategica</strong>
-            <p class="text-slate-300 leading-relaxed">Seleziona 🟢 GO per proseguire con la preparazione delle buste, oppure 🔴 NO-GO per scartarla subito ed evitare sprechi.</p>
+            <p class="text-slate-300 leading-relaxed">Seleziona 🟢 GO per proseguire con le buste, oppure 🔴 NO-GO per scartarla subito ed evitare sprechi di risorse.</p>
           </div>
         </div>
       </div>
@@ -860,10 +995,10 @@ function renderCurrentStepContent(tender) {
                 <input id="w_check_iso" type="checkbox" ${s2.check_iso ? 'checked' : ''} class="rounded bg-slate-900 border-slate-700 text-cyan-500 focus:ring-0 mt-0.5">
                 <div class="flex-1">
                   <div class="flex items-center">
-                    <strong class="text-slate-200">Certificazioni di Qualità (ISO 9001 / CAM)</strong>
+                    <strong class="text-slate-200">Certificazioni di Qualita' (ISO 9001 / CAM)</strong>
                     ${renderHelpBtn('check_iso')}
                   </div>
-                  <span class="text-[11px] text-slate-400 block mt-0.5">Certificati aziendali validi (danno anche diritto al 50% di sconto cauzione).</span>
+                  <span class="text-[11px] text-slate-400 block mt-0.5">ISO 9001 valida (riduzione 30% cauzione provvisoria ex art. 106 c.8).</span>
                 </div>
               </label>
             </div>
@@ -896,7 +1031,7 @@ function renderCurrentStepContent(tender) {
           </div>
         </div>
 
-        <!-- Delibera Go / No-Go & Marginalità -->
+        <!-- Delibera Go / No-Go & Marginalita' -->
         <div class="bg-slate-900/90 p-5 sm:p-6 rounded-3xl border border-slate-800 space-y-4 shadow-xl">
           <div class="border-b border-slate-800 pb-2.5 flex items-center justify-between">
             <span class="font-mono font-bold text-emerald-400 uppercase text-xs">Stima Margine &amp; Delibera Finale</span>
@@ -910,7 +1045,7 @@ function renderCurrentStepContent(tender) {
             </label>
             <div class="flex items-center gap-3">
               <input id="w_margin_pct" type="number" step="0.5" value="${s2.margin_estimated_pct || 12.5}" class="w-32 bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-emerald-400 font-mono font-bold text-sm focus:border-cyan-400">
-              <span class="text-slate-400 text-xs">Valore suggerito per sostenibilità: &ge; 10%</span>
+              <span class="text-slate-400 text-xs">Soglia di sicurezza consigliata: &ge; 8.0%</span>
             </div>
           </div>
 
@@ -919,9 +1054,9 @@ function renderCurrentStepContent(tender) {
               <span>Esito Valutazione Formale Ufficio Gare:</span>
               ${renderHelpBtn('go_decision')}
             </label>
-            <select id="w_go_decision" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2.5 text-slate-100 font-bold text-xs focus:border-cyan-400">
+            <select id="w_go_decision" onchange="window.handleGoDecisionChange(this.value)" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2.5 text-slate-100 font-bold text-xs focus:border-cyan-400">
               <option value="GO" ${s2.go_decision === 'GO' ? 'selected' : ''}>🟢 GO — Requisiti ok, procedi con l'offerta</option>
-              <option value="NO_GO" ${s2.go_decision === 'NO_GO' ? 'selected' : ''}>🔴 NO-GO — Scarta la gara (requisiti mancanti o margini insufficienti)</option>
+              <option value="NO_GO" ${s2.go_decision === 'NO_GO' ? 'selected' : ''}>🔴 NO-GO — Scarta la gara (blocca avanzamento alle buste)</option>
               <option value="PENDING" ${s2.go_decision === 'PENDING' ? 'selected' : ''}>🟡 IN ATTESA — In attesa di chiarimenti ufficiali dal RUP</option>
             </select>
           </div>
@@ -943,8 +1078,26 @@ function renderCurrentStepContent(tender) {
   // FASE 3: LE 3 BUSTE TELEMATICHE (A, B, C)
   // -------------------------------------------------------------
   if (currentWizardStep === 3) {
-    const s3 = d.step3_data;
+    const s3 = d.step3_data || {};
     const activeBusta = s3.active_busta || "A";
+
+    // Calcolo reattivo della garanzia provvisoria
+    const tenderAmount = Number(s3.busta_c_base_amount || tender.amount) || 0;
+    const guaranteeCalc = typeof WizardRules !== "undefined"
+      ? WizardRules.computeGuarantee({
+          base: tenderAmount,
+          ratePct: s3.garanzia_rate_pct || 2.0,
+          iso9001: !!d.step2_data.check_iso,
+          pmi: !!s3.garanzia_pmi,
+          extraReductionPct: s3.garanzia_riduzione_extra_pct || 0
+        })
+      : { amount: Math.round(tenderAmount * 0.01), gross: Math.round(tenderAmount * 0.02), mainReductionPct: 50 };
+
+    // Calcolo marginalita' effettiva post-ribasso
+    const discountVal = Number(s3.busta_c_discount_pct) || 0;
+    const effectiveMargin = typeof WizardRules !== "undefined"
+      ? WizardRules.marginAtDiscount(d.step2_data.margin_estimated_pct || 12.5, discountVal)
+      : null;
 
     return `
       <!-- BANNER GUIDA DELLA FASE 3 -->
@@ -988,7 +1141,7 @@ function renderCurrentStepContent(tender) {
           <div class="bg-slate-900/90 p-5 sm:p-6 rounded-3xl border border-slate-800 space-y-4 shadow-xl">
             <div class="border-b border-slate-800 pb-2.5 flex items-center justify-between">
               <span class="font-mono font-bold text-cyan-400 uppercase text-xs">Documenti Amministrativi (Busta A)</span>
-              <span class="text-[10px] text-slate-500 font-mono">Conformità e Garanzie</span>
+              <span class="text-[10px] text-slate-500 font-mono">Conformita' e Garanzie</span>
             </div>
 
             <div class="space-y-3">
@@ -1005,22 +1158,60 @@ function renderCurrentStepContent(tender) {
                 </label>
               </div>
 
-              <div class="p-3 rounded-2xl bg-slate-950 border border-slate-800">
-                <label class="flex items-start gap-2.5 cursor-pointer">
-                  <input id="w_busta_a_fideiussione" type="checkbox" ${s3.busta_a_fideiussione_ready ? 'checked' : ''} class="rounded bg-slate-900 border-slate-700 text-cyan-500 mt-0.5">
-                  <div class="flex-1">
-                    <div class="flex items-center">
+              <!-- SEZIONE CALCOLATORE CAUZIONE PROVVISORIA (ART. 106 C.8) -->
+              <div class="p-3.5 rounded-2xl bg-slate-950 border border-slate-800 space-y-3">
+                <div class="flex items-center justify-between border-b border-slate-800/80 pb-2">
+                  <label class="flex items-start gap-2.5 cursor-pointer">
+                    <input id="w_busta_a_fideiussione" type="checkbox" ${s3.busta_a_fideiussione_ready ? 'checked' : ''} class="rounded bg-slate-900 border-slate-700 text-cyan-500 mt-0.5">
+                    <div>
                       <strong class="text-slate-200">Garanzia Provvisoria ex art. 106 D.Lgs. 36/2023</strong>
-                      ${renderHelpBtn('busta_a_fideiussione')}
+                      <span class="text-[10px] text-emerald-400 block font-mono">Conferma acquisizione polizza fideiussoria</span>
                     </div>
-                    <span class="text-[11px] text-slate-400 block mt-0.5">Importo cauzione: <strong class="text-emerald-400 font-mono">${formatEUR(s3.busta_a_fideiussione_importo)}</strong> (riducibile al 50% con ISO 9001).</span>
+                  </label>
+                  ${renderHelpBtn('busta_a_fideiussione')}
+                </div>
+
+                <!-- Parametri Normativi Riduzione Cauzione -->
+                <div class="space-y-2 bg-slate-900/60 p-3 rounded-xl border border-slate-800 text-[11px]">
+                  <div class="flex items-center justify-between">
+                    <span class="text-slate-300">Aliquota base richiesta dal bando:</span>
+                    <div class="flex items-center gap-1 font-mono">
+                      <input id="w_garanzia_rate" type="number" step="0.1" min="1" max="4" value="${s3.garanzia_rate_pct || 2.0}" onchange="window.recalcGuaranteeFromDOM()" class="w-16 bg-slate-950 border border-slate-800 rounded px-2 py-1 text-right text-cyan-300 font-bold">
+                      <span class="text-slate-400">%</span>
+                    </div>
                   </div>
-                </label>
+
+                  <div class="pt-1.5 border-t border-slate-800/60 space-y-1.5">
+                    <label class="flex items-center gap-2 cursor-pointer text-slate-300">
+                      <input id="w_garanzia_pmi" type="checkbox" ${s3.garanzia_pmi !== false ? 'checked' : ''} onchange="window.recalcGuaranteeFromDOM()" class="rounded bg-slate-950 border-slate-700 text-cyan-500">
+                      <span>Micro, Piccola o Media Impresa (PMI) &bull; <strong class="text-emerald-400">-50%</strong></span>
+                    </label>
+
+                    <label class="flex items-center gap-2 text-slate-400 cursor-not-allowed" title="Non cumulabile con PMI: prevale la maggiore (50%)">
+                      <input id="w_garanzia_iso_info" type="checkbox" ${d.step2_data.check_iso ? 'checked' : ''} disabled class="rounded bg-slate-950 border-slate-800 text-slate-600">
+                      <span>ISO 9001 (Fase 2) &bull; <strong>-30%</strong> <em class="text-[10px] text-slate-500">(non cumulabile con PMI)</em></span>
+                    </label>
+
+                    <label class="flex items-center gap-2 cursor-pointer text-slate-300">
+                      <input id="w_garanzia_digitale" type="checkbox" ${s3.garanzia_riduzione_extra_pct === 10 ? 'checked' : ''} onchange="window.recalcGuaranteeFromDOM()" class="rounded bg-slate-950 border-slate-700 text-cyan-500">
+                      <span>Fideiussione telematica verificabile &bull; <strong class="text-emerald-400">-10%</strong></span>
+                    </label>
+                  </div>
+
+                  <div class="pt-2 border-t border-slate-800/80 flex items-center justify-between font-mono">
+                    <span class="text-slate-400">Importo Cauzione Ridotta:</span>
+                    <span id="labelGuaranteeAmount" class="text-sm font-bold text-emerald-400">${formatEUR(guaranteeCalc.amount)}</span>
+                  </div>
+                  <div class="text-[10px] text-slate-500 font-mono text-right">
+                    Lorda: ${formatEUR(guaranteeCalc.gross)} &bull; Sconto: ${guaranteeCalc.mainReductionPct}%
+                  </div>
+                </div>
               </div>
 
+              <!-- Codice FVOE 2.0 -->
               <div class="p-3.5 rounded-2xl bg-slate-950 border border-slate-800 space-y-1.5">
                 <label class="flex items-center text-slate-300 font-semibold">
-                  <span>Codice Fascicolo FVOE 2.0 / PassOE ANAC:</span>
+                  <span>Codice Fascicolo FVOE 2.0 ANAC:</span>
                   ${renderHelpBtn('fvoe_passoe')}
                 </label>
                 <div class="flex gap-1.5">
@@ -1064,7 +1255,7 @@ function renderCurrentStepContent(tender) {
           <div class="bg-slate-900/90 p-5 sm:p-6 rounded-3xl border border-slate-800 space-y-4 shadow-xl">
             <div class="border-b border-slate-800 pb-2.5 flex items-center justify-between">
               <span class="font-mono font-bold text-purple-400 uppercase text-xs">Offerta Tecnica &amp; CAM (Busta B)</span>
-              <span class="text-[10px] text-slate-500 font-mono">Qualità e Punteggi</span>
+              <span class="text-[10px] text-slate-500 font-mono">Qualita' e Punteggi</span>
             </div>
 
             <div class="space-y-3">
@@ -1086,7 +1277,7 @@ function renderCurrentStepContent(tender) {
                   <input id="w_busta_b_cam" type="checkbox" ${s3.busta_b_criteri_cam ? 'checked' : ''} class="rounded bg-slate-900 border-slate-700 text-purple-500 mt-0.5">
                   <div class="flex-1">
                     <div class="flex items-center">
-                      <strong class="text-slate-200">Criteri Ambientali Minimi (CAM) &amp; Premialità</strong>
+                      <strong class="text-slate-200">Criteri Ambientali Minimi (CAM) &amp; Premialita'</strong>
                       ${renderHelpBtn('busta_b_cam')}
                     </div>
                     <span class="text-[11px] text-slate-400 block mt-0.5">Schede dei produttori e certificati ecologici per massimo punteggio.</span>
@@ -1143,12 +1334,12 @@ function renderCurrentStepContent(tender) {
                   <span>Ribasso Offerto (%):</span>
                   ${renderHelpBtn('busta_c_discount')}
                 </label>
-                <input id="w_discount_pct" type="number" step="0.01" value="${s3.busta_c_discount_pct || 5.5}" onchange="window.recalcBustaCEconomics()" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-emerald-400 font-mono font-bold text-xs focus:border-cyan-400">
+                <input id="w_discount_pct" type="number" step="0.01" value="${s3.busta_c_discount_pct || 5.5}" oninput="window.recalcBustaCEconomics()" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-emerald-400 font-mono font-bold text-xs focus:border-cyan-400">
               </div>
             </div>
 
-            <!-- Prezzo Netto Ricalcolato -->
-            <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-1.5">
+            <!-- Prezzo Netto Ricalcolato & Marginalita' -->
+            <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-2">
               <label class="flex items-center text-slate-300 font-semibold">
                 <span>Prezzo Complessivo Netto Offerto:</span>
                 ${renderHelpBtn('busta_c_price')}
@@ -1157,10 +1348,32 @@ function renderCurrentStepContent(tender) {
                 <input id="w_offered_price" type="text" readonly value="${formatEUR(s3.busta_c_offered_price)}" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-emerald-400 font-mono font-black text-sm">
                 <button type="button" onclick="navigator.clipboard.writeText('${s3.busta_c_offered_price ? s3.busta_c_offered_price.toFixed(2) : '0'}'); showNotification('Cifra netta copiata!');" class="px-3 py-1 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-mono text-xs shrink-0 font-semibold">Copia Cifra</button>
               </div>
+
+              <!-- Indicatore Margine Residuo -->
+              <div class="pt-2 flex items-center justify-between text-[11px] font-mono">
+                <span class="text-slate-400">Margine residuo stimato:</span>
+                <span id="labelEffectiveMargin" class="font-bold ${effectiveMargin !== null && effectiveMargin < 0 ? 'text-rose-400' : (effectiveMargin !== null && effectiveMargin < 8 ? 'text-amber-400' : 'text-emerald-400')}">
+                  ${effectiveMargin !== null ? `${effectiveMargin}%` : 'N/D'} (Target: ${d.step2_data.margin_estimated_pct || 12.5}%)
+                </span>
+              </div>
+            </div>
+
+            <!-- ECCEZIONE FORNITURA SENZA POSA EX ART. 108 C.9 -->
+            <div class="p-3 rounded-2xl bg-slate-950 border border-slate-800">
+              <label class="flex items-start gap-2.5 cursor-pointer">
+                <input id="w_fornitura_senza_posa" type="checkbox" ${s3.fornitura_senza_posa ? 'checked' : ''} onchange="window.toggleFornituraSenzaPosa(this.checked)" class="rounded bg-slate-900 border-slate-700 text-cyan-500 mt-0.5">
+                <div class="flex-1">
+                  <div class="flex items-center">
+                    <strong class="text-slate-200">Fornitura senza posa o servizio intellettuale</strong>
+                    ${renderHelpBtn('fornitura_senza_posa')}
+                  </div>
+                  <span class="text-[11px] text-slate-400 block mt-0.5">Esente per legge (art. 108 c.9) dall'obbligo di scorporo di manodopera e sicurezza.</span>
+                </div>
+              </label>
             </div>
 
             <!-- Manodopera & Oneri Sicurezza ex art. 108 c. 9 -->
-            <div class="grid grid-cols-2 gap-3.5 pt-1">
+            <div id="boxManodoperaSicurezza" class="grid grid-cols-2 gap-3.5 pt-1 ${s3.fornitura_senza_posa ? 'opacity-40 pointer-events-none' : ''}">
               <div class="bg-slate-950 p-3.5 rounded-2xl border border-slate-800">
                 <label class="flex items-center text-slate-300 font-semibold mb-1">
                   <span>Costi Manodopera (€):</span>
@@ -1178,6 +1391,20 @@ function renderCurrentStepContent(tender) {
                 <input id="w_sicurezza" type="number" value="${s3.busta_c_sicurezza || 0}" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-amber-300 font-mono text-xs focus:border-cyan-400">
                 <span class="text-[9px] text-slate-500 block mt-1">Spese aziendali D.Lgs. 81/08</span>
               </div>
+            </div>
+
+            <!-- Checkbox Obbligatoria per passaggio a Fase 4: Offerta inviata a sistema MePA -->
+            <div class="p-3.5 rounded-2xl bg-emerald-950/30 border border-emerald-500/40">
+              <label class="flex items-start gap-2.5 cursor-pointer">
+                <input id="w_offerta_inviata" type="checkbox" ${s3.offerta_inviata ? 'checked' : ''} class="rounded bg-slate-900 border-emerald-500 text-emerald-500 mt-0.5">
+                <div class="flex-1">
+                  <div class="flex items-center">
+                    <strong class="text-emerald-300">Offerta Ufficialmente Inviata su AcquistinretePA</strong>
+                    ${renderHelpBtn('offerta_inviata')}
+                  </div>
+                  <span class="text-[11px] text-slate-300 block mt-0.5">Conferma di aver completato e firmato le 3 buste sul portale MePA con rilascio di ricevuta.</span>
+                </div>
+              </label>
             </div>
           </div>
 
@@ -1212,7 +1439,7 @@ function renderCurrentStepContent(tender) {
   // FASE 4: ESITO, AGGIUDICAZIONE & SVINCOLO POLIZZE
   // -------------------------------------------------------------
   if (currentWizardStep === 4) {
-    const s4 = d.step4_data;
+    const s4 = d.step4_data || {};
     return `
       <!-- BANNER GUIDA DELLA FASE 4 -->
       <div class="bg-gradient-to-br from-emerald-950/50 via-slate-900 to-slate-950 border border-emerald-500/40 rounded-3xl p-5 sm:p-6 shadow-xl space-y-3">
@@ -1238,7 +1465,7 @@ function renderCurrentStepContent(tender) {
           </div>
           <div class="bg-slate-950/80 p-3 rounded-2xl border border-slate-800">
             <strong class="text-cyan-400 block font-mono text-[11px] mb-1">Passo 4.2: Richiedi Svincolo Provvisoria</strong>
-            <p class="text-slate-300 leading-relaxed">Se la gara è conclusa (o persa), invia subito la PEC al RUP per farti rilasciare la liberatoria da trasmettere alla tua assicurazione per ripristinare il castelletto.</p>
+            <p class="text-slate-300 leading-relaxed">Se la gara e' conclusa (o persa), invia subito la PEC al RUP per farti rilasciare la liberatoria da trasmettere alla tua assicurazione per ripristinare il castelletto.</p>
           </div>
         </div>
       </div>
@@ -1257,7 +1484,7 @@ function renderCurrentStepContent(tender) {
               <span>Stato Aggiudicazione:</span>
               ${renderHelpBtn('fase4_outcome')}
             </label>
-            <select id="w_outcome" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2.5 text-slate-100 font-bold text-xs focus:border-cyan-400">
+            <select id="w_outcome" onchange="window.handleOutcomeChange(this.value)" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2.5 text-slate-100 font-bold text-xs focus:border-cyan-400">
               <option value="Vinta" ${s4.outcome === 'Vinta' ? 'selected' : ''}>🏆 Gara Vinta (Aggiudicazione Definitiva)</option>
               <option value="Persa" ${s4.outcome === 'Persa' ? 'selected' : ''}>❌ Gara Non Aggiudicata (Secondi classificati o scartati)</option>
               <option value="In Valutazione" ${s4.outcome === 'In Valutazione' ? 'selected' : ''}>⏳ In Valutazione (In attesa di seduta pubblica o anomalia)</option>
@@ -1343,16 +1570,33 @@ function readInputsFromWizardDOM() {
     const discEl = document.getElementById("w_discount_pct");
     const manoEl = document.getElementById("w_manodopera");
     const sicEl = document.getElementById("w_sicurezza");
+    const senzaPosaEl = document.getElementById("w_fornitura_senza_posa");
+    const offInvEl = document.getElementById("w_offerta_inviata");
+    const garRateEl = document.getElementById("w_garanzia_rate");
+    const garPmiEl = document.getElementById("w_garanzia_pmi");
+    const garDigEl = document.getElementById("w_garanzia_digitale");
 
     if (dgueCheck) d.step3_data.busta_a_dgue_ready = dgueCheck.checked;
     if (fidCheck) d.step3_data.busta_a_fideiussione_ready = fidCheck.checked;
     if (fvoeEl) d.step3_data.busta_a_fvoe_passoe = fvoeEl.value.trim();
     if (bReady) d.step3_data.busta_b_ready = bReady.checked;
     if (bCam) d.step3_data.busta_b_criteri_cam = bCam.checked;
+    if (senzaPosaEl) d.step3_data.fornitura_senza_posa = senzaPosaEl.checked;
+    if (offInvEl) d.step3_data.offerta_inviata = offInvEl.checked;
+    if (garRateEl) d.step3_data.garanzia_rate_pct = parseFloat(garRateEl.value) || 2.0;
+    if (garPmiEl) d.step3_data.garanzia_pmi = garPmiEl.checked;
+    if (garDigEl) d.step3_data.garanzia_riduzione_extra_pct = garDigEl.checked ? 10 : 0;
+
     if (discEl) {
-      d.step3_data.busta_c_discount_pct = parseFloat(discEl.value) || 0;
+      const pct = parseFloat(discEl.value) || 0;
+      d.step3_data.busta_c_discount_pct = pct;
       const base = d.step3_data.busta_c_base_amount || 0;
-      d.step3_data.busta_c_offered_price = base * (1 - (d.step3_data.busta_c_discount_pct / 100));
+      if (typeof WizardRules !== "undefined") {
+        const ec = WizardRules.computeEconomics({ base, discountPct: pct });
+        d.step3_data.busta_c_offered_price = ec.offered;
+      } else {
+        d.step3_data.busta_c_offered_price = base * (1 - (pct / 100));
+      }
     }
     if (manoEl) d.step3_data.busta_c_manodopera = parseFloat(manoEl.value) || 0;
     if (sicEl) d.step3_data.busta_c_sicurezza = parseFloat(sicEl.value) || 0;
@@ -1368,19 +1612,123 @@ function readInputsFromWizardDOM() {
 }
 
 /**
+ * Auto-imposta il termine Q&A a 10 giorni prima della scadenza offerta
+ */
+window.autoSuggestQaDeadline = function() {
+  const deadEl = document.getElementById("w_deadline");
+  const qaEl = document.getElementById("w_qa_deadline");
+  if (!deadEl || !qaEl) return;
+  const deadlineVal = deadEl.value;
+  if (!deadlineVal) {
+    showNotification("Imposta prima la scadenza presentazione offerta.", false);
+    return;
+  }
+  if (typeof WizardRules !== "undefined") {
+    const suggested = WizardRules.defaultQaDeadline(deadlineVal, 10);
+    qaEl.value = suggested;
+    currentWizardData.step1_data.qa_deadline = suggested;
+    showNotification("Termine Chiarimenti impostato a -10 giorni: " + suggested);
+  }
+};
+
+/**
+ * Gestisce il cambio di delibera Go / No-Go
+ */
+window.handleGoDecisionChange = function(decision) {
+  readInputsFromWizardDOM();
+  currentWizardData.step2_data.go_decision = decision;
+  if (decision === "NO_GO") {
+    showNotification("Hai impostato NO-GO: la gara verra' scartata e l'accesso alle buste sara' bloccato.", false);
+  }
+};
+
+/**
+ * Gestisce il cambio esito nella Fase 4
+ */
+window.handleOutcomeChange = function(outcome) {
+  readInputsFromWizardDOM();
+  currentWizardData.step4_data.outcome = outcome;
+  const tender = getAllTendersFromSQLite().find(t => t.id === currentWizardGaraId);
+  if (tender) {
+    tender.status = outcome;
+  }
+};
+
+/**
+ * Toggle per fornitura senza posa in opera (esente manodopera)
+ */
+window.toggleFornituraSenzaPosa = function(checked) {
+  currentWizardData.step3_data.fornitura_senza_posa = checked;
+  const box = document.getElementById("boxManodoperaSicurezza");
+  if (box) {
+    if (checked) {
+      box.classList.add("opacity-40", "pointer-events-none");
+    } else {
+      box.classList.remove("opacity-40", "pointer-events-none");
+    }
+  }
+};
+
+/**
+ * Ricalcola la cauzione provvisoria a partire dai controlli DOM
+ */
+window.recalcGuaranteeFromDOM = function() {
+  const garRateEl = document.getElementById("w_garanzia_rate");
+  const garPmiEl = document.getElementById("w_garanzia_pmi");
+  const garDigEl = document.getElementById("w_garanzia_digitale");
+  const labelEl = document.getElementById("labelGuaranteeAmount");
+
+  const rate = garRateEl ? parseFloat(garRateEl.value) || 2.0 : 2.0;
+  const pmi = garPmiEl ? garPmiEl.checked : true;
+  const dig = garDigEl ? garDigEl.checked : false;
+
+  currentWizardData.step3_data.garanzia_rate_pct = rate;
+  currentWizardData.step3_data.garanzia_pmi = pmi;
+  currentWizardData.step3_data.garanzia_riduzione_extra_pct = dig ? 10 : 0;
+
+  const base = currentWizardData.step3_data.busta_c_base_amount || 0;
+  if (typeof WizardRules !== "undefined") {
+    const g = WizardRules.computeGuarantee({
+      base,
+      ratePct: rate,
+      iso9001: !!currentWizardData.step2_data.check_iso,
+      pmi,
+      extraReductionPct: dig ? 10 : 0
+    });
+    currentWizardData.step3_data.busta_a_fideiussione_importo = g.amount;
+    if (labelEl) labelEl.textContent = formatEUR(g.amount);
+  }
+};
+
+/**
  * Ricalcola dinamicamente l'offerta economica in Busta C al variare del ribasso %
  */
 window.recalcBustaCEconomics = function() {
   const discEl = document.getElementById("w_discount_pct");
   const offeredPriceEl = document.getElementById("w_offered_price");
+  const labelMarginEl = document.getElementById("labelEffectiveMargin");
   if (!discEl || !offeredPriceEl) return;
 
   const pct = parseFloat(discEl.value) || 0;
   const base = currentWizardData.step3_data.busta_c_base_amount || 0;
-  const offered = base * (1 - (pct / 100));
-  offeredPriceEl.value = formatEUR(offered);
-  currentWizardData.step3_data.busta_c_discount_pct = pct;
-  currentWizardData.step3_data.busta_c_offered_price = offered;
+  
+  if (typeof WizardRules !== "undefined") {
+    const ec = WizardRules.computeEconomics({ base, discountPct: pct });
+    offeredPriceEl.value = formatEUR(ec.offered);
+    currentWizardData.step3_data.busta_c_discount_pct = pct;
+    currentWizardData.step3_data.busta_c_offered_price = ec.offered;
+
+    const eff = WizardRules.marginAtDiscount(currentWizardData.step2_data.margin_estimated_pct || 12.5, pct);
+    if (labelMarginEl && eff !== null) {
+      labelMarginEl.textContent = `${eff}% (Target: ${currentWizardData.step2_data.margin_estimated_pct || 12.5}%)`;
+      labelMarginEl.className = `font-bold ${eff < 0 ? 'text-rose-400' : (eff < 8 ? 'text-amber-400' : 'text-emerald-400')}`;
+    }
+  } else {
+    const offered = base * (1 - (pct / 100));
+    offeredPriceEl.value = formatEUR(offered);
+    currentWizardData.step3_data.busta_c_discount_pct = pct;
+    currentWizardData.step3_data.busta_c_offered_price = offered;
+  }
 };
 
 /**
@@ -1395,10 +1743,20 @@ window.setWizardBustaTab = function(tabName) {
 };
 
 /**
- * Sposta il Wizard allo step specificato
+ * Sposta il Wizard allo step specificato con controllo di gating deterministico
  */
 window.setWizardStep = function(stepNum) {
   readInputsFromWizardDOM();
+
+  // Controllo di Gating tramite WizardRules
+  if (typeof WizardRules !== "undefined" && stepNum > currentWizardStep) {
+    const canEnter = WizardRules.canEnterStep(stepNum, currentWizardData);
+    if (!canEnter.ok) {
+      window.showStepBlockedModal(stepNum, canEnter.errors);
+      return;
+    }
+  }
+
   currentWizardStep = stepNum;
   currentWizardData.current_step = stepNum;
   const tender = getAllTendersFromSQLite().find(t => t.id === currentWizardGaraId) || {};
@@ -1406,14 +1764,24 @@ window.setWizardStep = function(stepNum) {
 };
 
 /**
- * Salva e avanza allo step successivo
+ * Salva e avanza allo step successivo con validazione e salvataggio
  */
 window.advanceStepAndSave = async function() {
   readInputsFromWizardDOM();
+
   if (currentWizardStep < 4) {
-    currentWizardStep++;
+    const nextStep = currentWizardStep + 1;
+    if (typeof WizardRules !== "undefined") {
+      const canEnter = WizardRules.canEnterStep(nextStep, currentWizardData);
+      if (!canEnter.ok) {
+        window.showStepBlockedModal(nextStep, canEnter.errors);
+        return;
+      }
+    }
+    currentWizardStep = nextStep;
     currentWizardData.current_step = currentWizardStep;
   }
+
   await window.saveCurrentWizardState();
   const tender = getAllTendersFromSQLite().find(t => t.id === currentWizardGaraId) || {};
   renderWizardView(tender);
@@ -1428,13 +1796,13 @@ window.copyStepValuesForPortal = function() {
   let textToCopy = "";
 
   if (currentWizardStep === 1) {
-    textToCopy = `=== DATI BANDO CONSIP MEPA ===\nCIG: ${d.step1_data.cig}\nEnte: ${d.step1_data.authority}\nOggetto: ${d.step1_data.title}\nScadenza Domande: ${d.step1_data.qa_deadline}\nScadenza Bando: ${d.step1_data.deadline}\nRUP: ${d.step1_data.rup_name || 'N/D'}`;
+    textToCopy = `=== DATI BANDO CONSIP MEPA ===\nCIG: ${d.step1_data.cig}\nEnte: ${d.step1_data.authority}\nOggetto: ${d.step1_data.title}\nScadenza Domande (Q&A): ${d.step1_data.qa_deadline}\nScadenza Presentazione: ${d.step1_data.deadline}\nRUP: ${d.step1_data.rup_name || 'N/D'}`;
   } else if (currentWizardStep === 2) {
-    textToCopy = `=== QUALIFICAZIONE GO / NO-GO ===\nEsito: ${d.step2_data.go_decision}\nFatturato OK: ${d.step2_data.check_fatturato ? 'SI' : 'NO'}\nCertificazioni ISO: ${d.step2_data.check_iso ? 'SI' : 'NO'}\nMargine Stimato: ${d.step2_data.margin_estimated_pct}%\nNote: ${d.step2_data.notes || '-'}`;
+    textToCopy = `=== QUALIFICAZIONE GO / NO-GO ===\nEsito: ${d.step2_data.go_decision}\nFatturato Specifico OK: ${d.step2_data.check_fatturato ? 'SI' : 'NO'}\nCertificazioni ISO 9001: ${d.step2_data.check_iso ? 'SI (-30% garanzia)' : 'NO'}\nSopralluogo: ${d.step2_data.check_sopralluogo ? 'EFFETTUATO' : 'NON PREVISTO/NO'}\nFideiussione Capiente: ${d.step2_data.check_garanzie ? 'SI' : 'NO'}\nMargine Stimato Target: ${d.step2_data.margin_estimated_pct}%\nNote Strategiche: ${d.step2_data.notes || '-'}`;
   } else if (currentWizardStep === 3) {
-    textToCopy = `=== DATI LE 3 BUSTE TELEMATICHE ===\nCIG: ${d.step1_data.cig}\nPassOE/FVOE 2.0: ${d.step3_data.busta_a_fvoe_passoe || 'N/D'}\nFideiussione Provvisoria (€): ${d.step3_data.busta_a_fideiussione_importo}\nRibasso Percentuale: ${d.step3_data.busta_c_discount_pct}%\nPrezzo Netto Offerto (€): ${d.step3_data.busta_c_offered_price ? d.step3_data.busta_c_offered_price.toFixed(2) : '0'}\nCosti Manodopera (€): ${d.step3_data.busta_c_manodopera}\nOneri Sicurezza (€): ${d.step3_data.busta_c_sicurezza}`;
+    textToCopy = `=== DATI LE 3 BUSTE TELEMATICHE ===\nCIG: ${d.step1_data.cig}\nFascicolo FVOE 2.0 ANAC: ${d.step3_data.busta_a_fvoe_passoe || 'N/D'}\nGaranzia Provvisoria Ridotta (€): ${d.step3_data.busta_a_fideiussione_importo}\nBase d'Asta (€): ${d.step3_data.busta_c_base_amount}\nRibasso Percentuale Offerto: ${d.step3_data.busta_c_discount_pct}%\nPrezzo Complessivo Netto (€): ${d.step3_data.busta_c_offered_price ? d.step3_data.busta_c_offered_price.toFixed(2) : '0'}\nEsente Manodopera: ${d.step3_data.fornitura_senza_posa ? 'SI (Fornitura senza posa / Servizio intellettuale art. 108 c.9)' : 'NO'}\nCosti Manodopera (€): ${d.step3_data.fornitura_senza_posa ? 'ESENTE' : d.step3_data.busta_c_manodopera}\nOneri Sicurezza (€): ${d.step3_data.fornitura_senza_posa ? 'ESENTE' : d.step3_data.busta_c_sicurezza}\nOfferta Inviata a Sistema: ${d.step3_data.offerta_inviata ? 'SI' : 'NO'}`;
   } else if (currentWizardStep === 4) {
-    textToCopy = `=== ESITO GARA & SVINCOLO ===\nCIG: ${d.step1_data.cig}\nEsito: ${d.step4_data.outcome}\nFideiussione Svincolata: ${d.step4_data.fideiussione_svincolata ? 'SI' : 'NO'}\nNote: ${d.step4_data.note_conclusive || '-'}`;
+    textToCopy = `=== ESITO GARA & SVINCOLO ===\nCIG: ${d.step1_data.cig}\nEsito Ufficiale: ${d.step4_data.outcome}\nFideiussione Svincolata (PEC RUP): ${d.step4_data.fideiussione_svincolata ? 'SI' : 'NO'}\nNote & Verbale: ${d.step4_data.note_conclusive || '-'}`;
   }
 
   navigator.clipboard.writeText(textToCopy);
@@ -1453,41 +1821,18 @@ window.openAgentExportModal = function() {
   readInputsFromWizardDOM();
   const d = currentWizardData;
 
-  const payload = {
-    contract_type: "mepa_consip_tender_payload",
-    version: "1.0",
-    generated_at: new Date().toISOString(),
-    tender: {
-      id: d.gara_id,
-      cig: d.step1_data.cig,
-      authority: d.step1_data.authority,
-      title: d.step1_data.title,
-      deadline: d.step1_data.deadline,
-      portal_url: d.step1_data.link || "https://www.acquistinretepa.it"
-    },
-    qualification: {
-      decision: d.step2_data.go_decision,
-      margin_pct: d.step2_data.margin_estimated_pct
-    },
-    busta_a: {
-      dgue_ready: d.step3_data.busta_a_dgue_ready,
-      fvoe_code: d.step3_data.busta_a_fvoe_passoe,
-      fideiussione_amount: d.step3_data.busta_a_fideiussione_importo,
-      files_to_upload: d.step3_data.busta_a_files
-    },
-    busta_b: {
-      technical_ready: d.step3_data.busta_b_ready,
-      files_to_upload: d.step3_data.busta_b_files
-    },
-    busta_c: {
-      base_amount: d.step3_data.busta_c_base_amount,
-      discount_percentage: d.step3_data.busta_c_discount_pct,
-      offered_price: d.step3_data.busta_c_offered_price,
-      manodopera_costs: d.step3_data.busta_c_manodopera,
-      security_costs: d.step3_data.busta_c_sicurezza,
-      files_to_upload: d.step3_data.busta_c_files
-    }
-  };
+  const payload = typeof WizardRules !== "undefined"
+    ? WizardRules.buildAgentPayload(d)
+    : {
+        contract_type: "mepa_consip_tender_payload",
+        version: "1.0",
+        generated_at: new Date().toISOString(),
+        tender: d.step1_data,
+        qualification: d.step2_data,
+        busta_a: d.step3_data,
+        busta_b: d.step3_data,
+        busta_c: d.step3_data
+      };
 
   const jsonStr = JSON.stringify(payload, null, 2);
 
@@ -1499,14 +1844,21 @@ window.openAgentExportModal = function() {
     document.body.appendChild(modal);
   }
 
+  const isReady = payload.readiness ? payload.readiness.ready_to_submit : true;
+
   modal.innerHTML = `
     <div class="bg-slate-900 border border-purple-500/40 rounded-3xl p-6 max-w-2xl w-full shadow-2xl space-y-4 max-h-[90vh] flex flex-col">
       <div class="flex items-center justify-between border-b border-slate-800 pb-3">
         <div class="flex items-center gap-2.5">
           <span class="w-8 h-8 rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20 flex items-center justify-center font-bold text-sm">🤖</span>
           <div>
-            <h3 class="text-sm font-bold text-white">Payload per Agente Autonomo (Browser-Use)</h3>
-            <p class="text-[11px] text-slate-400 font-mono">Formato JSON strutturato per compilazione automatica su acquistinretepa.it</p>
+            <div class="flex items-center gap-2">
+              <h3 class="text-sm font-bold text-white">Payload per Agente Autonomo (Browser-Use)</h3>
+              <span class="text-[10px] font-mono px-2 py-0.5 rounded-full ${isReady ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-bold' : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'}">
+                ${isReady ? '✓ PRONTO PER INVIO' : '⚠️ DATI INCOMPLETI'}
+              </span>
+            </div>
+            <p class="text-[11px] text-slate-400 font-mono">Formato JSON v1.1 conforme con checklist operative e audit trail</p>
           </div>
         </div>
         <button onclick="document.getElementById('agentExportModal').classList.add('hidden')" class="text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-800 text-sm">✕</button>
@@ -1519,10 +1871,10 @@ window.openAgentExportModal = function() {
       <div class="flex items-center justify-between gap-3 pt-2 border-t border-slate-800 text-xs">
         <span class="text-slate-400 font-mono text-[11px]">CIG: ${escapeHtml(d.step1_data.cig || '-')}</span>
         <div class="flex items-center gap-2">
-          <button onclick="navigator.clipboard.writeText(decodeURIComponent('${encodeURIComponent(jsonStr)}')); showNotification('JSON copiato negli appunti!');" class="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-mono text-xs transition">
+          <button onclick="navigator.clipboard.writeText(decodeURIComponent('${encodeURIComponent(jsonStr)}')); showNotification('JSON copiato negli appunti!');" class="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-mono text-xs transition cursor-pointer">
             Copia JSON
           </button>
-          <a download="payload_mepa_${d.step1_data.cig || 'gara'}.json" href="data:application/json;charset=utf-8,${encodeURIComponent(jsonStr)}" class="px-4 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs transition flex items-center gap-1.5">
+          <a download="payload_mepa_${d.step1_data.cig || 'gara'}.json" href="data:application/json;charset=utf-8,${encodeURIComponent(jsonStr)}" class="px-4 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs transition flex items-center gap-1.5 cursor-pointer">
             Scarica .json
           </a>
         </div>

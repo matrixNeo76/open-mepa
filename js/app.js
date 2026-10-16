@@ -274,7 +274,7 @@ document.addEventListener("DOMContentLoaded", () => {
     btnConfirmClear.addEventListener("click", async () => {
       if (liveBackendConnected) {
         try {
-          await fetch(`${liveBackendUrl}/api/reset`, { method: "POST" });
+          await fetch(`${liveBackendUrl}/api/reset`, { method: "POST", headers: { "X-Confirm-Reset": "yes" } });
           await reloadFromBackend();
           showNotification("Database SQLite su disco svuotato completamente.");
         } catch (e) {

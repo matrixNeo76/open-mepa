@@ -415,7 +415,8 @@
               <label class="block text-slate-400 font-semibold mb-1 text-[11px]">Fase Ciclo di Vita:</label>
               <select id="filterStatus" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-2.5 py-1.5 text-slate-200 focus:outline-none focus:border-cyan-400 text-xs font-medium">
                 <option value="ALL">Tutti gli Stati</option>
-                <option value="SOLO_ATTIVE">Solo Aperte (Non Concluse)</option>
+                <option value="SOLO_ATTIVE" selected>Solo Attive (scadenza futura o inviate)</option>
+                <option value="SCADUTE">Scadute / Archivio</option>
                 <option value="Da Valutare">1. Da Valutare</option>
                 <option value="In Lavorazione">2. In Lavorazione</option>
                 <option value="Inviata">3. Inviata</option>
@@ -445,7 +446,7 @@
             <button id="chipPaper" onclick="applyFastFilter('category', 'CANCELLERIA')" class="chip-ghost"><span>📦</span> Cancelleria &amp; Carta</button>
             <button id="chipDual" onclick="applyFastFilter('category', 'DUAL_IT_PAPER')" class="chip-ghost"><span>⭐</span> IT + Cancelleria</button>
             <button id="chipExpiring" onclick="applyFastFilter('expiring_soon', true)" class="chip-ghost"><span>⏰</span> Scadenza in 7gg</button>
-            <button id="chipActive" onclick="applyFastFilter('status', 'SOLO_ATTIVE')" class="chip-ghost"><span>🟢</span> Solo non concluse</button>
+            <button id="chipActive" onclick="applyFastFilter('status', 'SOLO_ATTIVE')" class="chip-ghost"><span>🟢</span> Solo attive</button>
           </div>
         </div>
 
@@ -1446,6 +1447,7 @@ CREATE INDEX IF NOT EXISTS idx_deadline ON gare(deadline);</pre>
   <script defer src="js/db-engine.js"></script>
   <script defer src="js/importer.js"></script>
   <script defer src="js/views/cruscotto.js"></script>
+  <script defer src="js/wizard-rules.js"></script>
   <script defer src="js/views/wizard.js"></script>
   <script defer src="js/views/cataloghi.js"></script>
   <script defer src="js/views/amministrazioni.js"></script>

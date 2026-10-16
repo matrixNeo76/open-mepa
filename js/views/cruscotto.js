@@ -8,6 +8,20 @@ let currentPage = 1;
 let pageSize = 15;
 let searchDebounceTimer = null;
 
+const CONCLUDED_STATUSES = ["Vinta", "Persa", "Scartata"];
+
+/**
+ * Una gara e' "attiva" se non e' conclusa e (ha scadenza futura, oppure e' gia' stata
+ * inviata e si attende l'esito). Le gare scadute non inviate finiscono in archivio.
+ */
+function isTenderActive(t) {
+  if (CONCLUDED_STATUSES.includes(t.status)) return false;
+  if (t.status === "Inviata") return true;
+  if (!t.deadline) return true;
+  const d = new Date(t.deadline);
+  return isNaN(d.getTime()) || d.getTime() >= Date.now();
+}
+
 function getFilteredAndSortedTenders() {
   const all = getAllTendersFromSQLite();
   const searchInput = document.getElementById("searchInput");
@@ -43,7 +57,9 @@ function getFilteredAndSortedTenders() {
     if (src !== "ALL" && t.source !== src) return false;
 
     if (st === "SOLO_ATTIVE") {
-      if (["Vinta", "Persa", "Scartata"].includes(t.status)) return false;
+      if (!isTenderActive(t)) return false;
+    } else if (st === "SCADUTE") {
+      if (isTenderActive(t) || CONCLUDED_STATUSES.includes(t.status)) return false;
     } else if (st !== "ALL" && t.status !== st) {
       return false;
     }
@@ -407,7 +423,11 @@ window.editTender = function(id) {
 };
 
 window.deleteTender = async function(id) {
-  if (!confirm("Sei sicuro di voler rimuovere questa gara dal database?")) return;
+  const confirmed = await showConfirmDialog(
+    "La gara verra' rimossa dal database insieme al relativo avanzamento nel Wizard. L'operazione non e' reversibile.",
+    { title: "Rimuovere la gara?", confirmLabel: "Rimuovi gara", danger: true }
+  );
+  if (!confirmed) return;
   if (liveBackendConnected) {
     try {
       await Api.deleteGara(id);
@@ -579,7 +599,7 @@ function initCruscotto() {
       if (sortTenders) sortTenders.value = "deadline_asc";
       if (filterRegion) filterRegion.value = "ALL";
       if (filterSource) filterSource.value = "ALL";
-      if (filterStatus) filterStatus.value = "ALL";
+      if (filterStatus) filterStatus.value = "SOLO_ATTIVE";
       if (searchInput) searchInput.value = "";
       renderApp();
       showNotification("Tutti i filtri sono stati reimpostati.");
