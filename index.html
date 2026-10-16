@@ -926,101 +926,269 @@
       <!-- SECTION: STATISTICHE & MERCATO (Analytics) -->
       <div id="view-analytics" class="section-view hidden space-y-6">
         
-        <!-- Header -->
-        <div class="bg-slate-900/70 border border-slate-800/90 rounded-3xl p-6 sm:p-8 shadow-xl space-y-6">
-          <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-6 border-b border-slate-800">
-            <div class="space-y-1">
-              <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-purple-500/10 text-purple-400 border border-purple-500/20">
-                ANALISI QUANTITATIVA &amp; INTELLIGENCE APPALTI
-              </span>
-              <h2 class="text-xl sm:text-2xl font-extrabold text-white mt-2">
-                Cruscotto Statistiche di Mercato MePA &amp; Consip
+      <!-- SECTION: ANALISI DI MERCATO & STATISTICHE (EXECUTIVE INTELLIGENCE COCKPIT) -->
+      <div id="view-analytics" class="section-view hidden space-y-6">
+        
+        <div class="bg-slate-900/80 border border-slate-800/90 rounded-3xl p-6 sm:p-8 shadow-xl relative overflow-hidden space-y-6">
+          <div class="absolute -right-20 -top-20 w-80 h-80 bg-purple-500/5 rounded-full blur-3xl pointer-events-none"></div>
+
+          <!-- Header & Action Controls -->
+          <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-6 border-b border-slate-800/80 relative z-10">
+            <div class="space-y-2 max-w-3xl">
+              <div class="flex flex-wrap items-center gap-2">
+                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono font-bold bg-purple-500/10 text-purple-400 border border-purple-500/20">
+                  <span class="w-1.5 h-1.5 rounded-full bg-purple-400 animate-pulse"></span>
+                  EXECUTIVE COCKPIT &bull; MARKET INTELLIGENCE D.LGS. 36/2023
+                </span>
+                <span class="text-[11px] font-mono text-slate-400 bg-slate-950 px-2.5 py-0.5 rounded-lg border border-slate-800">
+                  Cruscotto Strategico Decisionale
+                </span>
+                <button type="button" onclick="window.showAnalyticsHelpModal('intro')" class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 text-[11px] font-medium transition touch-target-action" title="Guida all'interpretazione delle metriche di mercato">
+                  <span class="w-4 h-4 rounded-full bg-purple-500/20 text-purple-300 text-[10px] font-bold flex items-center justify-center">?</span>
+                  <span>Guida Metriche</span>
+                </button>
+              </div>
+              <h2 class="text-xl sm:text-2xl font-extrabold text-white tracking-tight">
+                Statistiche di Mercato, Spesa Pubblica &amp; Intelligence MePA
               </h2>
-              <p class="text-xs text-slate-400 max-w-2xl leading-relaxed">
-                Metriche aggregate calcolate in tempo reale sulle 1.822 gare attive, sui 287.536 articoli a listino e sulle 20.776 amministrazioni registrate in SQLite.
+              <p id="anaHeaderSubtitle" class="text-xs text-slate-400 leading-relaxed">
+                Aggregazioni strategiche in tempo reale su procedure attive, finestre di scadenza a semaforo, soglie di affidamento D.Lgs. 36/2023 e copertura territoriale della domanda pubblica.
               </p>
             </div>
             
-            <button onclick="loadAnalytics()" class="px-4 py-2 rounded-xl bg-purple-600/30 hover:bg-purple-600/40 border border-purple-500/40 text-purple-200 text-xs font-bold font-mono transition flex items-center gap-2">
-              <svg class="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-              <span>Aggiorna Dati</span>
-            </button>
-          </div>
+            <!-- Controls: Refresh, Export CSV, Export JSON -->
+            <div class="flex flex-wrap items-center gap-2 shrink-0">
+              <button type="button" onclick="loadAnalytics()" class="px-3.5 py-2 rounded-xl bg-purple-600/20 hover:bg-purple-600/30 border border-purple-500/30 text-purple-200 text-xs font-bold font-mono transition flex items-center gap-1.5" title="Ricalcola le statistiche dai dati SQLite">
+                <svg class="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                <span>Aggiorna Dati</span>
+              </button>
 
-          <!-- 4 Big KPI Cards -->
-          <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800">
-              <span class="text-[10px] uppercase font-mono text-cyan-400 font-bold block">Gare Monitorate</span>
-              <div id="anaTendersCount" class="text-3xl font-black text-white font-mono mt-1">--</div>
-              <div class="text-[11px] text-slate-500 mt-1">Convenzioni &amp; ASP</div>
-            </div>
+              <button type="button" onclick="window.exportAnalyticsReport('csv')" class="px-3.5 py-2 rounded-xl bg-emerald-950/40 hover:bg-emerald-900/60 border border-emerald-800/80 text-emerald-300 text-xs font-bold transition flex items-center gap-1.5" title="Esporta sintesi esecutiva in Excel con BOM UTF-8">
+                <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                <span>Esporta Excel (.csv)</span>
+              </button>
 
-            <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800">
-              <span class="text-[10px] uppercase font-mono text-emerald-400 font-bold block">Massa Economica Gare</span>
-              <div id="anaTotalAmount" class="text-2xl font-black text-emerald-400 font-mono mt-1">--</div>
-              <div class="text-[11px] text-slate-500 mt-1">Basi d'asta complessive</div>
-            </div>
-
-            <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800">
-              <span class="text-[10px] uppercase font-mono text-cyan-400 font-bold block">Articoli a Catalogo</span>
-              <div id="anaCatalogCount" class="text-3xl font-black text-cyan-400 font-mono mt-1">--</div>
-              <div class="text-[11px] text-slate-500 mt-1">Listini fornitori abilitati</div>
-            </div>
-
-            <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800">
-              <span class="text-[10px] uppercase font-mono text-sky-400 font-bold block">Clienti Pubblici (PA)</span>
-              <div id="anaAmmCount" class="text-3xl font-black text-sky-400 font-mono mt-1">--</div>
-              <div class="text-[11px] text-slate-500 mt-1">Stazioni appaltanti abilitate</div>
+              <button type="button" onclick="window.exportAnalyticsReport('json')" class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 text-xs font-semibold transition flex items-center gap-1.5" title="Scarica payload strutturato JSON">
+                <svg class="w-4 h-4 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                <span>JSON</span>
+              </button>
             </div>
           </div>
 
-          <!-- Section: Detailed Distribution Breakdowns -->
-          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-2">
+          <!-- Top 4 Executive KPI Cards -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 relative z-10">
+            <!-- KPI 1: Gare Attive Aggiudicabili -->
+            <div class="bg-slate-950/80 p-5 rounded-2xl border border-slate-800/90 shadow-sm space-y-2 flex flex-col justify-between hover:border-emerald-500/30 transition">
+              <div class="flex items-center justify-between">
+                <span class="text-[10px] uppercase font-mono text-emerald-400 font-bold tracking-wider">Gare Attive e Aperte</span>
+                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+              </div>
+              <div>
+                <div id="anaActiveCount" class="text-3xl font-black text-emerald-400 font-mono tabular-nums">--</div>
+                <div class="text-[11px] text-slate-400 mt-0.5">Procedure con scadenza attiva</div>
+              </div>
+              <div class="pt-2 border-t border-slate-800/60 flex items-center justify-between text-[11px]">
+                <span class="text-slate-500 font-mono">Totali a sistema: <strong id="anaTendersCount" class="text-slate-300">--</strong></span>
+                <button type="button" onclick="window.analyticsFilter('attive')" class="text-emerald-400 hover:text-emerald-300 font-semibold flex items-center gap-0.5" title="Vedi tutte le gare attive nel Cruscotto">
+                  <span>Cruscotto</span>
+                  <span>&rarr;</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- KPI 2: Massa Economica Attiva & Ticket Medio -->
+            <div class="bg-slate-950/80 p-5 rounded-2xl border border-slate-800/90 shadow-sm space-y-2 flex flex-col justify-between hover:border-cyan-500/30 transition">
+              <div class="flex items-center justify-between">
+                <span class="text-[10px] uppercase font-mono text-cyan-400 font-bold tracking-wider">Massa Economica Attiva</span>
+                <button type="button" onclick="window.showAnalyticsHelpModal('importo')" class="text-cyan-400 hover:text-cyan-300 text-xs font-bold">(?)</button>
+              </div>
+              <div>
+                <div id="anaActiveAmount" class="text-2xl font-black text-cyan-300 font-mono tabular-nums">--</div>
+                <div class="text-[11px] text-slate-400 mt-0.5">Basi d'asta aperte alla gara</div>
+              </div>
+              <div class="pt-2 border-t border-slate-800/60 flex items-center justify-between text-[11px]">
+                <span class="text-slate-500 font-mono">Ticket medio:</span>
+                <span id="anaAvgTicket" class="font-mono text-cyan-400 font-bold tabular-nums">--</span>
+              </div>
+            </div>
+
+            <!-- KPI 3: Urgenze Immediate (< 7 Giorni) -->
+            <div class="bg-slate-950/80 p-5 rounded-2xl border border-rose-500/20 bg-rose-950/5 shadow-sm space-y-2 flex flex-col justify-between hover:border-rose-500/40 transition">
+              <div class="flex items-center justify-between">
+                <span class="text-[10px] uppercase font-mono text-rose-400 font-bold tracking-wider">Urgenze &lt; 7 Giorni</span>
+                <span class="inline-flex items-center px-1.5 py-0.2 rounded-full text-[9px] font-mono font-bold bg-rose-500/20 text-rose-300 border border-rose-500/30">SCADENZA RAPIDA</span>
+              </div>
+              <div>
+                <div id="anaUrgentCount" class="text-3xl font-black text-rose-400 font-mono tabular-nums">--</div>
+                <div class="text-[11px] text-slate-400 mt-0.5">Offerte da presentare a breve</div>
+              </div>
+              <div class="pt-2 border-t border-slate-800/60 flex items-center justify-between text-[11px]">
+                <span class="text-slate-500 font-mono">Valore urgente: <strong id="anaUrgentAmount" class="text-rose-300 font-mono">--</strong></span>
+                <button type="button" onclick="window.analyticsFilter('urgent_7d')" class="text-rose-400 hover:text-rose-300 font-semibold flex items-center gap-0.5" title="Filtra gare in scadenza a 7 giorni">
+                  <span>Filtra</span>
+                  <span>&rarr;</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- KPI 4: Portafoglio Dossier Aziendale -->
+            <div class="bg-slate-950/80 p-5 rounded-2xl border border-slate-800/90 shadow-sm space-y-2 flex flex-col justify-between hover:border-purple-500/30 transition">
+              <div class="flex items-center justify-between">
+                <span class="text-[10px] uppercase font-mono text-purple-400 font-bold tracking-wider">Pipeline Ufficio Gare</span>
+                <button type="button" onclick="window.showAnalyticsHelpModal('pipeline')" class="text-purple-400 hover:text-purple-300 text-xs font-bold">(?)</button>
+              </div>
+              <div>
+                <div id="anaPipelineActiveCount" class="text-3xl font-black text-purple-300 font-mono tabular-nums">--</div>
+                <div class="text-[11px] text-slate-400 mt-0.5">Dossier in valutazione/offerta</div>
+              </div>
+              <div class="pt-2 border-t border-slate-800/60 flex items-center justify-between text-[11px]">
+                <span class="text-slate-500 font-mono">Workflow 4 Fasi:</span>
+                <button type="button" onclick="switchView('wizard')" class="text-purple-400 hover:text-purple-300 font-semibold flex items-center gap-0.5" title="Apri il Wizard 4 Fasi">
+                  <span>Wizard</span>
+                  <span>&rarr;</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Section 1: Scadenzario delle Opportunità & Soglie D.Lgs. 36/2023 -->
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-2 relative z-10">
             
-            <!-- Category Distribution -->
-            <div class="bg-slate-950 p-5 rounded-2xl border border-slate-800 space-y-4">
-              <h3 class="text-sm font-bold text-white flex items-center justify-between">
-                <span>Ripartizione Gare per Categoria Merceologica</span>
-                <span class="text-[10px] font-mono text-slate-400">Valore Economico</span>
-              </h3>
-              <div id="anaCategoryBars" class="space-y-3">
-                <div class="text-center text-slate-500 text-xs py-4">Caricamento dati...</div>
+            <!-- Box 1: Scadenzario delle Opportunità (Finestre di Partecipazione) -->
+            <div class="bg-slate-950/90 p-5 sm:p-6 rounded-2xl border border-slate-800/90 space-y-4">
+              <div class="flex items-center justify-between pb-3 border-b border-slate-800/80">
+                <div class="flex items-center gap-2">
+                  <div class="w-2.5 h-2.5 rounded-full bg-amber-400"></div>
+                  <h3 class="text-sm font-bold text-white tracking-tight">Finestre Temporali di Scadenza</h3>
+                  <button type="button" onclick="window.showAnalyticsHelpModal('scadenze')" class="text-sky-400 hover:text-sky-300 font-bold text-xs" title="Come usare lo scadenzario">(?)</button>
+                </div>
+                <span class="text-[11px] font-mono text-slate-400">Distribuzione delle scadenze</span>
+              </div>
+              <p class="text-xs text-slate-400 leading-relaxed">
+                Pianifica i tempi per il reperimento della <strong>Garanzia Provvisoria</strong> e la compilazione del <strong>DGUE</strong> in base alla finestra di chiusura del bando.
+              </p>
+              <div id="anaDeadlinesBreakdown" class="space-y-3 pt-1">
+                <div class="text-center text-slate-500 text-xs py-6 font-mono">Calcolo finestre temporali...</div>
               </div>
             </div>
 
-            <!-- Top PA Regions -->
-            <div class="bg-slate-950 p-5 rounded-2xl border border-slate-800 space-y-4">
-              <h3 class="text-sm font-bold text-white flex items-center justify-between">
-                <span>Top Regioni per Presenza Stazioni Appaltanti</span>
-                <span class="text-[10px] font-mono text-slate-400">Numero Enti</span>
-              </h3>
-              <div id="anaRegionAmmBars" class="space-y-3">
-                <div class="text-center text-slate-500 text-xs py-4">Caricamento dati...</div>
+            <!-- Box 2: Soglie Economiche D.Lgs. 36/2023 (Opportunità per PMI) -->
+            <div class="bg-slate-950/90 p-5 sm:p-6 rounded-2xl border border-slate-800/90 space-y-4">
+              <div class="flex items-center justify-between pb-3 border-b border-slate-800/80">
+                <div class="flex items-center gap-2">
+                  <div class="w-2.5 h-2.5 rounded-full bg-cyan-400"></div>
+                  <h3 class="text-sm font-bold text-white tracking-tight">Segmentazione Soglie D.Lgs. 36/2023</h3>
+                  <button type="button" onclick="window.showAnalyticsHelpModal('soglie')" class="text-sky-400 hover:text-sky-300 font-bold text-xs" title="Cosa significano le soglie comunitarie">(?)</button>
+                </div>
+                <span class="text-[11px] font-mono text-cyan-400">Nuovo Codice Appalti</span>
+              </div>
+              <p class="text-xs text-slate-400 leading-relaxed">
+                Le procedure sotto i <strong>143.000 €</strong> consentono alle PA l'affidamento diretto e negoziato rapido su MePA, ideali per PMI con tempi di firma dimezzati.
+              </p>
+              <div id="anaSoglieBreakdown" class="space-y-3 pt-1">
+                <div class="text-center text-slate-500 text-xs py-6 font-mono">Segmentazione importi...</div>
               </div>
             </div>
 
-            <!-- Top Catalog Product Categories -->
-            <div class="bg-slate-950 p-5 rounded-2xl border border-slate-800 space-y-4">
-              <h3 class="text-sm font-bold text-white flex items-center justify-between">
-                <span>Settori Più Offerti a Catalogo MePA</span>
-                <span class="text-[10px] font-mono text-slate-400">N. Articoli a listino</span>
-              </h3>
-              <div id="anaCatalogCategoryBars" class="space-y-3">
-                <div class="text-center text-slate-500 text-xs py-4">Caricamento dati...</div>
+          </div>
+
+          <!-- Section 2: Categorie Merceologiche & Strumenti MePA / Consip -->
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 relative z-10">
+            
+            <!-- Box 3: Categorie Merceologiche MePA -->
+            <div class="bg-slate-950/90 p-5 sm:p-6 rounded-2xl border border-slate-800/90 space-y-4">
+              <div class="flex items-center justify-between pb-3 border-b border-slate-800/80">
+                <div class="flex items-center gap-2">
+                  <div class="w-2.5 h-2.5 rounded-full bg-purple-400"></div>
+                  <h3 class="text-sm font-bold text-white tracking-tight">Ripartizione per Settore Merceologico</h3>
+                  <button type="button" onclick="window.showAnalyticsHelpModal('categorie')" class="text-purple-400 hover:text-purple-300 font-bold text-xs">(?)</button>
+                </div>
+                <span class="text-[11px] font-mono text-purple-300">Quote di Mercato</span>
+              </div>
+              <p class="text-xs text-slate-400 leading-relaxed">
+                Volume economico totale e numero di gare aggregate per settore. Clicca sul pulsante accanto a ciascun settore per consultarne direttamente i bandi.
+              </p>
+              <div id="anaCategoryBars" class="space-y-3 pt-1">
+                <div class="text-center text-slate-500 text-xs py-6 font-mono">Analisi settori merceologici...</div>
               </div>
             </div>
 
-            <!-- Pipeline Status Breakdown -->
-            <div class="bg-slate-950 p-5 rounded-2xl border border-slate-800 space-y-4">
-              <h3 class="text-sm font-bold text-white flex items-center justify-between">
-                <span>Stato del Pipeline Gare (Workflow 4 Fasi)</span>
-                <span class="text-[10px] font-mono text-slate-400">Conteggio Gare</span>
-              </h3>
-              <div id="anaStatusBars" class="space-y-3">
-                <div class="text-center text-slate-500 text-xs py-4">Caricamento dati...</div>
+            <!-- Box 4: Strumenti Negoziali MePA & Consip -->
+            <div class="bg-slate-950/90 p-5 sm:p-6 rounded-2xl border border-slate-800/90 space-y-4">
+              <div class="flex items-center justify-between pb-3 border-b border-slate-800/80">
+                <div class="flex items-center gap-2">
+                  <div class="w-2.5 h-2.5 rounded-full bg-sky-400"></div>
+                  <h3 class="text-sm font-bold text-white tracking-tight">Strumenti di Negoziazione Consip</h3>
+                  <button type="button" onclick="window.showAnalyticsHelpModal('strumenti')" class="text-sky-400 hover:text-sky-300 font-bold text-xs">(?)</button>
+                </div>
+                <span class="text-[11px] font-mono text-sky-400">Forma Giuridica</span>
+              </div>
+              <p class="text-xs text-slate-400 leading-relaxed">
+                Differenziazione tra Convenzioni centralizzate a prezzi standard, Accordi Quadro multiautorità e RdO MePA telematiche.
+              </p>
+              <div id="anaInstrumentsBreakdown" class="space-y-3 pt-1">
+                <div class="text-center text-slate-500 text-xs py-6 font-mono">Rilevamento strumenti negoziali...</div>
               </div>
             </div>
 
+          </div>
+
+          <!-- Section 3: Territorio della Spesa Pubblica & Pipeline Funnel -->
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 relative z-10">
+            
+            <!-- Box 5: Top Regioni & Domanda della PA -->
+            <div class="bg-slate-950/90 p-5 sm:p-6 rounded-2xl border border-slate-800/90 space-y-4">
+              <div class="flex items-center justify-between pb-3 border-b border-slate-800/80">
+                <div class="flex items-center gap-2">
+                  <div class="w-2.5 h-2.5 rounded-full bg-emerald-400"></div>
+                  <h3 class="text-sm font-bold text-white tracking-tight">Concentrazione Territoriale della Spesa</h3>
+                  <button type="button" onclick="window.showAnalyticsHelpModal('regioni')" class="text-emerald-400 hover:text-emerald-300 font-bold text-xs">(?)</button>
+                </div>
+                <span class="text-[11px] font-mono text-emerald-400">Geomarketing PA</span>
+              </div>
+              <p class="text-xs text-slate-400 leading-relaxed">
+                Regioni a più alta intensità di acquisti pubblici. Consente di focalizzare l'azione commerciale dell'azienda sui territori più ricettivi.
+              </p>
+              <div id="anaRegionAmmBars" class="space-y-3 pt-1">
+                <div class="text-center text-slate-500 text-xs py-6 font-mono">Mappatura territoriale...</div>
+              </div>
+            </div>
+
+            <!-- Box 6: Funnel Operativo 4 Fasi del Tuo Ufficio Gare -->
+            <div class="bg-slate-950/90 p-5 sm:p-6 rounded-2xl border border-slate-800/90 space-y-4">
+              <div class="flex items-center justify-between pb-3 border-b border-slate-800/80">
+                <div class="flex items-center gap-2">
+                  <div class="w-2.5 h-2.5 rounded-full bg-indigo-400"></div>
+                  <h3 class="text-sm font-bold text-white tracking-tight">Funnel Operativo del Dossier Aziendale</h3>
+                  <button type="button" onclick="window.showAnalyticsHelpModal('pipeline')" class="text-indigo-400 hover:text-indigo-300 font-bold text-xs">(?)</button>
+                </div>
+                <span class="text-[11px] font-mono text-indigo-300">Conversion Rate</span>
+              </div>
+              <p class="text-xs text-slate-400 leading-relaxed">
+                Avanzamento reale del tuo portafoglio gare attraverso le 4 fasi standard (Identificazione &bull; Go/No-Go &bull; Predisposizione Buste &bull; Esito).
+              </p>
+              <div id="anaStatusBars" class="space-y-3 pt-1">
+                <div class="text-center text-slate-500 text-xs py-6 font-mono">Calcolo funnel operativo...</div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Bottom Banner: Listini MePA & Amministrazioni -->
+          <div class="p-5 rounded-2xl bg-slate-950 border border-slate-800/90 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-mono relative z-10">
+            <div class="flex flex-wrap items-center gap-4 text-slate-400">
+              <span>Banca Dati Cataloghi: <strong id="anaCatalogCount" class="text-cyan-400 font-bold tabular-nums">--</strong> articoli</span>
+              <span class="text-slate-700 hidden sm:inline">|</span>
+              <span>Anagrafica Clienti: <strong id="anaAmmCount" class="text-sky-400 font-bold tabular-nums">--</strong> stazioni appaltanti</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <button type="button" onclick="switchView('cataloghi')" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold transition" title="Vai ai cataloghi">
+                Cataloghi MePA &rarr;
+              </button>
+              <button type="button" onclick="switchView('amministrazioni')" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold transition" title="Vai all'anagrafica enti">
+                Enti &amp; Clienti PA &rarr;
+              </button>
+            </div>
           </div>
 
         </div>
@@ -1558,18 +1726,18 @@ CREATE INDEX IF NOT EXISTS idx_deadline ON gare(deadline);</pre>
 
 
   <!-- Moduli Applicativi JavaScript (Zero-Build Vanilla Architecture) -->
-  <script defer src="js/utils.js?v=20261016_12"></script>
-  <script defer src="js/config.js?v=20261016_12"></script>
-  <script defer src="js/api.js?v=20261016_12"></script>
-  <script defer src="js/db-engine.js?v=20261016_12"></script>
-  <script defer src="js/importer.js?v=20261016_12"></script>
-  <script defer src="js/views/cruscotto.js?v=20261016_12"></script>
-  <script defer src="js/wizard-rules.js?v=20261016_12"></script>
-  <script defer src="js/legal-templates.js?v=20261016_12"></script>
-  <script defer src="js/views/wizard.js?v=20261016_12"></script>
-  <script defer src="js/views/cataloghi.js?v=20261016_12"></script>
-  <script defer src="js/views/amministrazioni.js?v=20261016_12"></script>
-  <script defer src="js/views/analytics.js?v=20261016_12"></script>
-  <script defer src="js/app.js?v=20261016_12"></script>
+  <script defer src="js/utils.js?v=20261016_13"></script>
+  <script defer src="js/config.js?v=20261016_13"></script>
+  <script defer src="js/api.js?v=20261016_13"></script>
+  <script defer src="js/db-engine.js?v=20261016_13"></script>
+  <script defer src="js/importer.js?v=20261016_13"></script>
+  <script defer src="js/views/cruscotto.js?v=20261016_13"></script>
+  <script defer src="js/wizard-rules.js?v=20261016_13"></script>
+  <script defer src="js/legal-templates.js?v=20261016_13"></script>
+  <script defer src="js/views/wizard.js?v=20261016_13"></script>
+  <script defer src="js/views/cataloghi.js?v=20261016_13"></script>
+  <script defer src="js/views/amministrazioni.js?v=20261016_13"></script>
+  <script defer src="js/views/analytics.js?v=20261016_13"></script>
+  <script defer src="js/app.js?v=20261016_13"></script>
 </body>
 </html>

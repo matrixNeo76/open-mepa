@@ -790,17 +790,109 @@ class MePAHandler(SimpleHTTPRequestHandler):
                 conn = get_db_connection()
                 cur = conn.cursor()
 
-                # Statistiche Gare
+                now_iso = dt.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S")
+                now_date = dt.now(timezone.utc).strftime("%Y-%m-%d")
+
+                # Statistiche Totali
                 cur.execute("SELECT COUNT(*), COALESCE(SUM(amount), 0) FROM gare")
                 tenders_count, total_amount = cur.fetchone()
 
+                # Gare Attive (aperte, con termine futuro o in attesa esito)
+                cur.execute("""
+                    SELECT 
+                        COUNT(*), 
+                        COALESCE(SUM(amount), 0), 
+                        COALESCE(AVG(CASE WHEN amount > 0 THEN amount END), 0)
+                    FROM gare 
+                    WHERE status NOT IN ('Vinta', 'Persa', 'Scartata', 'AGGIUDICATA', 'DESERTA', 'REVOCATA', 'ANNULLATA')
+                      AND (status = 'Inviata' OR deadline >= ? OR deadline >= ? OR deadline IS NULL OR deadline = '')
+                """, (now_iso, now_date))
+                active_count, active_amount, active_avg_ticket = cur.fetchone()
+
+                # Scadenzario Temporale (Finestre di Urgenza Partecipazione)
+                plus_7d = (dt.now(timezone.utc) + timedelta(days=7)).strftime("%Y-%m-%dT%H:%M:%S")
+                plus_15d = (dt.now(timezone.utc) + timedelta(days=15)).strftime("%Y-%m-%dT%H:%M:%S")
+                plus_30d = (dt.now(timezone.utc) + timedelta(days=30)).strftime("%Y-%m-%dT%H:%M:%S")
+
+                cur.execute("""
+                    SELECT 
+                        COUNT(CASE WHEN deadline >= ? AND deadline <= ? THEN 1 END) as urgent_7d,
+                        COALESCE(SUM(CASE WHEN deadline >= ? AND deadline <= ? THEN amount ELSE 0 END), 0) as urgent_7d_amount,
+                        COUNT(CASE WHEN deadline > ? AND deadline <= ? THEN 1 END) as medium_15d,
+                        COALESCE(SUM(CASE WHEN deadline > ? AND deadline <= ? THEN amount ELSE 0 END), 0) as medium_15d_amount,
+                        COUNT(CASE WHEN deadline > ? AND deadline <= ? THEN 1 END) as plan_30d,
+                        COALESCE(SUM(CASE WHEN deadline > ? AND deadline <= ? THEN amount ELSE 0 END), 0) as plan_30d_amount,
+                        COUNT(CASE WHEN deadline > ? THEN 1 END) as future_30d,
+                        COALESCE(SUM(CASE WHEN deadline > ? THEN amount ELSE 0 END), 0) as future_30d_amount,
+                        COUNT(CASE WHEN deadline < ? AND status NOT IN ('Vinta', 'Inviata') THEN 1 END) as expired_count
+                    FROM gare
+                    WHERE status NOT IN ('Vinta', 'Persa', 'Scartata', 'AGGIUDICATA', 'DESERTA', 'REVOCATA', 'ANNULLATA')
+                """, (now_iso, plus_7d, now_iso, plus_7d, plus_7d, plus_15d, plus_7d, plus_15d, plus_15d, plus_30d, plus_15d, plus_30d, plus_30d, plus_30d, now_iso))
+                dl_row = cur.fetchone()
+                deadline_breakdown = {
+                    "urgent_7d": dl_row[0] or 0, "urgent_7d_amount": dl_row[1] or 0,
+                    "medium_15d": dl_row[2] or 0, "medium_15d_amount": dl_row[3] or 0,
+                    "plan_30d": dl_row[4] or 0, "plan_30d_amount": dl_row[5] or 0,
+                    "future_30d": dl_row[6] or 0, "future_30d_amount": dl_row[7] or 0,
+                    "expired_count": dl_row[8] or 0
+                }
+
+                # Soglie Economiche (D.Lgs. 36/2023 Nuovo Codice Appalti)
+                cur.execute("""
+                    SELECT
+                        COUNT(CASE WHEN amount > 0 AND amount < 40000 THEN 1 END) as micro_count,
+                        COALESCE(SUM(CASE WHEN amount > 0 AND amount < 40000 THEN amount ELSE 0 END), 0) as micro_amount,
+                        COUNT(CASE WHEN amount >= 40000 AND amount < 143000 THEN 1 END) as sotto_count,
+                        COALESCE(SUM(CASE WHEN amount >= 40000 AND amount < 143000 THEN amount ELSE 0 END), 0) as sotto_amount,
+                        COUNT(CASE WHEN amount >= 143000 AND amount < 500000 THEN 1 END) as media_count,
+                        COALESCE(SUM(CASE WHEN amount >= 143000 AND amount < 500000 THEN amount ELSE 0 END), 0) as media_amount,
+                        COUNT(CASE WHEN amount >= 500000 THEN 1 END) as sopra_count,
+                        COALESCE(SUM(CASE WHEN amount >= 500000 THEN amount ELSE 0 END), 0) as sopra_amount
+                    FROM gare
+                """)
+                soglie_row = cur.fetchone()
+                soglie_breakdown = [
+                    {"key": "micro", "label": "Micro-Affidamenti (< €40k)", "count": soglie_row[0] or 0, "amount": soglie_row[1] or 0, "desc": "Affidamento diretto senza gara ex D.Lgs. 36/2023"},
+                    {"key": "sotto_soglia", "label": "Sotto-Soglia MePA (€40k - €143k)", "count": soglie_row[2] or 0, "amount": soglie_row[3] or 0, "desc": "RdO e affidamenti negoziati semplificati"},
+                    {"key": "media_soglia", "label": "Fascia Media (€143k - €500k)", "count": soglie_row[4] or 0, "amount": soglie_row[5] or 0, "desc": "Procedure negoziate o aperte ordinarie"},
+                    {"key": "sopra_soglia", "label": "Grandi Appalti / AQ (>= €500k)", "count": soglie_row[6] or 0, "amount": soglie_row[7] or 0, "desc": "Convenzioni nazionali e Accordi Quadro"}
+                ]
+
+                # Strumenti Negoziali MePA & Consip
+                cur.execute("""
+                    SELECT 
+                        CASE 
+                            WHEN source LIKE '%Convenzione%' THEN 'Convenzioni Consip'
+                            WHEN source LIKE '%Accordo%' THEN 'Accordi Quadro'
+                            WHEN source LIKE '%MePA%' OR source LIKE '%RdO%' THEN 'RdO MePA'
+                            WHEN source LIKE '%ASP%' THEN 'Gare ASP'
+                            ELSE 'Bandi Consip'
+                        END as strumento,
+                        COUNT(*),
+                        COALESCE(SUM(amount), 0)
+                    FROM gare
+                    GROUP BY 1
+                    ORDER BY 2 DESC
+                """)
+                instruments_breakdown = [{"instrument": r[0], "count": r[1], "amount": r[2]} for r in cur.fetchall()]
+
+                # Categorie Merceologiche
                 cur.execute("SELECT category, COUNT(*), COALESCE(SUM(amount), 0) FROM gare GROUP BY category ORDER BY COUNT(*) DESC")
                 categories_breakdown = [{"category": r[0], "count": r[1], "amount": r[2]} for r in cur.fetchall()]
 
-                cur.execute("SELECT status, COUNT(*) FROM gare GROUP BY status")
-                status_breakdown = [{"status": r[0] or "Da Valutare", "count": r[1]} for r in cur.fetchall()]
+                # Pipeline & Funnel 4 Fasi del Dossier
+                cur.execute("SELECT status, COUNT(*), COALESCE(SUM(amount), 0) FROM gare GROUP BY status")
+                status_raw = {r[0] or "Da Valutare": {"count": r[1], "amount": r[2]} for r in cur.fetchall()}
+                pipeline_funnel = [
+                    {"phase": "1. Identificazione", "status": "Da Valutare", "count": status_raw.get("Da Valutare", {}).get("count", 0), "amount": status_raw.get("Da Valutare", {}).get("amount", 0), "color": "sky"},
+                    {"phase": "2. In Lavorazione", "status": "In Lavorazione", "count": status_raw.get("In Lavorazione", {}).get("count", 0), "amount": status_raw.get("In Lavorazione", {}).get("amount", 0), "color": "amber"},
+                    {"phase": "3. Offerte Inviate", "status": "Inviata", "count": status_raw.get("Inviata", {}).get("count", 0), "amount": status_raw.get("Inviata", {}).get("amount", 0), "color": "purple"},
+                    {"phase": "4. Gare Vinte", "status": "Vinta", "count": status_raw.get("Vinta", {}).get("count", 0), "amount": status_raw.get("Vinta", {}).get("amount", 0), "color": "emerald"},
+                    {"phase": "5. Concluse / Perse", "status": "Concluse", "count": status_raw.get("Persa", {}).get("count", 0) + status_raw.get("Scartata", {}).get("count", 0), "amount": status_raw.get("Persa", {}).get("amount", 0) + status_raw.get("Scartata", {}).get("amount", 0), "color": "slate"}
+                ]
 
-                cur.execute("SELECT region, COUNT(*), COALESCE(SUM(amount), 0) FROM gare GROUP BY region ORDER BY COUNT(*) DESC LIMIT 6")
+                # Top Regioni Gare
+                cur.execute("SELECT region, COUNT(*), COALESCE(SUM(amount), 0) FROM gare WHERE region != '' AND region != 'ND' GROUP BY region ORDER BY COUNT(*) DESC LIMIT 5")
                 top_regions_gare = [{"region": r[0] or "Nazionale", "count": r[1], "amount": r[2]} for r in cur.fetchall()]
 
                 # Statistiche Cataloghi
@@ -827,14 +919,90 @@ class MePAHandler(SimpleHTTPRequestHandler):
                 self.send_json_response({
                     "total_tenders": tenders_count,
                     "total_amount": total_amount,
-                    "total_cataloghi": cat_count,
-                    "total_amministrazioni": amm_count,
+                    "active_tenders": active_count,
+                    "active_amount": active_amount,
+                    "average_ticket": active_avg_ticket,
+                    "deadline_breakdown": deadline_breakdown,
+                    "soglie_breakdown": soglie_breakdown,
+                    "instruments_breakdown": instruments_breakdown,
                     "categories_breakdown": categories_breakdown,
-                    "status_breakdown": status_breakdown,
+                    "pipeline_funnel": pipeline_funnel,
                     "top_regions_gare": top_regions_gare,
+                    "total_cataloghi": cat_count,
                     "top_cat_products": top_cat_products,
+                    "total_amministrazioni": amm_count,
                     "top_regions_amm": top_regions_amm
                 })
+            except Exception as e:
+                self.send_json_response({"error": str(e)}, 500)
+            return
+
+        # API: Esportazione Report Esecutivo di Mercato (CSV con UTF-8 BOM o JSON)
+        if path == "/api/analytics/export":
+            try:
+                qs = parse_qs(parsed.query)
+                fmt = qs.get("format", ["csv"])[0].strip().lower()
+
+                conn = get_db_connection()
+                cur = conn.cursor()
+
+                now_iso = dt.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S")
+
+                cur.execute("SELECT COUNT(*), COALESCE(SUM(amount), 0) FROM gare")
+                tenders_count, total_amount = cur.fetchone()
+
+                cur.execute("""
+                    SELECT COUNT(*), COALESCE(SUM(amount), 0), COALESCE(AVG(CASE WHEN amount > 0 THEN amount END), 0)
+                    FROM gare 
+                    WHERE status NOT IN ('Vinta', 'Persa', 'Scartata', 'AGGIUDICATA', 'DESERTA', 'REVOCATA', 'ANNULLATA')
+                      AND (status = 'Inviata' OR deadline >= ? OR deadline IS NULL OR deadline = '')
+                """, (now_iso,))
+                active_count, active_amount, active_avg_ticket = cur.fetchone()
+
+                cur.execute("SELECT category, COUNT(*), COALESCE(SUM(amount), 0) FROM gare GROUP BY category ORDER BY COUNT(*) DESC")
+                cats = cur.fetchall()
+
+                conn.close()
+
+                if fmt == "json":
+                    self.send_json_response({
+                        "generated_at": dt.now(timezone.utc).isoformat(),
+                        "total_tenders": tenders_count,
+                        "total_amount": total_amount,
+                        "active_tenders": active_count,
+                        "active_amount": active_amount,
+                        "average_ticket": active_avg_ticket,
+                        "categories": [{"category": r[0], "count": r[1], "amount": r[2]} for r in cats]
+                    })
+                    return
+
+                import io, csv
+                output = io.StringIO()
+                output.write('\ufeff')  # UTF-8 BOM per Excel
+                writer = csv.writer(output, delimiter=';', quoting=csv.QUOTE_MINIMAL)
+                writer.writerow(["REPORT ESECUTIVO DI MERCATO - MEPA & CONSIP DESK PRO"])
+                writer.writerow(["Data Generazione", dt.now(timezone.utc).strftime("%d/%m/%Y %H:%M:%S")])
+                writer.writerow([])
+                writer.writerow(["INDICATORE KPI", "VALORE", "NOTE"])
+                writer.writerow(["Gare Totali a Sistema", tenders_count, "Bandi, Convenzioni, RdO, Accordi Quadro"])
+                writer.writerow(["Gare Attive e Aperte", active_count, "Procedure con termine partecipazione attivo"])
+                writer.writerow(["Massa Economica Attiva", f"{active_amount:.2f} EUR", "Basi d'asta aperte alla concorrenza"])
+                writer.writerow(["Ticket Medio di Gara", f"{active_avg_ticket:.2f} EUR", "Importo medio a base d'asta"])
+                writer.writerow([])
+                writer.writerow(["RIPARTIZIONE PER CATEGORIA MERCEOLOGICA"])
+                writer.writerow(["Categoria", "Numero Gare", "Importo Complessivo (EUR)"])
+                for r in cats:
+                    writer.writerow([r[0], r[1], f"{r[2]:.2f}"])
+
+                csv_bytes = output.getvalue().encode('utf-8')
+                self.send_response(200)
+                self.send_header("Content-Type", "text/csv; charset=utf-8")
+                self.send_header("Content-Disposition", 'attachment; filename="report_mercato_consip.csv"')
+                self.send_header("Access-Control-Allow-Origin", "*")
+                self.send_header("Content-Length", str(len(csv_bytes)))
+                self.end_headers()
+                self.wfile.write(csv_bytes)
+                return
             except Exception as e:
                 self.send_json_response({"error": str(e)}, 500)
             return
