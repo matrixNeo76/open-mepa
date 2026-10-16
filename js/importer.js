@@ -137,22 +137,40 @@ async function handleFileUpload(file) {
   const importMode = document.getElementById("selectImportMode") ? document.getElementById("selectImportMode").value : "dedup";
   const fileNameLower = file.name.toLowerCase();
 
-  // Check for Catalog Big Data file (prevent browser memory freeze)
-  if (fileNameLower.includes("catalog")) {
-    await showInfoDialog(
-      "Il file selezionato appartiene ai Cataloghi Consip (~600 MB / ~300.000 righe di articoli).\n\n"
-      + "Questo dataset va importato nello storage dedicato 'cataloghi' con il motore di streaming Python:\n"
-      + "python consip_stream_ingestion.py\n\n"
-      + "Così il browser resta fluido e il cruscotto gare non viene intasato dai listini.",
-      { title: "Dataset troppo grande per il browser" });
-    return;
+  // Se il server locale è attivo ed il file è grande (> 10MB) o appartiene ai Cataloghi, usa lo Streaming Upload diretto
+  if (liveBackendConnected && (file.size > 10 * 1024 * 1024 || fileNameLower.includes("catalog") || fileNameLower.includes("amministraz"))) {
+    let targetTable = "auto";
+    if (fileNameLower.includes("catalog")) targetTable = "cataloghi";
+    else if (fileNameLower.includes("amministraz")) targetTable = "amministrazioni";
+    else targetTable = "gare";
+
+    showProgress(0, file.size, `Streaming Ingestion "${file.name}" (${(file.size / (1024 * 1024)).toFixed(1)} MB)...`);
+    try {
+      const resp = await Api.uploadStream(file, targetTable, importMode, (loaded, total) => {
+        showProgress(loaded, total, `Trasferimento stream "${file.name}": ${(loaded / (1024 * 1024)).toFixed(1)} / ${(total / (1024 * 1024)).toFixed(1)} MB`);
+      });
+      hideProgress();
+      await reloadFromBackend();
+      showNotification(`Elaborazione completata: ${resp.processed || 0} record memorizzati in SQLite.`);
+      if (targetTable === "cataloghi") switchView("cataloghi");
+      else if (targetTable === "amministrazioni") switchView("amministrazioni");
+      else switchView("cruscotto");
+      return;
+    } catch (streamErr) {
+      hideProgress();
+      console.warn("Upload streaming fallito, tentativo fallback:", streamErr);
+      showNotification("Errore durante l'ingestion streaming: " + (streamErr.message || streamErr), false);
+      return;
+    }
   }
 
-  if (file.size > 25 * 1024 * 1024) {
+  // Se siamo solo in Wasm (senza server locale) e il file supera i 25MB
+  if (!liveBackendConnected && file.size > 25 * 1024 * 1024) {
     await showInfoDialog(
-      `Il file selezionato pesa ${(file.size / (1024 * 1024)).toFixed(1)} MB: caricarlo direttamente nel browser rischia di bloccare la pagina.\n\n`
-      + "Per file oltre i 25 MB usa lo script di ingestione 'consip_stream_ingestion.py' collegato al database SQLite 3.",
-      { title: "File troppo grande" });
+      `Il file selezionato pesa ${(file.size / (1024 * 1024)).toFixed(1)} MB.\n\n`
+      + "In modalità offline senza server Python attivo, il browser non può elaborare file oltre i 25 MB per limiti di memoria.\n\n"
+      + "Avvia il server locale con 'python script_generatore_database_sqlite_3.py' per abilitare lo streaming senza limiti.",
+      { title: "Server locale richiesto per file oltre 25MB" });
     return;
   }
 

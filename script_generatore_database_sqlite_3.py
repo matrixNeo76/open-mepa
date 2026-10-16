@@ -13,6 +13,11 @@ import sys
 import os
 import sqlite3
 import json
+import csv
+import tempfile
+import urllib.request
+import ssl
+import re
 import datetime
 import socket
 import ipaddress
@@ -298,6 +303,342 @@ def is_local_origin(origin):
             return False
     except Exception:
         return False
+
+# ==============================================================================
+# MOTORE STREAMING INGESTION AD ALTE PRESTAZIONI (Zero limiti memoria / 600MB+)
+# ==============================================================================
+
+def clean_amount(val):
+    if val is None or val == "":
+        return 0.0
+    if isinstance(val, (int, float)):
+        return float(val)
+    s = str(val).strip().replace("€", "").replace(" ", "")
+    if "," in s and "." in s:
+        if s.rfind(",") > s.rfind("."):
+            s = s.replace(".", "").replace(",", ".")
+        else:
+            s = s.replace(",", "")
+    elif "," in s:
+        s = s.replace(",", ".")
+    try:
+        return float(s)
+    except ValueError:
+        return 0.0
+
+def clean_date(val):
+    if not val:
+        return "2026-12-31T12:00"
+    s = str(val).strip()
+    if "T" in s:
+        return s[:16]
+    parts = s.replace("/", "-").split("-")
+    if len(parts) == 3:
+        if len(parts[0]) == 4:
+            return f"{parts[0]}-{parts[1].zfill(2)}-{parts[2].zfill(2)}T12:00"
+        elif len(parts[2]) == 4:
+            return f"{parts[2]}-{parts[1].zfill(2)}-{parts[0].zfill(2)}T12:00"
+    return "2026-12-31T12:00"
+
+def detect_category(txt):
+    if not txt:
+        return "ALTRO"
+    t = str(txt).lower()
+    if any(k in t for k in ["informatic", "software", "hardware", "server", "pc", "cloud", "telecomunicazion", "digitale", "ict", "rete"]):
+        return "IT"
+    if any(k in t for k in ["cancelleria", "carta", "toner", "cartucce", "consumabil", "stampant", "fogli"]):
+        return "CANCELLERIA"
+    if any(k in t for k in ["sanit", "medical", "ospedal", "farmac", "dispositiv", "reagent", "paramedic"]):
+        return "SANITA"
+    if any(k in t for k in ["arred", "mobil", "sedie", "scrivanie", "scaffal", "armadi"]):
+        return "ARREDI"
+    if any(k in t for k in ["energi", "luce", "gas", "elettric", "combustibil"]):
+        return "ENERGIA"
+    return "ALTRO"
+
+REGIONS_ITALY = {
+    'Abruzzo': ['abruzzo', 'pescara', 'chieti', 'teramo', "l'aquila"],
+    'Basilicata': ['basilicata', 'potenza', 'matera'],
+    'Calabria': ['calabria', 'catanzaro', 'cosenza', 'reggio calabria', 'crotone', 'vibo'],
+    'Campania': ['campania', 'napoli', 'salerno', 'caserta', 'avellino', 'benevento'],
+    'Emilia-Romagna': ['emilia', 'romagna', 'bologna', 'modena', 'parma', 'reggio emilia', 'ravenna', 'ferrara', 'rimini', 'forlì', 'forli', 'piacenza', 'cesena'],
+    'Friuli-Venezia Giulia': ['friuli', 'venezia giulia', 'trieste', 'udine', 'pordenone', 'gorizia'],
+    'Lazio': ['lazio', 'roma', 'latina', 'frosinone', 'viterbo', 'rieti'],
+    'Liguria': ['liguria', 'genova', 'la spezia', 'savona', 'imperia'],
+    'Lombardia': ['lombardia', 'milano', 'bergamo', 'brescia', 'monza', 'como', 'varese', 'pavia', 'cremona', 'mantova', 'lecco', 'lodi', 'sondrio'],
+    'Marche': ['marche', 'ancona', 'pesaro', 'macerata', 'ascoli', 'fermo', 'urbino'],
+    'Molise': ['molise', 'campobasso', 'isernia'],
+    'Piemonte': ['piemonte', 'torino', 'novara', 'alessandria', 'cuneo', 'asti', 'vercelli', 'biella'],
+    'Puglia': ['puglia', 'bari', 'taranto', 'lecce', 'foggia', 'brindisi', 'barletta', 'andria', 'trani'],
+    'Sardegna': ['sardegna', 'cagliari', 'sassari', 'nuoro', 'oristano', 'olbia'],
+    'Sicilia': ['sicilia', 'palermo', 'catania', 'messina', 'siracusa', 'trapani', 'agrigento', 'caltanissetta', 'enna', 'ragusa'],
+    'Toscana': ['toscana', 'firenze', 'pisa', 'livorno', 'arezzo', 'siena', 'lucca', 'prato', 'pistoia', 'massa', 'carrara', 'grosseto'],
+    'Trentino-Alto Adige': ['trentino', 'alto adige', 'sudtirol', 'südtirol', 'trento', 'bolzano'],
+    'Umbria': ['umbria', 'perugia', 'terni'],
+    "Valle d'Aosta": ["valle d'aosta", "val d'aosta", "aosta"],
+    'Veneto': ['veneto', 'venezia', 'verona', 'padova', 'vicenza', 'treviso', 'rovigo', 'belluno']
+}
+
+def detect_region(txt):
+    if not txt:
+        return "Nazionale"
+    t = str(txt).lower()
+    matched = set()
+    for reg, keywords in REGIONS_ITALY.items():
+        for kw in keywords:
+            if re.search(r'\b' + re.escape(kw) + r'\b', t):
+                matched.add(reg)
+                break
+    if not matched or len(matched) >= 15:
+        return "Nazionale"
+    return ", ".join(sorted(matched))
+
+def stream_process_file_data(file_path, original_filename, target="gare", mode="dedup"):
+    """Ingestion ad alte prestazioni riga per riga per file anche fino a 600MB+."""
+    fn_lower = original_filename.lower()
+    
+    if target == "auto" or not target:
+        if "catalog" in fn_lower:
+            target = "cataloghi"
+        elif "amministraz" in fn_lower:
+            target = "amministrazioni"
+        else:
+            target = "gare"
+
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS cataloghi (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        iniziativa TEXT,
+        lotto_cig TEXT,
+        lotto_nome TEXT,
+        categoria TEXT,
+        cpv TEXT,
+        cpv_desc TEXT,
+        prodotto TEXT,
+        dettaglio TEXT,
+        strumento TEXT,
+        disponibile TEXT
+    );
+    """)
+    cur.execute("CREATE INDEX IF NOT EXISTS idx_cat_cpv ON cataloghi(cpv);")
+    cur.execute("CREATE INDEX IF NOT EXISTS idx_cat_iniz ON cataloghi(iniziativa);")
+    cur.execute("CREATE INDEX IF NOT EXISTS idx_cat_prod ON cataloghi(prodotto);")
+    cur.execute("CREATE INDEX IF NOT EXISTS idx_cat_lotto ON cataloghi(lotto_cig);")
+
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS amministrazioni (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        ipa TEXT UNIQUE,
+        codice_fiscale TEXT,
+        denominazione TEXT,
+        tipologia TEXT,
+        regione TEXT,
+        provincia TEXT,
+        comune TEXT,
+        po_attivi INTEGER
+    );
+    """)
+    cur.execute("CREATE INDEX IF NOT EXISTS idx_amm_ipa ON amministrazioni(ipa);")
+    cur.execute("CREATE INDEX IF NOT EXISTS idx_amm_cf ON amministrazioni(codice_fiscale);")
+    cur.execute("CREATE INDEX IF NOT EXISTS idx_amm_reg ON amministrazioni(regione);")
+    cur.execute("CREATE INDEX IF NOT EXISTS idx_amm_den ON amministrazioni(denominazione);")
+
+    processed = 0
+
+    if fn_lower.endswith(".json"):
+        with open(file_path, "r", encoding="utf-8", errors="replace") as f:
+            data = json.load(f)
+        records = data if isinstance(data, list) else data.get("records", data.get("data", []))
+        if target == "gare":
+            if mode == "replace":
+                cur.execute("DELETE FROM gare")
+            cur.execute("BEGIN TRANSACTION;")
+            for r in records:
+                cig = (r.get("cig") or r.get("Identificativo_Lotto") or r.get("CIG") or "").strip().upper()
+                if not cig:
+                    continue
+                title = r.get("title") or r.get("Denominazione_Lotto") or r.get("Oggetto") or "Gara Consip"
+                auth = r.get("authority") or r.get("Amministrazione") or "Consip S.p.A."
+                amount = clean_amount(r.get("amount") or r.get("Base_Asta") or r.get("Importo"))
+                dl = clean_date(r.get("deadline") or r.get("Data_Termine") or r.get("Scadenza"))
+                cat = r.get("category") or detect_category(title)
+                reg = r.get("region") or detect_region(f"{title} {auth}")
+                source = r.get("source") or "Bandi e Gare"
+                gid = r.get("id") or f"IMP_{cig}"
+                cur.execute("""
+                INSERT INTO gare (id, cig, category, region, source, authority, title, amount, deadline, status, owner, link)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(cig) DO UPDATE SET
+                    amount = CASE WHEN excluded.amount > 0 THEN excluded.amount ELSE gare.amount END,
+                    title = CASE WHEN excluded.title != '' THEN excluded.title ELSE gare.title END,
+                    authority = CASE WHEN excluded.authority != '' THEN excluded.authority ELSE gare.authority END,
+                    deadline = CASE WHEN excluded.deadline != '' THEN excluded.deadline ELSE gare.deadline END
+                """, (gid, cig, cat, reg, source, auth, title, amount, dl, "Da Valutare", "Ufficio Gare", "https://www.acquistinretepa.it"))
+                processed += 1
+            conn.commit()
+        conn.close()
+        return processed
+
+    # CSV Streaming riga per riga
+    encoding = "utf-8"
+    delimiter = ";"
+    with open(file_path, "rb") as f_test:
+        sample = f_test.read(4096)
+        if b";" in sample:
+            delimiter = ";"
+        elif b"," in sample:
+            delimiter = ","
+        try:
+            sample.decode("utf-8")
+        except UnicodeDecodeError:
+            encoding = "latin-1"
+
+    with open(file_path, "r", encoding=encoding, errors="replace", newline="") as f_csv:
+        reader = csv.reader(f_csv, delimiter=delimiter)
+        try:
+            header = next(reader)
+        except StopIteration:
+            conn.close()
+            return 0
+
+        lower_header = [h.strip().lower().replace("#", "").replace(" ", "_") for h in header]
+
+        if mode == "replace":
+            if target == "gare":
+                cur.execute("DELETE FROM gare")
+            elif target == "cataloghi":
+                cur.execute("DELETE FROM cataloghi")
+            elif target == "amministrazioni":
+                cur.execute("DELETE FROM amministrazioni")
+
+        cur.execute("BEGIN TRANSACTION;")
+        batch_count = 0
+        BATCH_SIZE = 2000
+
+        if target == "gare":
+            idx_cig = -1
+            idx_title = -1
+            idx_auth = -1
+            idx_amount = -1
+            idx_dl = -1
+            idx_cat = -1
+
+            for i, col in enumerate(lower_header):
+                if idx_cig == -1 and any(k in col for k in ["cig", "identificativo_lotto", "id_gara", "numero_rdo"]):
+                    idx_cig = i
+                if idx_title == -1 and any(k in col for k in ["oggetto", "denominazione_lotto", "titolo", "descrizione"]):
+                    idx_title = i
+                if idx_auth == -1 and any(k in col for k in ["amministrazione", "ente", "stazione", "acquirente"]):
+                    idx_auth = i
+                if idx_amount == -1 and any(k in col for k in ["base_asta", "importo", "valore", "prezzo", "massimale"]):
+                    idx_amount = i
+                if idx_dl == -1 and any(k in col for k in ["data_termine", "scadenza", "termine", "data_pubblicazione"]):
+                    idx_dl = i
+                if idx_cat == -1 and any(k in col for k in ["categoria", "settore", "merceolog"]):
+                    idx_cat = i
+
+            if idx_cig == -1: idx_cig = 0
+            if idx_title == -1: idx_title = min(1, len(header)-1)
+
+            for row in reader:
+                if not row or len(row) <= idx_cig:
+                    continue
+                cig = row[idx_cig].strip().upper()
+                if not cig:
+                    continue
+                title = row[idx_title].strip() if idx_title < len(row) else "Gara MePA Consip"
+                auth = row[idx_auth].strip() if idx_auth != -1 and idx_auth < len(row) else "Consip S.p.A."
+                raw_amount = row[idx_amount] if idx_amount != -1 and idx_amount < len(row) else "0"
+                raw_dl = row[idx_dl] if idx_dl != -1 and idx_dl < len(row) else ""
+                raw_cat = row[idx_cat] if idx_cat != -1 and idx_cat < len(row) else ""
+
+                amount = clean_amount(raw_amount)
+                dl = clean_date(raw_dl)
+                cat = detect_category(raw_cat or title)
+                reg = detect_region(f"{title} {auth}")
+                gid = f"IMP_{cig}"
+
+                cur.execute("""
+                INSERT INTO gare (id, cig, category, region, source, authority, title, amount, deadline, status, owner, link)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(cig) DO UPDATE SET
+                    amount = CASE WHEN excluded.amount > 0 THEN excluded.amount ELSE gare.amount END,
+                    title = CASE WHEN excluded.title != '' THEN excluded.title ELSE gare.title END,
+                    authority = CASE WHEN excluded.authority != '' THEN excluded.authority ELSE gare.authority END,
+                    deadline = CASE WHEN excluded.deadline != '' THEN excluded.deadline ELSE gare.deadline END
+                """, (gid, cig, cat, reg, "Bandi e Gare", auth, title, amount, dl, "Da Valutare", "Ufficio Gare", "https://www.acquistinretepa.it"))
+
+                processed += 1
+                batch_count += 1
+                if batch_count >= BATCH_SIZE:
+                    conn.commit()
+                    cur.execute("BEGIN TRANSACTION;")
+                    batch_count = 0
+
+        elif target == "cataloghi":
+            for row in reader:
+                if not row:
+                    continue
+                iniz = row[0] if len(row) > 0 else ""
+                lotto_cig = row[1] if len(row) > 1 else ""
+                lotto_nome = row[2] if len(row) > 2 else ""
+                categoria = row[3] if len(row) > 3 else ""
+                cpv = row[4] if len(row) > 4 else ""
+                cpv_desc = row[5] if len(row) > 5 else ""
+                prodotto = row[6] if len(row) > 6 else ""
+                dettaglio = row[7] if len(row) > 7 else ""
+                strumento = row[8] if len(row) > 8 else "MePA"
+                disponibile = row[9] if len(row) > 9 else "Sì"
+
+                cur.execute("""
+                INSERT INTO cataloghi (iniziativa, lotto_cig, lotto_nome, categoria, cpv, cpv_desc, prodotto, dettaglio, strumento, disponibile)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """, (iniz, lotto_cig, lotto_nome, categoria, cpv, cpv_desc, prodotto, dettaglio, strumento, disponibile))
+
+                processed += 1
+                batch_count += 1
+                if batch_count >= BATCH_SIZE:
+                    conn.commit()
+                    cur.execute("BEGIN TRANSACTION;")
+                    batch_count = 0
+
+        elif target == "amministrazioni":
+            for row in reader:
+                if not row or len(row) < 2:
+                    continue
+                ipa = row[0].strip().upper()
+                if not ipa:
+                    continue
+                cf = row[1].strip() if len(row) > 1 else ""
+                den = row[2].strip() if len(row) > 2 else ""
+                tip = row[3].strip() if len(row) > 3 else "Ente Pubblico"
+                reg = row[4].strip() if len(row) > 4 else ""
+                prov = row[5].strip() if len(row) > 5 else ""
+                com = row[6].strip() if len(row) > 6 else ""
+                po = int(clean_amount(row[7])) if len(row) > 7 else 1
+
+                cur.execute("""
+                INSERT INTO amministrazioni (ipa, codice_fiscale, denominazione, tipologia, regione, provincia, comune, po_attivi)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(ipa) DO UPDATE SET
+                    codice_fiscale = excluded.codice_fiscale,
+                    denominazione = excluded.denominazione
+                """, (ipa, cf, den, tip, reg, prov, com, po))
+
+                processed += 1
+                batch_count += 1
+                if batch_count >= BATCH_SIZE:
+                    conn.commit()
+                    cur.execute("BEGIN TRANSACTION;")
+                    batch_count = 0
+
+        conn.commit()
+
+    conn.close()
+    return processed
 
 class MePAHandler(SimpleHTTPRequestHandler):
     """Gestore HTTP con supporto per servire l'app web e le API REST SQLite 3."""
@@ -1273,6 +1614,74 @@ class MePAHandler(SimpleHTTPRequestHandler):
                 conn.commit()
                 conn.close()
                 self.send_json_response({"status": "success", "message": "Database svuotato"})
+            except Exception as e:
+                self.send_json_response({"status": "error", "message": str(e)}, 500)
+            return
+
+        # API: Sincronizzazione 1-Click Diretta da URL Consip (Zero download locale)
+        if path == "/api/ingest/url":
+            try:
+                payload = json.loads(post_body.decode('utf-8'))
+                url = payload.get("url")
+                if not url:
+                    self.send_json_response({"status": "error", "message": "Parametro url obbligatorio"}, 400)
+                    return
+                target = payload.get("target", "auto")
+                mode = payload.get("mode", "dedup")
+
+                ctx = ssl.create_default_context()
+                ctx.check_hostname = False
+                ctx.verify_mode = ssl.CERT_NONE
+                req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'})
+
+                with tempfile.NamedTemporaryFile(delete=False, suffix=".tmp") as tmp:
+                    tmp_path = tmp.name
+                    with urllib.request.urlopen(req, timeout=300, context=ctx) as resp:
+                        while True:
+                            chunk = resp.read(65536)
+                            if not chunk:
+                                break
+                            tmp.write(chunk)
+
+                try:
+                    filename = os.path.basename(urlparse(url).path) or "consip_dataset.csv"
+                    count = stream_process_file_data(tmp_path, filename, target=target, mode=mode)
+                    self.send_json_response({
+                        "status": "success",
+                        "processed": count,
+                        "target": target,
+                        "message": f"Sincronizzazione completata con successo: {count} record elaborati."
+                    })
+                finally:
+                    if os.path.exists(tmp_path):
+                        os.remove(tmp_path)
+            except Exception as e:
+                self.send_json_response({"status": "error", "message": str(e)}, 500)
+            return
+
+        # API: Upload ad alte prestazioni via Streaming per Grandi File (senza limiti di MB)
+        if path == "/api/upload/stream":
+            try:
+                qs = parse_qs(parsed.query)
+                filename = qs.get("filename", ["dataset.csv"])[0]
+                target = qs.get("target", ["auto"])[0]
+                mode = qs.get("mode", ["dedup"])[0]
+
+                with tempfile.NamedTemporaryFile(delete=False, suffix=".tmp") as tmp:
+                    tmp_path = tmp.name
+                    tmp.write(post_body)
+
+                try:
+                    count = stream_process_file_data(tmp_path, filename, target=target, mode=mode)
+                    self.send_json_response({
+                        "status": "success",
+                        "processed": count,
+                        "filename": filename,
+                        "message": f"Importazione completata: {count} record memorizzati in SQLite."
+                    })
+                finally:
+                    if os.path.exists(tmp_path):
+                        os.remove(tmp_path)
             except Exception as e:
                 self.send_json_response({"status": "error", "message": str(e)}, 500)
             return

@@ -145,21 +145,25 @@ function renderOpenDataCards() {
         <!-- Actions Footer -->
         <div class="mt-5 pt-3.5 border-t border-slate-800/80 flex flex-wrap items-center justify-between gap-2">
           <div class="flex items-center gap-1.5">
-            <a href="${ckanPage}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-cyan-300 hover:text-cyan-200 text-xs font-semibold border border-slate-700 transition" title="Apri scheda ufficiale verificata sul portale dati.consip.it">
+            <a href="${ckanPage}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-cyan-300 hover:text-cyan-200 text-xs font-semibold border border-slate-700 transition" title="Apri scheda ufficiale verificata sul portale dati.consip.it">
               <span>Scheda CKAN ↗</span>
             </a>
             ${csvDirectUrl ? `
-            <a href="${csvDirectUrl}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs font-mono font-semibold transition" title="Scarica file CSV annuale (${year})">
+            <a href="${csvDirectUrl}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 px-2 py-1.5 rounded-xl bg-slate-800/70 hover:bg-slate-700 text-slate-300 border border-slate-700 text-xs font-mono transition" title="Scarica file CSV sul tuo computer (${year})">
               <span>CSV (${year})</span>
               <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
             </a>
             ` : ""}
           </div>
 
-          <button type="button" onclick="triggerOpenDataUpload('${ds.id}')" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 text-xs font-semibold transition" title="Carica un file scaricato per questo dataset">
-            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
-            <span>Importa nel DB</span>
-          </button>
+          <div class="flex items-center gap-1.5">
+            <button type="button" onclick="triggerOpenDataUpload('${ds.id}')" class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium border border-slate-700 transition" title="Carica un file dal tuo computer">
+              <span>Sfoglia PC</span>
+            </button>
+            <button type="button" onclick="syncConsipDatasetFromUrl('${ds.id}', '${year}')" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-emerald-500/20 to-teal-500/20 hover:from-emerald-500/30 hover:to-teal-500/30 text-emerald-300 hover:text-emerald-200 border border-emerald-500/40 text-xs font-bold shadow-sm transition" title="Scarica direttamente dal server Consip ed importa in SQLite con 1 click senza limiti di MB">
+              <span>⚡ Sincronizza 1-Click</span>
+            </button>
+          </div>
         </div>
       </div>
     `;
@@ -271,4 +275,44 @@ window.copyStreamIngestionCmd = function() {
 // Cambio anno dataset
 window.onOpendataYearChange = function() {
   renderOpenDataCards();
+};
+
+// Sincronizzazione 1-Click Diretta da URL Consip (Zero download locale, nessun limite di MB)
+window.syncConsipDatasetFromUrl = async function(datasetId, year) {
+  const ds = consipDatasets.find(d => d.id === datasetId);
+  if (!ds) return;
+
+  const slug = typeof ds.fileSlug === "function" ? ds.fileSlug(year) : "";
+  if (!slug) {
+    showNotification("Dataset non disponibile per l'anno " + year, false);
+    return;
+  }
+  const url = `https://dati.consip.it/download/dataset/${slug}.csv`;
+  const modeSelect = document.getElementById("selectOpendataImportMode");
+  const mode = modeSelect ? modeSelect.value : "dedup";
+
+  if (!liveBackendConnected) {
+    await showInfoDialog(
+      "La sincronizzazione 1-Click ad alte prestazioni richiede il motore SQLite locale attivo (porta 8050).\n\n"
+      + "In assenza di connessione puoi scaricare il file con il pulsante 'CSV' o trascinarlo dal PC.",
+      { title: "Server Locale Richiesto" }
+    );
+    return;
+  }
+
+  showProgress(0, 100, `Sincronizzazione 1-Click in corso per ${ds.title} (${year})...`);
+  try {
+    const res = await Api.ingestFromUrl(url, ds.tableName || "auto", mode);
+    hideProgress();
+    await refreshOpenDataStats();
+    renderOpenDataCards();
+    showNotification(res.message || `Sincronizzazione completata: ${res.processed} record inseriti in SQLite!`);
+    if (ds.tableName === "cataloghi") switchView("cataloghi");
+    else if (ds.tableName === "amministrazioni") switchView("amministrazioni");
+    else switchView("cruscotto");
+  } catch (err) {
+    hideProgress();
+    console.error("Errore sincronizzazione 1-Click:", err);
+    showNotification("Impossibile completare la sincronizzazione automatica: " + (err.message || err), false);
+  }
 };

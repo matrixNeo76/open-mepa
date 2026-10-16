@@ -151,6 +151,56 @@ const Api = {
 
   getIcsExportUrl(garaId = null) {
     return garaId ? `${this.getBaseUrl()}/api/export/ics?gara_id=${encodeURIComponent(garaId)}` : `${this.getBaseUrl()}/api/export/ics`;
+  },
+
+  async ingestFromUrl(url, target = "auto", mode = "dedup") {
+    const resp = await fetch(`${this.getBaseUrl()}/api/ingest/url`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ url, target, mode })
+    });
+    if (!resp.ok) {
+      const err = await resp.json().catch(() => ({}));
+      throw new Error(err.message || "Errore durante la sincronizzazione da URL");
+    }
+    return await resp.json();
+  },
+
+  async uploadStream(file, target = "auto", mode = "dedup", onProgress = null) {
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      const url = `${this.getBaseUrl()}/api/upload/stream?filename=${encodeURIComponent(file.name)}&target=${encodeURIComponent(target)}&mode=${encodeURIComponent(mode)}`;
+      xhr.open("POST", url, true);
+      xhr.setRequestHeader("Content-Type", "application/octet-stream");
+
+      if (xhr.upload && onProgress) {
+        xhr.upload.onprogress = (e) => {
+          if (e.lengthComputable) {
+            onProgress(e.loaded, e.total);
+          }
+        };
+      }
+
+      xhr.onload = () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          try {
+            resolve(JSON.parse(xhr.responseText));
+          } catch (e) {
+            resolve({ status: "success" });
+          }
+        } else {
+          try {
+            const err = JSON.parse(xhr.responseText);
+            reject(new Error(err.message || "Errore upload streaming"));
+          } catch (e) {
+            reject(new Error("Errore upload HTTP " + xhr.status));
+          }
+        }
+      };
+
+      xhr.onerror = () => reject(new Error("Errore di rete durante l'upload streaming"));
+      xhr.send(file);
+    });
   }
 };
 
