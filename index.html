@@ -1404,183 +1404,484 @@
 
       </div>
 
-      <!-- SECTION 3: GUIDA METODOLOGICA -->
+      <!-- SECTION 3: GUIDA METODOLOGICA & STRUMENTI OPERATIVI (D.LGS. 36/2023) -->
       <div id="view-guida" class="section-view hidden space-y-6">
         
-        <div class="bg-slate-900/70 border border-slate-800/90 rounded-3xl p-6 sm:p-8 shadow-xl space-y-8">
+        <div class="bg-slate-900/70 border border-slate-800/90 rounded-3xl p-5 sm:p-7 shadow-xl space-y-6">
           
-          <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800 pb-5">
-            <div class="space-y-1">
-              <span class="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                METODOLOGIA ZERO-COMPLICAZIONI
-              </span>
-              <h2 class="text-2xl sm:text-3xl font-extrabold text-white">
-                Come Gestire Bandi &amp; Gare in modo Semplice, Diretto e Immediato
+          <!-- Header Sezione con Metodologia D.Lgs. 36/2023 -->
+          <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-slate-800 pb-5">
+            <div class="space-y-1.5">
+              <div class="flex items-center gap-2 flex-wrap">
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                  <span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span>
+                  D.LGS. 36/2023 &amp; ANAC
+                </span>
+                <span class="text-xs font-mono px-2 py-0.5 rounded-md bg-slate-950 text-slate-400 border border-slate-800">
+                  Workflow Certificato MePA / Consip
+                </span>
+              </div>
+              <h2 class="text-xl sm:text-2xl font-extrabold text-white tracking-tight">
+                Guida Metodologica &amp; Strumenti Operativi di Gara
               </h2>
               <p class="text-xs sm:text-sm text-slate-400 max-w-3xl leading-relaxed">
-                Il ciclo di vita completo di una gara pubblica in 4 passaggi sequenziali, memorizzato e velocizzato dal motore relazionale SQLite locale.
+                Il protocollo operativo completo in 4 fasi, corredato da calcolatore dei termini perentori, simulatore di cauzione provvisoria, checklist 3 buste e modelli legali formali.
               </p>
             </div>
-            <div class="text-xs font-mono px-3 py-1.5 rounded-xl bg-slate-950 border border-slate-800 text-slate-300">
-              Tempo medio/gara: <strong class="text-cyan-400">~5-10 min</strong>
+
+            <!-- Bottoni Rapidi Testata -->
+            <div class="flex flex-wrap items-center gap-2 shrink-0">
+              <button type="button" onclick="window.switchView('cruscotto')" class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold border border-slate-700 transition flex items-center gap-1.5">
+                <span>&larr; Torna al Cruscotto</span>
+              </button>
+              <button type="button" onclick="window.openTenderWizard(null, 1)" class="px-3.5 py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 text-xs font-bold shadow-lg shadow-cyan-500/20 transition flex items-center gap-1.5">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                <span>Avvia Wizard Gara</span>
+              </button>
             </div>
           </div>
 
-          <!-- Flowchart Graphic -->
-          <div class="w-full overflow-x-auto pb-2">
-            <svg viewBox="0 0 1000 360" class="w-full min-w-[820px] h-auto select-none" xmlns="http://www.w3.org/2000/svg">
-              <defs>
-                <linearGradient id="opStepBg" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stop-color="#0f172a"/>
-                  <stop offset="100%" stop-color="#1e293b"/>
-                </linearGradient>
-                <marker id="opArrow" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-                  <path d="M 0 1 L 8 5 L 0 9 z" fill="#38bdf8"/>
-                </marker>
-                <filter id="opShadow" x="-5%" y="-5%" width="110%" height="110%">
-                  <feDropShadow dx="0" dy="4" stdDeviation="5" flood-color="#000000" flood-opacity="0.35"/>
-                </filter>
-              </defs>
-
-              <line x1="120" y1="120" x2="880" y2="120" stroke="#334155" stroke-width="3" stroke-dasharray="6 5"/>
-
-              <!-- Step 1 -->
-              <g filter="url(#opShadow)">
-                <rect x="25" y="25" width="215" height="195" rx="14" fill="url(#opStepBg)" stroke="#38bdf8" stroke-width="2"/>
-                <circle cx="58" cy="55" r="16" fill="#0284c7" fill-opacity="0.25"/>
-                <text x="58" y="60" fill="#38bdf8" font-family="'JetBrains Mono', monospace" font-size="13" font-weight="bold" text-anchor="middle">1</text>
-                <text x="85" y="60" fill="#ffffff" font-family="'Plus Jakarta Sans', sans-serif" font-size="14" font-weight="700">Identificazione</text>
-                <g transform="translate(38, 85)">
-                  <text x="0" y="0" fill="#94a3b8" font-family="'Plus Jakarta Sans', sans-serif" font-size="11" font-weight="600">INPUT INIZIALE:</text>
-                  <text x="0" y="18" fill="#e2e8f0" font-family="'Plus Jakarta Sans', sans-serif" font-size="11">• Importa o inserisci CIG</text>
-                  <text x="0" y="34" fill="#e2e8f0" font-family="'Plus Jakarta Sans', sans-serif" font-size="11">• Rileva Ente, Oggetto, €</text>
-                  <text x="0" y="50" fill="#e2e8f0" font-family="'Plus Jakarta Sans', sans-serif" font-size="11">• Fissa Termine Scadenza</text>
-                  <rect x="0" y="65" width="185" height="28" rx="6" fill="#0b1329" stroke="#0284c7" stroke-width="1"/>
-                  <text x="92" y="83" fill="#38bdf8" font-family="'JetBrains Mono', monospace" font-size="10" font-weight="bold" text-anchor="middle">Stato: Da Valutare</text>
-                </g>
-              </g>
-
-              <line x1="243" y1="120" x2="270" y2="120" stroke="#38bdf8" stroke-width="2.5" marker-end="url(#opArrow)"/>
-
-              <!-- Step 2 -->
-              <g filter="url(#opShadow)">
-                <rect x="275" y="25" width="215" height="195" rx="14" fill="url(#opStepBg)" stroke="#f59e0b" stroke-width="2"/>
-                <circle cx="308" cy="55" r="16" fill="#d97706" fill-opacity="0.25"/>
-                <text x="308" y="60" fill="#fbbf24" font-family="'JetBrains Mono', monospace" font-size="13" font-weight="bold" text-anchor="middle">2</text>
-                <text x="335" y="60" fill="#ffffff" font-family="'Plus Jakarta Sans', sans-serif" font-size="14" font-weight="700">Valutazione</text>
-                <g transform="translate(288, 85)">
-                  <text x="0" y="0" fill="#94a3b8" font-family="'Plus Jakarta Sans', sans-serif" font-size="11" font-weight="600">ANALISI FATTIBILITÀ:</text>
-                  <text x="0" y="18" fill="#e2e8f0" font-family="'Plus Jakarta Sans', sans-serif" font-size="11">• Requisiti fatturato &amp; ISO</text>
-                  <text x="0" y="34" fill="#e2e8f0" font-family="'Plus Jakarta Sans', sans-serif" font-size="11">• Margine economico stimato</text>
-                  <text x="0" y="50" fill="#e2e8f0" font-family="'Plus Jakarta Sans', sans-serif" font-size="11">• Assegna Responsabile</text>
-                  <rect x="0" y="65" width="185" height="28" rx="6" fill="#0b1329" stroke="#d97706" stroke-width="1"/>
-                  <text x="92" y="83" fill="#fbbf24" font-family="'JetBrains Mono', monospace" font-size="10" font-weight="bold" text-anchor="middle">Stato: In Lavorazione</text>
-                </g>
-              </g>
-
-              <line x1="493" y1="120" x2="520" y2="120" stroke="#fbbf24" stroke-width="2.5" marker-end="url(#opArrow)"/>
-
-              <!-- Step 3 -->
-              <g filter="url(#opShadow)">
-                <rect x="525" y="25" width="215" height="195" rx="14" fill="url(#opStepBg)" stroke="#a855f7" stroke-width="2"/>
-                <circle cx="558" cy="55" r="16" fill="#7e22ce" fill-opacity="0.25"/>
-                <text x="558" y="60" fill="#c084fc" font-family="'JetBrains Mono', monospace" font-size="13" font-weight="bold" text-anchor="middle">3</text>
-                <text x="585" y="60" fill="#ffffff" font-family="'Plus Jakarta Sans', sans-serif" font-size="14" font-weight="700">Predisposizione</text>
-                <g transform="translate(538, 85)">
-                  <text x="0" y="0" fill="#94a3b8" font-family="'Plus Jakarta Sans', sans-serif" font-size="11" font-weight="600">LE 3 BUSTE TELEMATICHE:</text>
-                  <text x="0" y="18" fill="#e2e8f0" font-family="'Plus Jakarta Sans', sans-serif" font-size="11">• Busta A: DGUE &amp; Garanzia</text>
-                  <text x="0" y="34" fill="#e2e8f0" font-family="'Plus Jakarta Sans', sans-serif" font-size="11">• Busta B: Offerta Tecnica</text>
-                  <text x="0" y="50" fill="#e2e8f0" font-family="'Plus Jakarta Sans', sans-serif" font-size="11">• Busta C: Ribasso Prezzo</text>
-                  <rect x="0" y="65" width="185" height="28" rx="6" fill="#0b1329" stroke="#7e22ce" stroke-width="1"/>
-                  <text x="92" y="83" fill="#c084fc" font-family="'JetBrains Mono', monospace" font-size="10" font-weight="bold" text-anchor="middle">Stato: Inviata</text>
-                </g>
-              </g>
-
-              <line x1="743" y1="120" x2="770" y2="120" stroke="#c084fc" stroke-width="2.5" marker-end="url(#opArrow)"/>
-
-              <!-- Step 4 -->
-              <g filter="url(#opShadow)">
-                <rect x="775" y="25" width="200" height="195" rx="14" fill="url(#opStepBg)" stroke="#10b981" stroke-width="2"/>
-                <circle cx="808" cy="55" r="16" fill="#059669" fill-opacity="0.25"/>
-                <text x="808" y="60" fill="#34d399" font-family="'JetBrains Mono', monospace" font-size="13" font-weight="bold" text-anchor="middle">4</text>
-                <text x="835" y="60" fill="#ffffff" font-family="'Plus Jakarta Sans', sans-serif" font-size="14" font-weight="700">Esito Finale</text>
-                <g transform="translate(788, 85)">
-                  <text x="0" y="0" fill="#94a3b8" font-family="'Plus Jakarta Sans', sans-serif" font-size="11" font-weight="600">POST-GARA &amp; ARCHIVIO:</text>
-                  <text x="0" y="18" fill="#e2e8f0" font-family="'Plus Jakarta Sans', sans-serif" font-size="11">• Seduta pubblica &amp; graduatoria</text>
-                  <text x="0" y="34" fill="#e2e8f0" font-family="'Plus Jakarta Sans', sans-serif" font-size="11">• Svincolo Fideiussione</text>
-                  <text x="0" y="50" fill="#e2e8f0" font-family="'Plus Jakarta Sans', sans-serif" font-size="11">• Esporta e archivia storico</text>
-                  <rect x="0" y="65" width="170" height="28" rx="6" fill="#0b1329" stroke="#059669" stroke-width="1"/>
-                  <text x="85" y="83" fill="#34d399" font-family="'JetBrains Mono', monospace" font-size="10" font-weight="bold" text-anchor="middle">Vinta / Persa</text>
-                </g>
-              </g>
-
-              <!-- Bottom Semaphore Bar -->
-              <g transform="translate(25, 240)">
-                <rect width="950" height="100" rx="12" fill="#090e1d" stroke="#1e293b" stroke-width="1.5"/>
-                <text x="25" y="30" fill="#38bdf8" font-family="'JetBrains Mono', monospace" font-size="11" font-weight="700">SEMAFORO VISIVO SCADENZE (ATTIVO AUTOMATICAMENTE NELLA TABELLA):</text>
-                <g transform="translate(25, 45)">
-                  <rect width="280" height="42" rx="6" fill="#450a0a" stroke="#ef4444" stroke-width="1"/>
-                  <text x="12" y="26" fill="#fca5a5" font-family="'JetBrains Mono', monospace" font-size="11" font-weight="bold">🔴 Meno di 3 Giorni: Emergenza</text>
-                </g>
-                <g transform="translate(330, 45)">
-                  <rect width="280" height="42" rx="6" fill="#451a03" stroke="#f59e0b" stroke-width="1"/>
-                  <text x="12" y="26" fill="#fde68a" font-family="'JetBrains Mono', monospace" font-size="11" font-weight="bold">🟡 4 - 7 Giorni: In Lavorazione</text>
-                </g>
-                <g transform="translate(635, 45)">
-                  <rect width="310" height="42" rx="6" fill="#064e3b" stroke="#10b981" stroke-width="1"/>
-                  <text x="12" y="26" fill="#a7f3d0" font-family="'JetBrains Mono', monospace" font-size="11" font-weight="bold">🟢 Oltre 7 Giorni: Chiarimenti &amp; Q&amp;A</text>
-                </g>
-              </g>
-            </svg>
+          <!-- Navigazione Tab Interna alla Guida -->
+          <div class="flex items-center gap-2 border-b border-slate-800/80 pb-3 overflow-x-auto custom-scrollbar">
+            <button id="tabBtnGuida-fasi" onclick="window.switchGuidaTab('fasi')" class="px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 bg-gradient-to-r from-cyan-500/20 to-blue-500/20 text-cyan-300 border border-cyan-500/40 shadow-sm">
+              <span>🧭 4 Fasi del Ciclo di Vita</span>
+            </button>
+            <button id="tabBtnGuida-calcolatori" onclick="window.switchGuidaTab('calcolatori')" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition flex items-center gap-2 border border-transparent">
+              <span>🧮 Calcolatori Operativi (Scadenze &amp; Cauzione)</span>
+            </button>
+            <button id="tabBtnGuida-checklist" onclick="window.switchGuidaTab('checklist')" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition flex items-center gap-2 border border-transparent">
+              <span>🛡️ Checklist Anti-Esclusione (3 Buste)</span>
+            </button>
+            <button id="tabBtnGuida-modelli" onclick="window.switchGuidaTab('modelli')" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition flex items-center gap-2 border border-transparent">
+              <span>📜 Modelli Legali &amp; Fac-Simile RUP</span>
+            </button>
           </div>
 
-          <!-- Explanation Grid -->
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+          <!-- TAB 1: 4 FASI DEL CICLO DI VITA (RESPONSIVE WORKFLOW) -->
+          <div id="tabPaneGuida-fasi" class="space-y-6">
             
-            <div class="bg-slate-950 p-5 rounded-2xl border border-slate-800 space-y-2.5">
-              <span class="text-xs font-mono font-bold text-sky-400 bg-sky-500/10 px-2.5 py-0.5 rounded-full border border-sky-500/20">
-                FASE 1: Identificazione Rapida
-              </span>
-              <h3 class="text-sm font-bold text-white">Caricamento e Presa in Carico</h3>
-              <p class="text-xs text-slate-300 leading-relaxed">
-                Importa il file JSON/CSV da Consip o premi <strong>"Nuova Gara"</strong>. Il sistema associa automaticamente il <strong>CIG</strong>, la stazione appaltante, la regione e la categoria merceologica, memorizzandola nel database SQLite.
+            <!-- Timeline a 4 Card Responsive -->
+            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+              
+              <!-- Step 1: Identificazione & Triage -->
+              <div class="rounded-2xl p-4 bg-slate-950/80 border border-sky-500/30 hover:border-sky-400/60 transition shadow-md flex flex-col justify-between space-y-3">
+                <div class="space-y-2">
+                  <div class="flex items-center justify-between">
+                    <span class="w-7 h-7 rounded-lg bg-sky-500/20 border border-sky-500/40 text-sky-300 font-mono font-bold text-xs flex items-center justify-center">1</span>
+                    <span class="text-[10px] font-mono text-sky-400 font-semibold bg-sky-500/10 px-2 py-0.5 rounded">Art. 70-76</span>
+                  </div>
+                  <h3 class="text-sm font-bold text-white">Identificazione &amp; Triage</h3>
+                  <p class="text-xs text-slate-300 leading-relaxed">
+                    Presa in carico del bando o RdO. Verifica del CIG, Stazione Appaltante, categoria merceologica e base d'asta. Fissaggio della data di scadenza perentoria.
+                  </p>
+                  <div class="p-2.5 rounded-xl bg-slate-900 border border-slate-800/80 text-[11px] font-mono text-slate-400 space-y-1">
+                    <div class="text-sky-300 font-semibold">Attività Chiave:</div>
+                    <div>&bull; Rilevazione CIG / SmartCIG</div>
+                    <div>&bull; Calcolo scadenza chiarimenti</div>
+                    <div>&bull; Assegnazione operatore</div>
+                  </div>
+                </div>
+                <div class="pt-2 border-t border-slate-800 flex items-center justify-between">
+                  <span class="text-[10px] font-mono text-sky-400 font-bold">Stato: Da Valutare</span>
+                  <button type="button" onclick="document.getElementById('btnSidebarNewTender') && document.getElementById('btnSidebarNewTender').click()" class="text-xs font-semibold text-sky-300 hover:text-sky-200 hover:underline">
+                    + Nuova Gara &rarr;
+                  </button>
+                </div>
+              </div>
+
+              <!-- Step 2: Valutazione Go / No-Go -->
+              <div class="rounded-2xl p-4 bg-slate-950/80 border border-amber-500/30 hover:border-amber-400/60 transition shadow-md flex flex-col justify-between space-y-3">
+                <div class="space-y-2">
+                  <div class="flex items-center justify-between">
+                    <span class="w-7 h-7 rounded-lg bg-amber-500/20 border border-amber-500/40 text-amber-300 font-mono font-bold text-xs flex items-center justify-center">2</span>
+                    <span class="text-[10px] font-mono text-amber-400 font-semibold bg-amber-500/10 px-2 py-0.5 rounded">Requisiti &amp; ISO</span>
+                  </div>
+                  <h3 class="text-sm font-bold text-white">Valutazione Go / No-Go</h3>
+                  <p class="text-xs text-slate-300 leading-relaxed">
+                    Analisi di convenienza economica e fattibilità tecnica. Verifica requisiti speciali di fatturato, iscrizioni abilitative (Albi/CCIAA) e certificazioni ISO richieste.
+                  </p>
+                  <div class="p-2.5 rounded-xl bg-slate-900 border border-slate-800/80 text-[11px] font-mono text-slate-400 space-y-1">
+                    <div class="text-amber-300 font-semibold">Attività Chiave:</div>
+                    <div>&bull; Verifica margine economico</div>
+                    <div>&bull; Calcolo cauzione provvisoria</div>
+                    <div>&bull; Decisione Go / Scarta</div>
+                  </div>
+                </div>
+                <div class="pt-2 border-t border-slate-800 flex items-center justify-between">
+                  <span class="text-[10px] font-mono text-amber-400 font-bold">Stato: In Lavorazione</span>
+                  <button type="button" onclick="window.switchGuidaTab('calcolatori')" class="text-xs font-semibold text-amber-300 hover:text-amber-200 hover:underline">
+                    Calcola Cauzione &rarr;
+                  </button>
+                </div>
+              </div>
+
+              <!-- Step 3: Predisposizione 3 Buste -->
+              <div class="rounded-2xl p-4 bg-slate-950/80 border border-purple-500/30 hover:border-purple-400/60 transition shadow-md flex flex-col justify-between space-y-3">
+                <div class="space-y-2">
+                  <div class="flex items-center justify-between">
+                    <span class="w-7 h-7 rounded-lg bg-purple-500/20 border border-purple-500/40 text-purple-300 font-mono font-bold text-xs flex items-center justify-center">3</span>
+                    <span class="text-[10px] font-mono text-purple-400 font-semibold bg-purple-500/10 px-2 py-0.5 rounded">Buste A, B, C</span>
+                  </div>
+                  <h3 class="text-sm font-bold text-white">Predisposizione 3 Buste</h3>
+                  <p class="text-xs text-slate-300 leading-relaxed">
+                    Preparazione dei documenti: Busta A (DGUE, Fideiussione, ANAC), Busta B (Offerta Tecnica), Busta C (Offerta Economica con manodopera e sicurezza). Firma CAdES (.p7m).
+                  </p>
+                  <div class="p-2.5 rounded-xl bg-slate-900 border border-slate-800/80 text-[11px] font-mono text-slate-400 space-y-1">
+                    <div class="text-purple-300 font-semibold">Attività Chiave:</div>
+                    <div>&bull; Separazione tecnica/prezzo</div>
+                    <div>&bull; Verifica firme digitali .p7m</div>
+                    <div>&bull; Upload piattaforma min. 24h prima</div>
+                  </div>
+                </div>
+                <div class="pt-2 border-t border-slate-800 flex items-center justify-between">
+                  <span class="text-[10px] font-mono text-purple-400 font-bold">Stato: Inviata</span>
+                  <button type="button" onclick="window.switchGuidaTab('checklist')" class="text-xs font-semibold text-purple-300 hover:text-purple-200 hover:underline">
+                    Apri Checklist &rarr;
+                  </button>
+                </div>
+              </div>
+
+              <!-- Step 4: Aggiudicazione & Svincolo -->
+              <div class="rounded-2xl p-4 bg-slate-950/80 border border-emerald-500/30 hover:border-emerald-400/60 transition shadow-md flex flex-col justify-between space-y-3">
+                <div class="space-y-2">
+                  <div class="flex items-center justify-between">
+                    <span class="w-7 h-7 rounded-lg bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 font-mono font-bold text-xs flex items-center justify-center">4</span>
+                    <span class="text-[10px] font-mono text-emerald-400 font-semibold bg-emerald-500/10 px-2 py-0.5 rounded">Art. 106 c.9</span>
+                  </div>
+                  <h3 class="text-sm font-bold text-white">Esito &amp; Svincolo Cauzione</h3>
+                  <p class="text-xs text-slate-300 leading-relaxed">
+                    Monitoraggio della graduatoria finale. In caso di non aggiudicazione, invio sollecito per lo svincolo tempestivo della polizza fideiussoria per liberare il castelletto bancario.
+                  </p>
+                  <div class="p-2.5 rounded-xl bg-slate-900 border border-slate-800/80 text-[11px] font-mono text-slate-400 space-y-1">
+                    <div class="text-emerald-300 font-semibold">Attività Chiave:</div>
+                    <div>&bull; Registrazione esito (Vinta/Persa)</div>
+                    <div>&bull; Richiesta lettera svincolo</div>
+                    <div>&bull; Archiviazione storica SQLite</div>
+                  </div>
+                </div>
+                <div class="pt-2 border-t border-slate-800 flex items-center justify-between">
+                  <span class="text-[10px] font-mono text-emerald-400 font-bold">Stato: Conclusa</span>
+                  <button type="button" onclick="window.switchGuidaTab('modelli')" class="text-xs font-semibold text-emerald-300 hover:text-emerald-200 hover:underline">
+                    Modello Svincolo &rarr;
+                  </button>
+                </div>
+              </div>
+
+            </div>
+
+            <!-- Semaforo Scadenze Live con Collegamento al Database -->
+            <div class="p-5 rounded-2xl bg-slate-950/90 border border-slate-800 space-y-4">
+              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div class="space-y-0.5">
+                  <div class="flex items-center gap-2">
+                    <span class="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-pulse"></span>
+                    <h4 class="text-xs font-bold text-white uppercase tracking-wider font-mono">Semaforo Scadenze Dinamico (Dati Reali SQLite)</h4>
+                  </div>
+                  <p class="text-[11px] text-slate-400">Classificazione automatica del rischio per tutte le gare aperte attualmente registrate nel gestionale.</p>
+                </div>
+                <button type="button" onclick="window.switchView('cruscotto')" class="text-xs font-mono text-cyan-400 hover:text-cyan-300 font-bold self-start sm:self-auto">
+                  Gestisci nel Cruscotto &rarr;
+                </button>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <!-- Red Alert -->
+                <div class="p-3.5 rounded-xl bg-rose-950/30 border border-rose-500/40 space-y-1">
+                  <div class="flex items-center justify-between text-xs">
+                    <span class="font-mono font-bold text-rose-300">🔴 Emergenza (&le; 3 Giorni)</span>
+                    <span id="guidaStatRed" class="font-mono font-bold text-rose-400 bg-rose-500/20 px-2 py-0.5 rounded">0 gare</span>
+                  </div>
+                  <p class="text-[11px] text-slate-300">Buste in chiusura immediata. Priorità assoluta di firma e caricamento a portale.</p>
+                </div>
+
+                <!-- Yellow Alert -->
+                <div class="p-3.5 rounded-xl bg-amber-950/30 border border-amber-500/40 space-y-1">
+                  <div class="flex items-center justify-between text-xs">
+                    <span class="font-mono font-bold text-amber-300">🟡 In Lavorazione (4 - 7 Giorni)</span>
+                    <span id="guidaStatYellow" class="font-mono font-bold text-amber-400 bg-amber-500/20 px-2 py-0.5 rounded">0 gare</span>
+                  </div>
+                  <p class="text-[11px] text-slate-300">Fase di redazione offerta tecnica e richiesta polizza fideiussoria al garante.</p>
+                </div>
+
+                <!-- Green Alert -->
+                <div class="p-3.5 rounded-xl bg-emerald-950/30 border border-emerald-500/40 space-y-1">
+                  <div class="flex items-center justify-between text-xs">
+                    <span class="font-mono font-bold text-emerald-300">🟢 Tempo Congruo (&gt; 7 Giorni)</span>
+                    <span id="guidaStatGreen" class="font-mono font-bold text-emerald-400 bg-emerald-500/20 px-2 py-0.5 rounded">0 gare</span>
+                  </div>
+                  <p class="text-[11px] text-slate-300">Finestra utile per richiedere chiarimenti e formulare quesiti (Q&amp;A) al RUP.</p>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- TAB 2: CALCOLATORI OPERATIVI (SCADENZE & CAUZIONE) -->
+          <div id="tabPaneGuida-calcolatori" class="hidden space-y-6">
+            
+            <!-- Selettore Rapido Gara Esistente -->
+            <div class="p-4 rounded-2xl bg-slate-950/80 border border-slate-800 space-y-2">
+              <label class="block text-xs font-bold text-slate-300 uppercase font-mono">
+                Carica Dati da una Gara Registrata (Opzionale):
+              </label>
+              <select id="calcTenderSelect" onchange="window.handleGuidaTenderSelect(this.value)" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-slate-200 text-xs focus:outline-none focus:border-cyan-400">
+                <option value="">-- Seleziona una gara salvata per pre-compilare i calcolatori --</option>
+              </select>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              
+              <!-- CALCOLATORE 1: TERMINI PROCEDURALI D.LGS. 36/2023 -->
+              <div class="p-5 rounded-2xl bg-slate-950 border border-slate-800/90 space-y-4">
+                <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                  <div class="space-y-0.5">
+                    <div class="text-xs font-mono font-bold text-cyan-400 uppercase">Strumento 1</div>
+                    <h3 class="text-sm font-bold text-white">Calcolatore Termini Procedurali &amp; Q&amp;A</h3>
+                  </div>
+                  <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">Art. 92</span>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label class="block text-xs text-slate-300 font-semibold mb-1">Data &amp; Ora Scadenza Offerte:</label>
+                    <input id="calcInputDeadline" type="datetime-local" onchange="window.calculateGuidaDeadlines()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-slate-200 text-xs focus:outline-none focus:border-cyan-400 font-mono">
+                  </div>
+                  <div>
+                    <label class="block text-xs text-slate-300 font-semibold mb-1">Anticipo Richiesta Quesiti (gg):</label>
+                    <input id="calcInputQaDays" type="number" min="3" max="30" value="10" oninput="window.calculateGuidaDeadlines()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-slate-200 text-xs focus:outline-none focus:border-cyan-400 font-mono">
+                  </div>
+                </div>
+
+                <!-- Box Risultati Calcolo Scadenze -->
+                <div id="calcDeadlinesResult" class="pt-2">
+                  <div class="p-6 rounded-2xl bg-slate-900/40 border border-slate-800/60 text-center text-xs text-slate-400 font-mono">
+                    Inserisci la data di scadenza per calcolare i termini perentori di legge.
+                  </div>
+                </div>
+              </div>
+
+              <!-- CALCOLATORE 2: CAUZIONE PROVVISORIA (ART. 106) -->
+              <div class="p-5 rounded-2xl bg-slate-950 border border-slate-800/90 space-y-4">
+                <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                  <div class="space-y-0.5">
+                    <div class="text-xs font-mono font-bold text-indigo-400 uppercase">Strumento 2</div>
+                    <h3 class="text-sm font-bold text-white">Simulatore Cauzione Provvisoria</h3>
+                  </div>
+                  <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">Art. 106 c.8</span>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label class="block text-xs text-slate-300 font-semibold mb-1">Base d'Asta Imponibile (€):</label>
+                    <input id="calcInputAmount" type="number" step="1000" min="0" placeholder="Es. 150000" oninput="window.renderGuidaCauzione()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-slate-200 text-xs focus:outline-none focus:border-indigo-400 font-mono">
+                  </div>
+                  <div>
+                    <label class="block text-xs text-slate-300 font-semibold mb-1">Aliquota Cauzione Bando:</label>
+                    <select id="calcSelectRate" onchange="window.renderGuidaCauzione()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-slate-200 text-xs focus:outline-none focus:border-indigo-400">
+                      <option value="2" selected>2% (Ordinaria D.Lgs. 36/2023)</option>
+                      <option value="1">1% (Ridotta motivata da bando)</option>
+                      <option value="4">4% (Massima raddoppiata)</option>
+                    </select>
+                  </div>
+                </div>
+
+                <!-- Checkbox Riduzioni di Legge -->
+                <div class="space-y-2 pt-1">
+                  <div class="text-xs font-bold text-slate-300 uppercase font-mono">Riduzioni Cumulabili (Spunta se in possesso):</div>
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                    <label class="flex items-center gap-2 p-2 rounded-xl bg-slate-900 border border-slate-800 hover:border-indigo-400/50 cursor-pointer transition">
+                      <input id="chkCauzionePmi" type="checkbox" checked onchange="window.renderGuidaCauzione()" class="w-4 h-4 rounded text-indigo-500 bg-slate-950 border-slate-700">
+                      <span class="text-slate-200 font-medium">🏢 Micro/PMI (-50%)</span>
+                    </label>
+                    <label class="flex items-center gap-2 p-2 rounded-xl bg-slate-900 border border-slate-800 hover:border-indigo-400/50 cursor-pointer transition">
+                      <input id="chkCauzioneIso9001" type="checkbox" onchange="window.renderGuidaCauzione()" class="w-4 h-4 rounded text-indigo-500 bg-slate-950 border-slate-700">
+                      <span class="text-slate-200 font-medium">🏅 ISO 9001 (-30%)</span>
+                    </label>
+                    <label class="flex items-center gap-2 p-2 rounded-xl bg-slate-900 border border-slate-800 hover:border-indigo-400/50 cursor-pointer transition">
+                      <input id="chkCauzioneIso14001" type="checkbox" onchange="window.renderGuidaCauzione()" class="w-4 h-4 rounded text-indigo-500 bg-slate-950 border-slate-700">
+                      <span class="text-slate-200 font-medium">🌿 ISO 14001 (-20%)</span>
+                    </label>
+                    <label class="flex items-center gap-2 p-2 rounded-xl bg-slate-900 border border-slate-800 hover:border-indigo-400/50 cursor-pointer transition">
+                      <input id="chkCauzioneParita" type="checkbox" onchange="window.renderGuidaCauzione()" class="w-4 h-4 rounded text-indigo-500 bg-slate-950 border-slate-700">
+                      <span class="text-slate-200 font-medium">⚖️ Parità Genere (-20%)</span>
+                    </label>
+                    <label class="flex items-center gap-2 p-2 rounded-xl bg-slate-900 border border-slate-800 hover:border-indigo-400/50 cursor-pointer transition sm:col-span-2">
+                      <input id="chkCauzioneRating" type="checkbox" onchange="window.renderGuidaCauzione()" class="w-4 h-4 rounded text-indigo-500 bg-slate-950 border-slate-700">
+                      <span class="text-slate-200 font-medium">🛡️ Rating di Legalità AGCM (-10%)</span>
+                    </label>
+                  </div>
+                </div>
+
+                <!-- Risultato Cauzione -->
+                <div id="calcCauzioneResult" class="pt-2">
+                  <div class="p-6 rounded-2xl bg-slate-900/40 border border-slate-800/60 text-center text-xs text-slate-400 font-mono">
+                    Inserisci l'importo per visualizzare il netto della garanzia.
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+
+          <!-- TAB 3: CHECKLIST ANTI-ESCLUSIONE (3 BUSTE TELEMATICHE) -->
+          <div id="tabPaneGuida-checklist" class="hidden space-y-6">
+            
+            <div class="p-4 rounded-2xl bg-slate-950/90 border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div class="space-y-1">
+                <div class="flex items-center gap-2">
+                  <span class="text-xs font-mono font-bold text-cyan-400 uppercase">Verifica Pre-Invio Buste</span>
+                  <span id="guidaChecklistProgressPercent" class="text-xs font-mono font-bold text-white bg-slate-800 px-2 py-0.5 rounded border border-slate-700">0% (0/12)</span>
+                </div>
+                <div class="w-full sm:w-64 bg-slate-800 h-2 rounded-full overflow-hidden">
+                  <div id="guidaChecklistProgressBar" class="bg-gradient-to-r from-cyan-500 to-emerald-400 h-full w-0 transition-all duration-300"></div>
+                </div>
+              </div>
+              <div class="flex items-center gap-2">
+                <button type="button" onclick="window.resetGuidaChecklist()" class="px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 text-xs font-semibold border border-slate-700 transition">
+                  Azzera Spunte
+                </button>
+                <button type="button" onclick="window.openTenderWizard(null, 3)" class="px-3.5 py-1.5 rounded-xl bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 border border-cyan-500/30 text-xs font-bold transition flex items-center gap-1.5">
+                  <span>Vai a Busta A/B/C Wizard &rarr;</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Container Checklist Dinamica (popolato da guida.js) -->
+            <div id="guidaChecklistContainer"></div>
+
+            <!-- Banner Avviso Errore Fatale -->
+            <div class="p-4 rounded-2xl bg-rose-950/30 border border-rose-500/40 flex items-start gap-3">
+              <span class="text-2xl">⚠️</span>
+              <div class="space-y-1 text-xs">
+                <h4 class="font-bold text-rose-300 uppercase tracking-wide font-mono">Regola Invalicabile: Divieto di Commistione Tecnico-Economica</h4>
+                <p class="text-slate-300 leading-relaxed">
+                  L'inserimento di qualsiasi elemento di prezzo, sconto o valore economico all'interno della <strong>Busta B (Tecnica)</strong> comporta l'<strong>esclusione immediata e inderogabile</strong> dalla gara. Tale vizio viola il principio di segretezza dell'offerta e <em>non può essere sanato mediante soccorso istruttorio</em>.
+                </p>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- TAB 4: REPOSITORY MODELLI LEGALI & FAC-SIMILE RUP -->
+          <div id="tabPaneGuida-modelli" class="hidden space-y-6">
+            
+            <div class="space-y-1">
+              <h3 class="text-sm font-bold text-white uppercase tracking-wider font-mono">Modelli Formali Conformi al D.Lgs. 36/2023</h3>
+              <p class="text-xs text-slate-400 leading-relaxed">
+                Fac-simile pronti all'uso per dialogare ufficialmente con la Stazione Appaltante a mezzo piattaforma MePA. Clicca su "Visualizza &amp; Copia" per visualizzare l'anteprima, personalizzare il testo e scaricare il file.
               </p>
             </div>
 
-            <div class="bg-slate-950 p-5 rounded-2xl border border-slate-800 space-y-2.5">
-              <span class="text-xs font-mono font-bold text-amber-400 bg-amber-500/10 px-2.5 py-0.5 rounded-full border border-amber-500/20">
-                FASE 2: Valutazione (Go / No-Go)
-              </span>
-              <h3 class="text-sm font-bold text-white">Filtrare senza Perdere Tempo</h3>
-              <p class="text-xs text-slate-300 leading-relaxed">
-                Usa la scorciatoia <strong>"Mie Categorie"</strong> per isolare Informatica e Cancelleria. Se mancano requisiti o i margini sono bassi, imposta lo stato su <code class="text-rose-400">Scartata</code>. Se idonea, imposta <code class="text-amber-400">In Lavorazione</code>.
-              </p>
-            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              
+              <!-- Modello 1: Chiarimenti Q&A -->
+              <div class="p-5 rounded-2xl bg-slate-950 border border-slate-800 hover:border-sky-500/40 transition space-y-3 flex flex-col justify-between">
+                <div class="space-y-2">
+                  <div class="flex items-center justify-between">
+                    <span class="text-[10px] font-mono font-bold text-sky-400 bg-sky-500/10 px-2.5 py-0.5 rounded-full border border-sky-500/20">Art. 92 c.2</span>
+                    <span class="text-[10px] font-mono text-slate-500">Formato TXT / PEC</span>
+                  </div>
+                  <h4 class="text-sm font-bold text-white">Istanza di Chiarimento (Q&amp;A) al RUP</h4>
+                  <p class="text-xs text-slate-300 leading-relaxed">
+                    Richiesta ufficiale di chiarimento su clausole ambigue del bando o specifiche tecniche incongruenti, da trasmettere prima della scadenza quesiti.
+                  </p>
+                </div>
+                <div class="pt-3 border-t border-slate-800/80 flex items-center justify-end gap-2">
+                  <button type="button" onclick="window.previewLegalTemplate('qa')" class="px-3.5 py-1.5 rounded-xl bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 font-semibold text-xs border border-sky-500/30 transition">
+                    Visualizza &amp; Copia
+                  </button>
+                </div>
+              </div>
 
-            <div class="bg-slate-950 p-5 rounded-2xl border border-slate-800 space-y-2.5">
-              <span class="text-xs font-mono font-bold text-purple-400 bg-purple-500/10 px-2.5 py-0.5 rounded-full border border-purple-500/20">
-                FASE 3: Predisposizione Buste &amp; Invio
-              </span>
-              <h3 class="text-sm font-bold text-white">Le 3 Buste Telematiche</h3>
-              <p class="text-xs text-slate-300 leading-relaxed">
-                Separa rigorosamente <strong>Busta A (Amministrativa)</strong>, <strong>Busta B (Tecnica)</strong> e <strong>Busta C (Economica)</strong>. Firma digitalmente in formato CAdES (<strong>.p7m</strong>) e trasmetti almeno 24 ore prima per evitare blocchi SPID.
-              </p>
-            </div>
+              <!-- Modello 2: Soccorso Istruttorio -->
+              <div class="p-5 rounded-2xl bg-slate-950 border border-slate-800 hover:border-amber-500/40 transition space-y-3 flex flex-col justify-between">
+                <div class="space-y-2">
+                  <div class="flex items-center justify-between">
+                    <span class="text-[10px] font-mono font-bold text-amber-400 bg-amber-500/10 px-2.5 py-0.5 rounded-full border border-amber-500/20">Art. 101</span>
+                    <span class="text-[10px] font-mono text-slate-500">Termine Max 10gg</span>
+                  </div>
+                  <h4 class="text-sm font-bold text-white">Riscontro a Soccorso Istruttorio</h4>
+                  <p class="text-xs text-slate-300 leading-relaxed">
+                    Dichiarazione formale per sanare carenze documentali della Busta A (DGUE, dichiarazioni) senza alterare il contenuto dell'offerta tecnica ed economica.
+                  </p>
+                </div>
+                <div class="pt-3 border-t border-slate-800/80 flex items-center justify-end gap-2">
+                  <button type="button" onclick="window.previewLegalTemplate('soccorso')" class="px-3.5 py-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 font-semibold text-xs border border-amber-500/30 transition">
+                    Visualizza &amp; Copia
+                  </button>
+                </div>
+              </div>
 
-            <div class="bg-slate-950 p-5 rounded-2xl border border-slate-800 space-y-2.5">
-              <span class="text-xs font-mono font-bold text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded-full border border-emerald-500/20">
-                FASE 4: Esito, Aggiudicazione &amp; Storico
-              </span>
-              <h3 class="text-sm font-bold text-white">Chiusura e Svincolo Garanzie</h3>
-              <p class="text-xs text-slate-300 leading-relaxed">
-                Segna la gara come <code class="text-emerald-400">Vinta</code> o <code class="text-rose-400">Persa</code>. Richiedi subito la lettera di svincolo della cauzione provvisoria per liberare il castelletto bancario ed esporta il database SQLite 3 o CSV a fine mese per lo storico.
-              </p>
+              <!-- Modello 3: Svincolo Cauzione -->
+              <div class="p-5 rounded-2xl bg-slate-950 border border-slate-800 hover:border-emerald-500/40 transition space-y-3 flex flex-col justify-between">
+                <div class="space-y-2">
+                  <div class="flex items-center justify-between">
+                    <span class="text-[10px] font-mono font-bold text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded-full border border-emerald-500/20">Art. 106 c.9</span>
+                    <span class="text-[10px] font-mono text-slate-500">Post-Aggiudicazione</span>
+                  </div>
+                  <h4 class="text-sm font-bold text-white">Richiesta Svincolo Cauzione Provvisoria</h4>
+                  <p class="text-xs text-slate-300 leading-relaxed">
+                    Diffida e richiesta alla Stazione Appaltante per il rilascio del benestare allo svincolo della fideiussione bancaria o assicurativa dopo la pubblicazione della graduatoria.
+                  </p>
+                </div>
+                <div class="pt-3 border-t border-slate-800/80 flex items-center justify-end gap-2">
+                  <button type="button" onclick="window.previewLegalTemplate('svincolo')" class="px-3.5 py-1.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 font-semibold text-xs border border-emerald-500/30 transition">
+                    Visualizza &amp; Copia
+                  </button>
+                </div>
+              </div>
+
+              <!-- Modello 4: Accesso agli Atti -->
+              <div class="p-5 rounded-2xl bg-slate-950 border border-slate-800 hover:border-purple-500/40 transition space-y-3 flex flex-col justify-between">
+                <div class="space-y-2">
+                  <div class="flex items-center justify-between">
+                    <span class="text-[10px] font-mono font-bold text-purple-400 bg-purple-500/10 px-2.5 py-0.5 rounded-full border border-purple-500/20">Artt. 35-36</span>
+                    <span class="text-[10px] font-mono text-slate-500">Diritto di Difesa</span>
+                  </div>
+                  <h4 class="text-sm font-bold text-white">Istanza di Accesso agli Atti di Gara</h4>
+                  <p class="text-xs text-slate-300 leading-relaxed">
+                    Richiesta per la visione dei verbali di gara, dei punteggi della commissione giudicatrice e dell'offerta tecnica dell'aggiudicatario (con rispetto dei segreti industriali).
+                  </p>
+                </div>
+                <div class="pt-3 border-t border-slate-800/80 flex items-center justify-end gap-2">
+                  <button type="button" onclick="window.previewLegalTemplate('accesso')" class="px-3.5 py-1.5 rounded-xl bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 font-semibold text-xs border border-purple-500/30 transition">
+                    Visualizza &amp; Copia
+                  </button>
+                </div>
+              </div>
+
             </div>
 
           </div>
 
         </div>
 
+      </div>
+
+      <!-- MODALE ANTEPRIMA MODELLI LEGALI -->
+      <div id="guidaTemplateModal" class="hidden fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-3xl overflow-hidden shadow-2xl flex flex-col max-h-[85vh]">
+          <div class="p-4 sm:p-5 border-b border-slate-800 flex items-center justify-between">
+            <h3 id="guidaTemplateModalTitle" class="text-sm sm:text-base font-bold text-white truncate">Modello Legale</h3>
+            <button type="button" onclick="window.closeGuidaTemplateModal()" class="text-slate-400 hover:text-white p-1 rounded-lg">✕</button>
+          </div>
+          <div class="p-4 sm:p-5 flex-1 overflow-y-auto space-y-3">
+            <p class="text-xs text-slate-400">Personalizza i dati evidenziati prima di copiare o inviare a mezzo PEC/MePA:</p>
+            <textarea id="guidaTemplateModalContent" rows="14" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3.5 text-xs font-mono text-slate-200 focus:outline-none focus:border-cyan-400 leading-relaxed"></textarea>
+          </div>
+          <div class="p-4 border-t border-slate-800 flex items-center justify-between bg-slate-950/60">
+            <span class="text-[11px] font-mono text-slate-500">Conforme D.Lgs. 36/2023</span>
+            <div class="flex items-center gap-2">
+              <button type="button" onclick="window.copyGuidaModalTemplate()" class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold border border-slate-700 transition">
+                Copia negli Appunti
+              </button>
+              <button type="button" onclick="window.downloadGuidaModalTemplate()" class="px-4 py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-bold text-xs shadow-lg shadow-cyan-500/20 transition">
+                Scarica File .txt
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- SECTION 4: MOTORE SQLITE 3 & STRUMENTI AVANZATI -->
@@ -1876,19 +2177,20 @@ CREATE INDEX IF NOT EXISTS idx_deadline ON gare(deadline);</pre>
 
 
   <!-- Moduli Applicativi JavaScript (Zero-Build Vanilla Architecture) -->
-  <script defer src="js/utils.js?v=20261016_21"></script>
-  <script defer src="js/config.js?v=20261016_21"></script>
-  <script defer src="js/api.js?v=20261016_21"></script>
-  <script defer src="js/db-engine.js?v=20261016_21"></script>
-  <script defer src="js/importer.js?v=20261016_21"></script>
-  <script defer src="js/views/cruscotto.js?v=20261016_21"></script>
-  <script defer src="js/wizard-rules.js?v=20261016_21"></script>
-  <script defer src="js/legal-templates.js?v=20261016_21"></script>
-  <script defer src="js/views/wizard.js?v=20261016_21"></script>
-  <script defer src="js/views/cataloghi.js?v=20261016_21"></script>
-  <script defer src="js/views/amministrazioni.js?v=20261016_21"></script>
-  <script defer src="js/views/analytics.js?v=20261016_21"></script>
-  <script defer src="js/views/opendata.js?v=20261016_21"></script>
-  <script defer src="js/app.js?v=20261016_21"></script>
+  <script defer src="js/utils.js?v=20261016_22"></script>
+  <script defer src="js/config.js?v=20261016_22"></script>
+  <script defer src="js/api.js?v=20261016_22"></script>
+  <script defer src="js/db-engine.js?v=20261016_22"></script>
+  <script defer src="js/importer.js?v=20261016_22"></script>
+  <script defer src="js/views/cruscotto.js?v=20261016_22"></script>
+  <script defer src="js/wizard-rules.js?v=20261016_22"></script>
+  <script defer src="js/legal-templates.js?v=20261016_22"></script>
+  <script defer src="js/views/wizard.js?v=20261016_22"></script>
+  <script defer src="js/views/cataloghi.js?v=20261016_22"></script>
+  <script defer src="js/views/amministrazioni.js?v=20261016_22"></script>
+  <script defer src="js/views/analytics.js?v=20261016_22"></script>
+  <script defer src="js/views/opendata.js?v=20261016_22"></script>
+  <script defer src="js/views/guida.js?v=20261016_22"></script>
+  <script defer src="js/app.js?v=20261016_22"></script>
 </body>
 </html>

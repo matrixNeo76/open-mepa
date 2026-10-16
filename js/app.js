@@ -54,8 +54,9 @@ window.switchView = function(viewId) {
       topBarSubtitle.textContent = "Sincronizzazione banche dati, tracciato record e ingestione diretta SQLite 3";
       if (typeof loadOpenDataHub === "function") loadOpenDataHub();
     } else if (viewId === "guida") {
-      topBarTitle.innerHTML = `<span>Guida Metodologica Semplice</span><span class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 hidden sm:inline-flex">Zero Codice</span>`;
-      topBarSubtitle.textContent = "Il metodo in 4 fasi operative sequenziali per gestire le gare senza intoppi";
+      topBarTitle.innerHTML = `<span>Guida Metodologica &amp; Strumenti</span><span class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 hidden sm:inline-flex">D.Lgs. 36/2023</span>`;
+      topBarSubtitle.textContent = "Workflow 4 fasi, calcolatori scadenze Q&A, cauzione provvisoria e modelli legali RUP";
+      if (typeof loadGuida === "function") loadGuida();
     } else if (viewId === "sqlite") {
       topBarTitle.innerHTML = `<span>Database SQLite 3 &amp; Manutenzione Dati</span>`;
       topBarSubtitle.textContent = "Database relazionale Wasm, export file .db binario e deduplica CIG";
