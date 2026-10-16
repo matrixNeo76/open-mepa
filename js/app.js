@@ -51,7 +51,8 @@ window.switchView = function(viewId) {
       if (typeof loadAnalytics === "function") loadAnalytics();
     } else if (viewId === "opendata") {
       topBarTitle.innerHTML = `<span>Open Data Consip Hub</span><span class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hidden sm:inline-flex">dati.consip.it</span>`;
-      topBarSubtitle.textContent = "Download diretto dataset ufficiali 2025–2028 in formato CSV, JSON e XLSX";
+      topBarSubtitle.textContent = "Sincronizzazione banche dati, tracciato record e ingestione diretta SQLite 3";
+      if (typeof loadOpenDataHub === "function") loadOpenDataHub();
     } else if (viewId === "guida") {
       topBarTitle.innerHTML = `<span>Guida Metodologica Semplice</span><span class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 hidden sm:inline-flex">Zero Codice</span>`;
       topBarSubtitle.textContent = "Il metodo in 4 fasi operative sequenziali per gestire le gare senza intoppi";
@@ -83,56 +84,11 @@ function closeMobileSidebar() {
   }
 }
 
-// Hub Open Data & Dataset Cards
+// Hub Open Data & Dataset Cards (Delega al modulo dedicato)
 function updateDatasetLinks() {
-  const datasetCardsContainer = document.getElementById("datasetCardsContainer");
-  const selectDatasetYear = document.getElementById("selectDatasetYear");
-  if (!datasetCardsContainer || !selectDatasetYear) return;
-
-  const year = selectDatasetYear.value;
-
-  datasetCardsContainer.innerHTML = consipDatasets.map(ds => {
-    const slug = ds.fileSlug(year);
-    const csvUrl = `https://dati.consip.it/download/dataset/${slug}.csv`;
-    const jsonUrl = `https://dati.consip.it/download/dataset/${slug}.json`;
-    const xlsxUrl = `https://dati.consip.it/download/dataset/${slug}.xlsx`;
-
-    return `
-      <div class="bg-slate-950/70 border border-slate-800 hover:border-slate-700 rounded-2xl p-4 flex flex-col justify-between transition shadow-md">
-        <div>
-          <div class="flex items-center justify-between gap-2 mb-2">
-            <span class="text-[10px] font-mono px-2 py-0.5 rounded-full border ${ds.badgeColor} font-bold">${ds.badge}</span>
-            <span class="text-[10px] text-slate-500 font-mono">Anno: ${year}</span>
-          </div>
-          <h3 class="text-sm font-bold text-white">${ds.title}</h3>
-          <p class="text-xs text-slate-400 mt-1.5 leading-relaxed">${ds.description}</p>
-        </div>
-
-        <div class="mt-4 pt-3 border-t border-slate-800/80 space-y-2">
-          <div class="flex items-center justify-between text-[11px] font-mono text-slate-400">
-            <span>Scarica (${year}):</span>
-            <a href="${ds.ckanUrl}" target="_blank" rel="noopener noreferrer" class="text-cyan-400 hover:underline flex items-center gap-0.5 font-bold">
-              Scheda CKAN ↗
-            </a>
-          </div>
-          <div class="grid grid-cols-3 gap-1.5 pt-0.5">
-            <button onclick="handleDownloadHelper('${ds.title}', '${csvUrl}', '${ds.ckanUrl}', '${slug}.csv')" class="px-2 py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs font-mono font-bold transition flex items-center justify-center gap-1">
-              <span>CSV</span>
-              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-            </button>
-            <button onclick="handleDownloadHelper('${ds.title}', '${jsonUrl}', '${ds.ckanUrl}', '${slug}.json')" class="px-2 py-1.5 rounded-lg bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 text-xs font-mono font-bold transition flex items-center justify-center gap-1">
-              <span>JSON</span>
-              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-            </button>
-            <button onclick="handleDownloadHelper('${ds.title}', '${xlsxUrl}', '${ds.ckanUrl}', '${slug}.xlsx')" class="px-2 py-1.5 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 text-xs font-mono font-bold transition flex items-center justify-center gap-1">
-              <span>XLSX</span>
-              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-            </button>
-          </div>
-        </div>
-      </div>
-    `;
-  }).join('');
+  if (typeof loadOpenDataHub === "function") {
+    loadOpenDataHub();
+  }
 }
 
 // Modale per il download assistito da Open Data Hub

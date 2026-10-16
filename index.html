@@ -1192,61 +1192,220 @@
 
       </div>
 
-      <!-- SECTION 2: OPEN DATA CONSIP HUB (With Reliable URLs & Fallbacks) -->
+      <!-- SECTION: OPEN DATA CONSIP HUB (Executive Synchronization & Ingestion Center) -->
       <div id="view-opendata" class="section-view hidden space-y-6">
         
-        <div class="bg-slate-900/70 border border-slate-800/90 rounded-3xl p-6 sm:p-8 shadow-xl">
-          <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-6 border-b border-slate-800">
-            <div class="space-y-1">
+        <div class="bg-slate-900/80 border border-slate-800/90 rounded-3xl p-6 sm:p-8 shadow-xl relative overflow-hidden space-y-6">
+          <div class="absolute -right-20 -top-20 w-80 h-80 bg-emerald-500/5 rounded-full blur-3xl pointer-events-none"></div>
+
+          <!-- Header & Action Controls -->
+          <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-6 border-b border-slate-800/80 relative z-10">
+            <div class="space-y-2 max-w-3xl">
               <div class="flex flex-wrap items-center gap-2">
-                <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
-                  FONTE UFFICIALE: DATI.CONSIP.IT • PORTALE CKAN
+                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                  OPEN DATA CONSIP HUB &bull; CKAN REPOSITORY DATI.CONSIP.IT
                 </span>
                 
                 <!-- Dynamic Year Selector -->
-                <div class="inline-flex items-center gap-1.5 bg-slate-950 px-3 py-1 rounded-xl border border-cyan-500/40 text-xs">
-                  <label for="selectDatasetYear" class="font-mono text-cyan-300 font-bold uppercase text-[10px]">Anno Dataset:</label>
-                  <select id="selectDatasetYear" class="bg-slate-900 text-white font-mono font-bold rounded px-2 py-0.5 border border-slate-700 focus:outline-none focus:border-cyan-400 cursor-pointer text-xs">
-                    <option value="2025">2025</option>
-                    <option value="2026" selected>2026 (In Corso)</option>
+                <div class="inline-flex items-center gap-1.5 bg-slate-950 px-3 py-1 rounded-xl border border-emerald-500/30 text-xs shadow-inner">
+                  <label for="selectDatasetYear" class="font-mono text-emerald-400 font-bold uppercase text-[10px]">Anno Dataset:</label>
+                  <select id="selectDatasetYear" onchange="window.onOpendataYearChange()" class="bg-slate-900 text-white font-mono font-bold rounded px-2 py-0.5 border border-slate-700 focus:outline-none focus:border-emerald-400 cursor-pointer text-xs">
+                    <option value="2024">2024 (Archivio)</option>
+                    <option value="2025">2025 (Consolidato)</option>
+                    <option value="2026" selected>2026 (In Corso Ufficiale)</option>
                     <option value="2027">2027 (Predisposto)</option>
-                    <option value="2028">2028 (Futuro)</option>
                   </select>
                 </div>
               </div>
 
-              <h2 class="text-xl sm:text-2xl font-extrabold text-white mt-2">
-                Download Diretto Dataset Ufficiali Consip S.p.A.
+              <h2 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+                Sincronizzazione &amp; Download Dataset Ufficiali Consip S.p.A.
               </h2>
-              <p class="text-xs text-slate-400 max-w-2xl leading-relaxed">
-                I collegamenti puntano sia all'endpoint di download diretto sia alla scheda risorsa CKAN. Se il server Consip limita i download da finestre esterne per criteri di sicurezza, premi su <strong>"Apri Pagina CKAN"</strong> o usa la modale assistita.
+              <p class="text-xs sm:text-sm text-slate-400 leading-relaxed">
+                Centro operativo unificato per l'acquisizione dei dataset aperti MePA e Consip, integrazione diretta nello storage relazionale SQLite 3 e monitoraggio delle banche dati locali.
               </p>
             </div>
 
-            <!-- Quick Info Badge -->
-            <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 text-xs space-y-1 min-w-[260px]">
-              <div class="text-slate-400 font-mono text-[10px] uppercase">Risoluzione Download:</div>
-              <div class="text-emerald-400 font-semibold flex items-center gap-1.5">
-                <span>✓</span> Link diretti CKAN verificati
-              </div>
-              <div class="text-cyan-400 font-semibold flex items-center gap-1.5">
-                <span>✓</span> Fallback pagina risorsa integrato
-              </div>
-              <div class="text-slate-300 font-mono text-[11px] mt-1">Caricamento asincrono senza freeze</div>
+            <!-- Top Status & Actions -->
+            <div class="flex flex-wrap items-center gap-3 shrink-0">
+              <button type="button" onclick="window.loadOpenDataHub()" class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold border border-slate-700 flex items-center gap-2 transition" title="Aggiorna metriche e stato sincronizzazione">
+                <svg class="w-3.5 h-3.5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                <span>Aggiorna Stato DB</span>
+              </button>
+              <a href="https://dati.consip.it" target="_blank" rel="noopener noreferrer" class="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-slate-950 text-xs font-bold shadow-lg shadow-emerald-500/20 flex items-center gap-1.5 transition">
+                <span>Portale dati.consip.it ↗</span>
+              </a>
             </div>
           </div>
 
-          <!-- Notice for Big Data datasets like Cataloghi (~600MB) -->
-          <div class="mt-4 p-4 rounded-2xl bg-indigo-950/40 border border-indigo-500/30 flex items-start gap-3">
-            <svg class="w-5 h-5 text-indigo-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-            <div class="text-xs text-indigo-200 leading-relaxed">
-              <strong class="text-white font-semibold">Gestione Dataset ad Alto Volume (Cataloghi ~600MB / 287.000+ articoli):</strong>
-              Il dataset 6 (<em class="text-pink-300 font-medium">Cataloghi Beni &amp; Servizi</em>) contiene l'intero listino merci del MePA. Per non bloccare il browser né sovraccaricare la memoria UI con centinaia di migliaia di prodotti, questo dataset viene importato nello storage dedicato <code class="bg-indigo-900/60 px-1 py-0.5 rounded text-cyan-300 font-mono">cataloghi</code> di SQLite 3 tramite lo streaming engine Python (<code class="bg-indigo-900/60 px-1 py-0.5 rounded text-cyan-300 font-mono">python consip_stream_ingestion.py</code>). I dati sono interrogabili ad alte prestazioni via REST API (<code class="bg-indigo-900/60 px-1 py-0.5 rounded text-cyan-300 font-mono">/api/cataloghi?q=...</code>).
+          <!-- LIVE SYNC KPI BAR: Database Status & Coverage -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            
+            <!-- KPI 1: Bandi & Gare nel DB -->
+            <div class="p-4 rounded-2xl bg-slate-950/90 border border-slate-800/90 space-y-1 relative group">
+              <div class="flex items-center justify-between text-[11px] font-mono text-slate-400">
+                <span class="flex items-center gap-1.5">
+                  <span class="w-2 h-2 rounded-full bg-cyan-400"></span>
+                  Bandi &amp; Gare in SQLite
+                </span>
+                <button type="button" onclick="switchView('cruscotto')" class="text-cyan-400 hover:underline text-[10px]">Vedi Cruscotto &rarr;</button>
+              </div>
+              <div class="text-2xl font-extrabold text-cyan-300 tabular-nums" id="kpiOpendataGare">--</div>
+              <div class="text-[10px] text-slate-500 font-mono">Tabella <code class="text-cyan-400">gare</code> &bull; CIG indicizzati</div>
+            </div>
+
+            <!-- KPI 2: Cataloghi Merci MePA -->
+            <div class="p-4 rounded-2xl bg-slate-950/90 border border-slate-800/90 space-y-1 relative group">
+              <div class="flex items-center justify-between text-[11px] font-mono text-slate-400">
+                <span class="flex items-center gap-1.5">
+                  <span class="w-2 h-2 rounded-full bg-pink-400"></span>
+                  Cataloghi Merci MePA
+                </span>
+                <button type="button" onclick="switchView('cataloghi')" class="text-pink-400 hover:underline text-[10px]">Vedi Listini &rarr;</button>
+              </div>
+              <div class="text-2xl font-extrabold text-pink-300 tabular-nums" id="kpiOpendataCat">--</div>
+              <div class="text-[10px] text-slate-500 font-mono">Tabella <code class="text-pink-400">cataloghi</code> &bull; CPV europei</div>
+            </div>
+
+            <!-- KPI 3: Amministrazioni Pubbliche -->
+            <div class="p-4 rounded-2xl bg-slate-950/90 border border-slate-800/90 space-y-1 relative group">
+              <div class="flex items-center justify-between text-[11px] font-mono text-slate-400">
+                <span class="flex items-center gap-1.5">
+                  <span class="w-2 h-2 rounded-full bg-sky-400"></span>
+                  Enti &amp; Clienti PA
+                </span>
+                <button type="button" onclick="switchView('amministrazioni')" class="text-sky-400 hover:underline text-[10px]">Vedi Enti &rarr;</button>
+              </div>
+              <div class="text-2xl font-extrabold text-sky-300 tabular-nums" id="kpiOpendataAmm">--</div>
+              <div class="text-[10px] text-slate-500 font-mono">Tabella <code class="text-sky-400">amministrazioni</code> &bull; Codici Fiscali</div>
+            </div>
+
+            <!-- KPI 4: Motore di Storage Locale -->
+            <div class="p-4 rounded-2xl bg-slate-950/90 border border-slate-800/90 space-y-1">
+              <div class="flex items-center justify-between text-[11px] font-mono text-slate-400">
+                <span class="flex items-center gap-1.5">
+                  <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                  Motore Database
+                </span>
+                <span class="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-1.5 py-0.2 rounded border border-emerald-500/20">ACID</span>
+              </div>
+              <div class="text-sm font-bold text-emerald-300 truncate" id="kpiOpendataStorage">SQLite 3 Locale</div>
+              <div class="text-[10px] text-slate-500 font-mono">Zero dipendenze esterne &bull; 60fps</div>
+            </div>
+
+          </div>
+
+          <!-- UNIVERSAL INGESTION & DROP-ZONE -->
+          <div class="p-6 rounded-2xl bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 border border-slate-800 shadow-inner space-y-4">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div class="space-y-1">
+                <div class="flex items-center gap-2">
+                  <span class="text-emerald-400 font-bold text-sm flex items-center gap-1.5">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+                    Caricamento Diretto &bull; Universal Drag &amp; Drop Ingestion
+                  </span>
+                  <span class="text-[10px] font-mono text-cyan-400 bg-cyan-500/10 px-2 py-0.2 rounded-full border border-cyan-500/20">Anti-Freeze Chunked</span>
+                </div>
+                <p class="text-xs text-slate-400">
+                  Trascina qualsiasi file CSV o JSON scaricato da Consip, oppure un database SQLite (.db). Il sistema rileva automaticamente il formato e aggiorna il database locale.
+                </p>
+              </div>
+
+              <!-- Deduplication Mode Selector -->
+              <div class="flex items-center gap-2 shrink-0 bg-slate-950 px-3 py-1.5 rounded-xl border border-slate-800 text-xs">
+                <label for="selectOpendataImportMode" class="font-mono text-slate-400 text-[11px]">Modalità:</label>
+                <select id="selectOpendataImportMode" class="bg-slate-900 text-slate-200 font-medium rounded px-2 py-0.5 border border-slate-700 text-xs focus:outline-none focus:border-cyan-400 cursor-pointer">
+                  <option value="dedup" selected>Deduplica Intelligente (UPSERT su CIG)</option>
+                  <option value="replace">Sostituzione Totale (Svuota e Ricrea)</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Visual Drop Target Zone -->
+            <div id="opendataDropZone" onclick="document.getElementById('opendataFileInput').click()" class="border-2 border-dashed border-slate-700 hover:border-cyan-400/70 bg-slate-950/60 hover:bg-cyan-950/20 rounded-2xl p-6 sm:p-8 text-center cursor-pointer transition-all duration-200 group relative">
+              <input id="opendataFileInput" type="file" accept=".csv,.json,.db,.sqlite,.sqlite3,.txt" class="hidden">
+              <div class="space-y-2 max-w-md mx-auto pointer-events-none">
+                <div class="w-12 h-12 mx-auto rounded-2xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+                </div>
+                <div class="text-sm font-bold text-white group-hover:text-cyan-300 transition-colors">
+                  Trascina qui il file Consip oppure clicca per sfogliare
+                </div>
+                <p class="text-xs text-slate-400 leading-relaxed font-mono">
+                  Supporta formati ufficiali: <strong class="text-emerald-400">.CSV</strong> (separatore ; o ,), <strong class="text-cyan-400">.JSON</strong> e <strong class="text-indigo-400">.DB SQLite 3</strong> (fino a 25MB via browser)
+                </p>
+              </div>
             </div>
           </div>
 
-          <!-- Dynamic Cards Container (Rendered via JS) -->
-          <div id="datasetCardsContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-6"></div>
+          <!-- DATASET CATALOG & TRACCIATO RECORD SECTION -->
+          <div class="space-y-4">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div>
+                <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                  <span>📚</span>
+                  <span>Catalogo dei 6 Dataset Ufficiali Consip &bull; MePA</span>
+                </h3>
+                <p class="text-xs text-slate-400">
+                  Accedi direttamente alla scheda CKAN certificata di ciascuna categoria per scaricare l'aggiornamento e importarlo subito nel DB locale.
+                </p>
+              </div>
+              <div class="text-[11px] font-mono text-slate-400">
+                Frequenza di aggiornamento monitorata
+              </div>
+            </div>
+
+            <!-- Dynamic Cards Container (Rendered via js/views/opendata.js) -->
+            <div id="datasetCardsContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"></div>
+          </div>
+
+          <!-- BIG DATA STREAMING NOTICE (Cataloghi ~600MB) -->
+          <div class="p-6 rounded-2xl bg-indigo-950/40 border border-indigo-500/30 space-y-4">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div class="space-y-1 max-w-3xl">
+                <div class="flex items-center gap-2 text-indigo-300 font-bold text-sm">
+                  <span>⚡</span>
+                  <span>Streaming Engine per Grandi Dataset (Cataloghi MePA ~600MB / 287.536 record)</span>
+                </div>
+                <p class="text-xs text-indigo-200/80 leading-relaxed">
+                  Il dataset dei Cataloghi Beni &amp; Servizi supera i 600 Megabyte. Per garantire che l'interfaccia resti fluida a 60fps e la memoria del browser non si saturi, l'ingestione massiva viene gestita dallo script Python integrato che alimenta la tabella SQLite dedicata <code class="bg-indigo-900/60 px-1 py-0.5 rounded text-cyan-300 font-mono">cataloghi</code>.
+                </p>
+              </div>
+
+              <!-- Quick Command Copy -->
+              <div class="flex items-center gap-2 shrink-0">
+                <button type="button" onclick="copyStreamIngestionCmd()" class="px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold font-mono shadow-lg shadow-indigo-600/20 flex items-center gap-2 transition" title="Copia comando terminale negli appunti">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                  <span>python consip_stream_ingestion.py</span>
+                </button>
+                <button type="button" onclick="switchView('cataloghi')" class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold border border-slate-700 transition" title="Apri vista cataloghi">
+                  Esplora Articoli &rarr;
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- EXPORT & LOCAL BACKUP ACTIONS -->
+          <div class="p-5 rounded-2xl bg-slate-950/80 border border-slate-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div class="space-y-0.5">
+              <h4 class="text-xs font-bold text-white uppercase tracking-wider font-mono">Backup &amp; Portabilità Dati</h4>
+              <p class="text-[11px] text-slate-400">Esporta in ogni momento lo stato corrente delle gare e dei dati Consip in formati universali aperti.</p>
+            </div>
+            <div class="flex flex-wrap items-center gap-2">
+              <button type="button" onclick="downloadSQLiteDbBinary()" class="px-3.5 py-2 rounded-xl bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 text-xs font-semibold flex items-center gap-1.5 transition">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                <span>Scarica .db SQLite</span>
+              </button>
+              <button type="button" onclick="document.getElementById('btnExportJSON') && document.getElementById('btnExportJSON').click()" class="px-3.5 py-2 rounded-xl bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 text-xs font-semibold flex items-center gap-1.5 transition">
+                <span>Dump JSON</span>
+              </button>
+              <button type="button" onclick="document.getElementById('btnExportCSV') && document.getElementById('btnExportCSV').click()" class="px-3.5 py-2 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs font-semibold flex items-center gap-1.5 transition">
+                <span>Export CSV</span>
+              </button>
+            </div>
+          </div>
+
         </div>
 
       </div>
@@ -1723,18 +1882,19 @@ CREATE INDEX IF NOT EXISTS idx_deadline ON gare(deadline);</pre>
 
 
   <!-- Moduli Applicativi JavaScript (Zero-Build Vanilla Architecture) -->
-  <script defer src="js/utils.js?v=20261016_14"></script>
-  <script defer src="js/config.js?v=20261016_14"></script>
-  <script defer src="js/api.js?v=20261016_14"></script>
-  <script defer src="js/db-engine.js?v=20261016_14"></script>
-  <script defer src="js/importer.js?v=20261016_14"></script>
-  <script defer src="js/views/cruscotto.js?v=20261016_14"></script>
-  <script defer src="js/wizard-rules.js?v=20261016_14"></script>
-  <script defer src="js/legal-templates.js?v=20261016_14"></script>
-  <script defer src="js/views/wizard.js?v=20261016_14"></script>
-  <script defer src="js/views/cataloghi.js?v=20261016_14"></script>
-  <script defer src="js/views/amministrazioni.js?v=20261016_14"></script>
-  <script defer src="js/views/analytics.js?v=20261016_14"></script>
-  <script defer src="js/app.js?v=20261016_14"></script>
+  <script defer src="js/utils.js?v=20261016_15"></script>
+  <script defer src="js/config.js?v=20261016_15"></script>
+  <script defer src="js/api.js?v=20261016_15"></script>
+  <script defer src="js/db-engine.js?v=20261016_15"></script>
+  <script defer src="js/importer.js?v=20261016_15"></script>
+  <script defer src="js/views/cruscotto.js?v=20261016_15"></script>
+  <script defer src="js/wizard-rules.js?v=20261016_15"></script>
+  <script defer src="js/legal-templates.js?v=20261016_15"></script>
+  <script defer src="js/views/wizard.js?v=20261016_15"></script>
+  <script defer src="js/views/cataloghi.js?v=20261016_15"></script>
+  <script defer src="js/views/amministrazioni.js?v=20261016_15"></script>
+  <script defer src="js/views/analytics.js?v=20261016_15"></script>
+  <script defer src="js/views/opendata.js?v=20261016_15"></script>
+  <script defer src="js/app.js?v=20261016_15"></script>
 </body>
 </html>
