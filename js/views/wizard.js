@@ -679,58 +679,70 @@ function renderWizardView(tender) {
 
   // Definizione degli step e dei loro vincoli di accesso (gating)
   const stepStatus = [
-    { num: 1, title: "1. Identificazione", sub: "CIG & Scadenze Portale", statusText: currentWizardStep > 1 ? "Completato" : "In compilazione", badge: "bg-cyan-500/10 text-cyan-400" },
-    { num: 2, title: "2. Qualificazione", sub: "Idoneita' Go / No-Go", statusText: s2.go_decision === 'GO' ? "Deliberato: GO" : (s2.go_decision === 'NO_GO' ? "Scartata: NO-GO" : "Da valutare"), badge: s2.go_decision === 'GO' ? "bg-emerald-500/10 text-emerald-400" : (s2.go_decision === 'NO_GO' ? "bg-rose-500/10 text-rose-400" : "bg-amber-500/10 text-amber-400") },
-    { num: 3, title: "3. Le 3 Buste", sub: "Busta A, B & C", statusText: s3.offerta_inviata ? "Offerta Inviata" : (s3.busta_a_dgue_ready ? "Buste avviate" : "Bozza da firmare"), badge: s3.offerta_inviata ? "bg-emerald-500/10 text-emerald-400" : "bg-purple-500/10 text-purple-400" },
-    { num: 4, title: "4. Esito & Svincolo", sub: "Chiusura & Polizze", statusText: s4.outcome || "In attesa", badge: "bg-slate-500/10 text-slate-400" }
+    { num: 1, title: "1. Identificazione", sub: "CIG & Scadenze Portale", statusText: currentWizardStep > 1 ? "Completato" : "In compilazione", badge: "bg-cyan-500/10 text-cyan-400 border-cyan-500/30" },
+    { num: 2, title: "2. Qualificazione", sub: "Idoneita' Go / No-Go", statusText: s2.go_decision === 'GO' ? "Deliberato: GO" : (s2.go_decision === 'NO_GO' ? "Scartata: NO-GO" : "Da valutare"), badge: s2.go_decision === 'GO' ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30" : (s2.go_decision === 'NO_GO' ? "bg-rose-500/10 text-rose-400 border-rose-500/30" : "bg-amber-500/10 text-amber-400 border-amber-500/30") },
+    { num: 3, title: "3. Le 3 Buste", sub: "Busta A, B & C", statusText: s3.offerta_inviata ? "Offerta Inviata" : (s3.busta_a_dgue_ready ? "Buste avviate" : "Bozza da firmare"), badge: s3.offerta_inviata ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30" : "bg-purple-500/10 text-purple-400 border-purple-500/30" },
+    { num: 4, title: "4. Esito & Svincolo", sub: "Chiusura & Polizze", statusText: s4.outcome || "In attesa", badge: "bg-slate-500/10 text-slate-400 border-slate-700" }
   ];
+
+  // Calcolo avanzamento complessivo in percentuale (25%, 50%, 75%, 100%)
+  const progressPercent = Math.min(100, Math.round((currentWizardStep / 4) * 100));
 
   container.innerHTML = `
     <div class="space-y-6">
       
       <!-- TOP COMMAND BAR & GARA SELECTION -->
-      <div class="bg-slate-900 border border-slate-800 rounded-3xl p-5 sm:p-6 shadow-xl flex flex-col lg:flex-row lg:items-center justify-between gap-5">
-        <div class="flex items-start sm:items-center gap-3.5">
-          <button onclick="window.switchView('cruscotto')" class="p-2.5 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition touch-target-action shrink-0" title="Torna al Cruscotto delle Gare">
+      <div class="bg-gradient-to-r from-slate-900 via-slate-900/95 to-slate-950 border border-slate-800 rounded-3xl p-5 sm:p-6 shadow-2xl flex flex-col lg:flex-row lg:items-center justify-between gap-5 relative overflow-hidden">
+        <div class="absolute -top-24 -right-24 w-72 h-72 bg-cyan-500/5 rounded-full blur-3xl pointer-events-none"></div>
+
+        <div class="flex items-start sm:items-center gap-4 relative z-10">
+          <button onclick="window.switchView('cruscotto')" class="p-3 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition shadow-sm touch-target-action shrink-0 border border-slate-700" title="Torna al Cruscotto delle Gare">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
           </button>
           
-          <div class="space-y-1">
+          <div class="space-y-1.5">
             <div class="flex flex-wrap items-center gap-2">
-              <span class="text-[10px] font-mono uppercase tracking-wider text-cyan-400 font-bold bg-cyan-950/60 border border-cyan-800/80 px-2 py-0.5 rounded-md">WIZARD DETERMINISTICO MEPA</span>
-              <span class="text-xs font-mono font-bold text-white bg-slate-950 px-2.5 py-0.5 rounded-md border border-slate-800">${escapeHtml(tender.cig || 'CIG N/D')}</span>
-              <span class="text-[11px] font-mono font-bold px-2 py-0.5 rounded-md ${tender.status === 'Vinta' ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40' : (tender.status === 'Scartata' ? 'bg-rose-500/20 text-rose-300 border border-rose-500/40' : 'bg-slate-800 text-cyan-300 border border-slate-700')}">
+              <span class="text-[10px] font-mono uppercase tracking-wider text-cyan-400 font-bold bg-cyan-950/70 border border-cyan-800/80 px-2.5 py-0.5 rounded-lg shadow-inner">
+                WIZARD DETERMINISTICO MEPA &bull; D.LGS. 36/2023
+              </span>
+              <button type="button" onclick="navigator.clipboard.writeText('${escapeHtml(tender.cig || '')}'); showNotification('CIG ${escapeHtml(tender.cig || '')} copiato negli appunti!');" class="group inline-flex items-center gap-1.5 text-xs font-mono font-bold text-white bg-slate-950 hover:bg-slate-800 px-2.5 py-0.5 rounded-lg border border-slate-700/80 transition cursor-pointer" title="Clicca per copiare il CIG">
+                <span>${escapeHtml(tender.cig || 'CIG N/D')}</span>
+                <svg class="w-3 h-3 text-slate-400 group-hover:text-cyan-400 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+              </button>
+              <span class="text-[11px] font-mono font-bold px-2.5 py-0.5 rounded-lg border ${tender.status === 'Vinta' ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40' : (tender.status === 'Scartata' ? 'bg-rose-500/20 text-rose-300 border-rose-500/40' : (tender.status === 'In Lavorazione' ? 'bg-purple-500/20 text-purple-300 border-purple-500/40' : 'bg-slate-800 text-cyan-300 border-slate-700'))}">
                 ${escapeHtml(tender.status || 'Da Valutare')}
               </span>
-              <button onclick="window.showWizardHelpModal('general_wizard')" class="px-2 py-0.5 rounded-md bg-slate-800 hover:bg-cyan-500 hover:text-slate-950 text-cyan-400 text-[11px] font-semibold border border-slate-700 transition flex items-center gap-1">
+              <button onclick="window.showWizardHelpModal('general_wizard')" class="px-2 py-0.5 rounded-lg bg-slate-800/80 hover:bg-cyan-500 hover:text-slate-950 text-cyan-400 text-[11px] font-semibold border border-slate-700 transition flex items-center gap-1">
                 <span>Come funziona?</span>
                 <span class="font-bold">?</span>
               </button>
             </div>
-            <h2 class="text-sm sm:text-base font-bold text-white tracking-tight truncate max-w-xl md:max-w-2xl">${escapeHtml(tender.title || 'Procedura di gara')}</h2>
+            <h2 class="text-sm sm:text-base lg:text-lg font-bold text-white tracking-tight line-clamp-2 max-w-2xl md:max-w-3xl">${escapeHtml(tender.title || 'Procedura di gara')}</h2>
             <div class="text-xs text-slate-400 font-mono flex flex-wrap items-center gap-x-4 gap-y-1">
-              <span>🏛️ ${escapeHtml(tender.authority || 'Ente')}</span>
-              <span>💶 <strong class="text-emerald-400 font-semibold">${formatEUR(tender.amount)}</strong></span>
-              <span class="${rem.urgent ? 'text-rose-400 font-bold' : 'text-slate-300'}">⏰ ${rem.text}</span>
+              <span class="flex items-center gap-1.5">🏛️ <span class="text-slate-300">${escapeHtml(tender.authority || 'Ente Appaltante')}</span></span>
+              <span class="flex items-center gap-1.5">💶 <strong class="text-emerald-400 font-bold">${formatEUR(tender.amount)}</strong></span>
+              <span class="flex items-center gap-1.5 px-2 py-0.5 rounded-md ${rem.urgent ? 'bg-rose-500/10 text-rose-400 font-bold border border-rose-500/30' : (rem.days < 7 ? 'bg-amber-500/10 text-amber-300 border border-amber-500/30' : 'bg-slate-800/60 text-slate-300 border border-slate-700')}">
+                ⏰ ${rem.text}
+              </span>
             </div>
           </div>
         </div>
 
         <!-- Selettore rapido di Gara & Salvataggio -->
-        <div class="flex items-center gap-2.5 flex-wrap self-end lg:self-center">
-          <div class="flex items-center gap-1.5 bg-slate-950 border border-slate-800 rounded-2xl px-3 py-1.5">
+        <div class="flex items-center gap-2.5 flex-wrap self-end lg:self-center relative z-10">
+          <div class="flex items-center gap-2 bg-slate-950 border border-slate-800 rounded-2xl px-3 py-1.5 shadow-inner">
             <label class="text-[11px] text-slate-400 font-mono hidden sm:inline">Gara:</label>
-            <select id="selectWizardTender" onchange="window.openTenderWizard(this.value)" class="bg-transparent text-slate-200 text-xs font-medium focus:outline-none cursor-pointer">
+            <select id="selectWizardTender" onchange="window.openTenderWizard(this.value)" class="bg-transparent text-slate-200 text-xs font-medium focus:outline-none cursor-pointer max-w-[220px] sm:max-w-xs truncate">
               ${getAllTendersFromSQLite().map(t => `
                 <option value="${escapeHtml(t.id)}" ${t.id === tender.id ? 'selected' : ''}>${escapeHtml(t.cig || t.id)} - ${escapeHtml(t.authority ? t.authority.substring(0, 18) : 'Gara')} (${formatEUR(t.amount)})</option>
               `).join('')}
             </select>
           </div>
 
-          <!-- Bottone Esporta Calendario .ics (Milestone 4) -->
+          <!-- Bottone Esporta Calendario .ics -->
           <button onclick="window.exportCurrentTenderIcs()" class="px-3.5 py-2 rounded-2xl bg-slate-800 hover:bg-slate-700 text-cyan-300 font-bold text-xs transition flex items-center gap-1.5 border border-slate-700 shadow-sm cursor-pointer" title="Scarica evento .ics per Microsoft Outlook o Google Calendar">
             <svg class="w-3.5 h-3.5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-            <span>Calendario (.ics)</span>
+            <span class="hidden sm:inline">Calendario (.ics)</span>
           </button>
 
           <button onclick="window.saveCurrentWizardState()" class="px-4 py-2 rounded-2xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs transition flex items-center gap-1.5 shadow-md shadow-cyan-500/20 cursor-pointer">
@@ -740,9 +752,25 @@ function renderWizardView(tender) {
         </div>
       </div>
 
-      <!-- STEPPER ORIZZONTALE CON STATO, GATING E FEEDBACK VISIVO -->
-      <div class="bg-slate-900/80 border border-slate-800 rounded-3xl p-3 sm:p-4 shadow-md">
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
+      <!-- STEPPER ORIZZONTALE CON PROGRESS TRACK E NODI COLLEGATI -->
+      <div class="bg-slate-900/90 border border-slate-800 rounded-3xl p-4 sm:p-5 shadow-xl space-y-3.5">
+        
+        <!-- Barra di Avanzamento Sequenziale Continua -->
+        <div class="space-y-1.5">
+          <div class="flex items-center justify-between text-[11px] font-mono text-slate-400">
+            <span class="flex items-center gap-1.5">
+              <span class="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></span>
+              <span>Avanzamento del Workflow Deterministico:</span>
+            </span>
+            <span class="font-bold text-cyan-400">${progressPercent}% Completato</span>
+          </div>
+          <div class="w-full bg-slate-950 h-2 rounded-full border border-slate-800 overflow-hidden p-0.5">
+            <div class="h-full bg-gradient-to-r from-cyan-500 via-indigo-500 to-emerald-400 rounded-full transition-all duration-500 ease-out" style="width: ${progressPercent}%;"></div>
+          </div>
+        </div>
+
+        <!-- Griglia dei 4 Step con Connettori Logici -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-1">
           ${stepStatus.map(s => {
             const isCompleted = s.num < currentWizardStep;
             const isCurrent = s.num === currentWizardStep;
@@ -754,34 +782,39 @@ function renderWizardView(tender) {
 
             const isLocked = !canEnter.ok && s.num > currentWizardStep;
             
-            let cardBg = "bg-slate-950/60 border-slate-800/80 text-slate-400 hover:border-slate-700";
+            let cardBg = "bg-slate-950/70 border-slate-800/90 text-slate-400 hover:border-slate-700 hover:bg-slate-950";
             let badgeBg = "bg-slate-800 text-slate-400";
+            let iconText = s.num;
             
             if (isCurrent) {
-              cardBg = "bg-cyan-950/40 border-cyan-500/60 text-white ring-1 ring-cyan-500/30";
-              badgeBg = "bg-cyan-500 text-slate-950 font-black";
+              cardBg = "bg-cyan-950/40 border-cyan-500/70 text-white ring-1 ring-cyan-500/40 shadow-lg shadow-cyan-950/50";
+              badgeBg = "bg-cyan-500 text-slate-950 font-black shadow-md shadow-cyan-500/30";
+              iconText = s.num;
             } else if (isCompleted) {
-              cardBg = "bg-emerald-950/20 border-emerald-500/40 text-emerald-200";
+              cardBg = "bg-emerald-950/20 border-emerald-500/50 text-emerald-200 hover:border-emerald-400";
               badgeBg = "bg-emerald-500 text-slate-950 font-bold";
+              iconText = "✓";
             } else if (isLocked) {
-              cardBg = "bg-slate-950/30 border-slate-900 text-slate-600 opacity-60";
-              badgeBg = "bg-slate-900 text-slate-600";
+              cardBg = "bg-slate-950/40 border-slate-900 text-slate-600 opacity-60";
+              badgeBg = "bg-slate-900 text-slate-600 border border-slate-800";
+              iconText = "🔒";
             }
 
             return `
               <button type="button" 
                       onclick="${isLocked ? `window.showStepBlockedModal(${s.num}, ${escapeHtml(JSON.stringify(canEnter.errors))})` : `window.setWizardStep(${s.num})`}" 
-                      class="text-left p-3.5 rounded-2xl border ${cardBg} transition flex items-center justify-between gap-3 group cursor-pointer">
+                      class="text-left p-3.5 rounded-2xl border ${cardBg} transition-all duration-200 flex items-center justify-between gap-3 group cursor-pointer relative overflow-hidden">
+                ${isCurrent ? '<div class="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-cyan-400 to-blue-500"></div>' : ''}
                 <div class="flex items-center gap-3 min-w-0">
                   <div class="w-8 h-8 rounded-xl flex items-center justify-center font-mono text-xs ${badgeBg} shrink-0 transition-transform group-hover:scale-105">
-                    ${isLocked ? '🔒' : (isCompleted ? '✓' : s.num)}
+                    ${iconText}
                   </div>
                   <div class="truncate">
                     <div class="text-xs font-bold leading-tight truncate ${isCurrent ? 'text-white' : (isLocked ? 'text-slate-500' : 'text-slate-200')}">${s.title}</div>
                     <div class="text-[10px] ${isLocked ? 'text-slate-600' : 'text-slate-400'} truncate mt-0.5">${s.sub}</div>
                   </div>
                 </div>
-                <span class="text-[10px] font-mono px-2 py-0.5 rounded-full ${s.badge} shrink-0 hidden md:inline-block">
+                <span class="text-[10px] font-mono px-2 py-0.5 rounded-full border ${s.badge} shrink-0 hidden md:inline-block">
                   ${s.statusText}
                 </span>
               </button>
@@ -792,9 +825,9 @@ function renderWizardView(tender) {
 
       <!-- BANNER ERRORI E AVVISI DETERMINISTICI DELLO STEP CORRENTE -->
       ${valResult.errors.length > 0 || valResult.warnings.length > 0 ? `
-        <div class="space-y-2">
+        <div class="space-y-2.5">
           ${valResult.errors.length > 0 ? `
-            <div class="p-4 rounded-3xl bg-rose-950/30 border border-rose-500/40 text-rose-200 text-xs space-y-1.5 shadow-lg shadow-rose-950/20">
+            <div class="p-4 rounded-3xl bg-rose-950/40 border border-rose-500/50 text-rose-200 text-xs space-y-1.5 shadow-xl shadow-rose-950/20 backdrop-blur-sm">
               <div class="flex items-center gap-2 font-bold text-rose-300">
                 <span class="text-base">🚫</span>
                 <span>Elementi Bloccanti per la Fase ${currentWizardStep} (D.Lgs. 36/2023):</span>
@@ -806,7 +839,7 @@ function renderWizardView(tender) {
           ` : ''}
 
           ${valResult.warnings.length > 0 ? `
-            <div class="p-3.5 rounded-3xl bg-amber-950/20 border border-amber-500/30 text-amber-200 text-xs space-y-1">
+            <div class="p-3.5 rounded-3xl bg-amber-950/30 border border-amber-500/40 text-amber-200 text-xs space-y-1 backdrop-blur-sm">
               <div class="flex items-center gap-2 font-bold text-amber-300">
                 <span>⚠️</span>
                 <span>Avvertenze Operative Ufficio Gare:</span>
@@ -824,7 +857,7 @@ function renderWizardView(tender) {
         ${renderCurrentStepContent(tender)}
       </div>
 
-      <!-- SEZIONE NOTE & DIARIO DI BORDO GARA (MILESTONE 4) -->
+      <!-- SEZIONE NOTE & DIARIO DI BORDO GARA (COLLASSABILE & CRONOLOGICA) -->
       <div class="bg-slate-900/90 border border-slate-800 rounded-3xl p-5 sm:p-6 shadow-xl space-y-4">
         <div class="flex items-center justify-between border-b border-slate-800 pb-3">
           <div class="flex items-center gap-2.5">
@@ -834,18 +867,18 @@ function renderWizardView(tender) {
                 <span>Diario di Bordo &amp; Note Interne Ufficio Gare</span>
                 <span id="notesCountBadge" class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-slate-800 text-cyan-300 font-bold border border-slate-700">${(currentWizardData.notes || []).length} note</span>
               </h3>
-              <p class="text-[11px] text-slate-400 font-mono">Annotazioni strategiche, chiarimenti inviati, verbali e delibere (SQLite 3)</p>
+              <p class="text-[11px] text-slate-400 font-mono">Annotazioni strategiche, chiarimenti inviati, verbali e delibere (persistenza SQLite 3)</p>
             </div>
           </div>
           ${renderHelpBtn('notes_log')}
         </div>
 
         <!-- Form Inserimento Rapido Nota -->
-        <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-3">
+        <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-3 shadow-inner">
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div class="flex items-center gap-2">
               <label class="text-[11px] font-mono text-slate-400">Categoria:</label>
-              <select id="newNoteCategory" class="bg-slate-900 border border-slate-800 rounded-xl px-2.5 py-1 text-xs text-slate-200 focus:border-cyan-400">
+              <select id="newNoteCategory" class="bg-slate-900 border border-slate-800 rounded-xl px-2.5 py-1 text-xs text-slate-200 focus:border-cyan-400 cursor-pointer">
                 <option value="GENERALE">📌 Generale</option>
                 <option value="Q&A">❓ Chiarimenti Q&amp;A</option>
                 <option value="GO_NOGO">⚖️ Delibera Go/No-Go</option>
@@ -853,7 +886,7 @@ function renderWizardView(tender) {
                 <option value="ESITO">🏆 Esito / Svincolo Polizza</option>
               </select>
             </div>
-            <button type="button" onclick="window.addNewGaraNote()" class="px-4 py-1.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs transition flex items-center gap-1.5 self-end sm:self-auto cursor-pointer">
+            <button type="button" onclick="window.addNewGaraNote()" class="px-4 py-1.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs transition flex items-center gap-1.5 self-end sm:self-auto cursor-pointer shadow-md shadow-cyan-500/20">
               <span>+ Aggiungi al Diario</span>
             </button>
           </div>
@@ -867,10 +900,10 @@ function renderWizardView(tender) {
       </div>
 
       <!-- DOCK AZIONI RAPIDE INFERIORE (NAVIGAZIONE & DUAL HAND-OFF) -->
-      <div class="bg-slate-950/95 backdrop-blur-md border border-slate-800 rounded-3xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-2xl sticky bottom-4 z-20">
+      <div class="bg-slate-950/95 backdrop-blur-md border border-slate-800 rounded-3xl p-4 flex flex-col md:flex-row items-center justify-between gap-4 shadow-2xl sticky bottom-4 z-20">
         
         <!-- Pulsanti Spostamento Step -->
-        <div class="flex items-center gap-2 w-full sm:w-auto">
+        <div class="flex items-center gap-2 w-full md:w-auto">
           <button onclick="window.setWizardStep(${Math.max(1, currentWizardStep - 1)})" ${currentWizardStep === 1 ? 'disabled' : ''} class="px-4 py-2.5 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-200 disabled:opacity-30 disabled:cursor-not-allowed font-semibold text-xs transition border border-slate-700 flex items-center gap-1.5 cursor-pointer">
             <span>← Fase Precedente</span>
           </button>
@@ -880,8 +913,14 @@ function renderWizardView(tender) {
           </button>
         </div>
 
-        <!-- Tasti Dual Hand-Off & Avanzamento -->
-        <div class="flex items-center gap-2.5 flex-wrap w-full sm:w-auto justify-end">
+        <!-- Indicatore compatto fase corrente (Centro) -->
+        <div class="hidden lg:flex items-center gap-2 font-mono text-xs text-slate-400 bg-slate-900 px-3.5 py-2 rounded-2xl border border-slate-800">
+          <span class="w-2 h-2 rounded-full ${currentWizardStep === 4 ? 'bg-emerald-400' : 'bg-cyan-400'} animate-pulse"></span>
+          <span>Fase ${currentWizardStep} di 4: <strong class="text-white">${stepStatus[currentWizardStep - 1].title.replace(/^\d+\.\s*/, '')}</strong></span>
+        </div>
+
+        <!-- Tasti Dual Hand-Off & Avanzamento (Destra) -->
+        <div class="flex items-center gap-2.5 flex-wrap w-full md:w-auto justify-end">
           
           <!-- Copia Rapida Portale (Manuale) con info -->
           <div class="flex items-center">
@@ -928,10 +967,10 @@ function renderCurrentStepContent(tender) {
 
     return `
       <!-- BANNER GUIDA DELLA FASE 1 -->
-      <div class="bg-gradient-to-br from-cyan-950/50 via-slate-900 to-slate-950 border border-cyan-500/40 rounded-3xl p-5 sm:p-6 shadow-xl space-y-3">
+      <div class="bg-gradient-to-br from-cyan-950/60 via-slate-900 to-slate-950 border border-cyan-500/40 rounded-3xl p-5 sm:p-6 shadow-xl space-y-3">
         <div class="flex items-center justify-between border-b border-cyan-500/20 pb-3">
           <div class="flex items-center gap-2.5">
-            <span class="w-7 h-7 rounded-lg bg-cyan-500 text-slate-950 font-black text-xs flex items-center justify-center">1</span>
+            <span class="w-7 h-7 rounded-lg bg-cyan-500 text-slate-950 font-black text-xs flex items-center justify-center shadow-md shadow-cyan-500/30">1</span>
             <div>
               <h3 class="text-sm sm:text-base font-bold text-white flex items-center gap-2">
                 <span>🎯 Cosa devi fare in questa Fase 1: Identificazione e Setup Bando</span>
@@ -939,7 +978,7 @@ function renderCurrentStepContent(tender) {
               <span class="text-[11px] text-cyan-300 font-mono">D.Lgs. 36/2023 &bull; Termini di Chiarimento Q&A e Scadenza Offerte</span>
             </div>
           </div>
-          <a href="${escapeHtml(d.step1_data.link || 'https://www.acquistinretepa.it')}" target="_blank" rel="noopener noreferrer" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-cyan-300 text-xs font-mono inline-flex items-center gap-1.5 border border-slate-700 shadow-sm">
+          <a href="${escapeHtml(d.step1_data.link || 'https://www.acquistinretepa.it')}" target="_blank" rel="noopener noreferrer" class="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-cyan-300 text-xs font-mono inline-flex items-center gap-1.5 border border-slate-700 shadow-sm transition">
             <span>Apri su acquistinretepa.it ↗</span>
           </a>
         </div>
@@ -960,127 +999,150 @@ function renderCurrentStepContent(tender) {
         </div>
       </div>
 
-      <!-- FORM SEZIONI FASE 1 -->
-      <div class="bg-slate-900/90 border border-slate-800 rounded-3xl p-5 sm:p-7 shadow-xl space-y-5">
-        <div class="text-xs font-mono uppercase tracking-wider text-slate-400 font-bold border-b border-slate-800 pb-2 flex items-center justify-between">
-          <span>Dati Ufficiali del Bando &amp; Cronoprogramma</span>
-          <span class="text-[11px] text-slate-500 font-normal">Tutti i campi con (?) includono guida operativa</span>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 text-xs">
-          <!-- CIG -->
-          <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-1.5">
-            <label class="flex items-center text-slate-300 font-semibold">
-              <span>Codice Identificativo Gara (CIG):</span>
-              ${renderHelpBtn('cig')}
-            </label>
-            <div class="flex gap-1.5">
-              <input id="w_cig" type="text" maxlength="10" value="${escapeHtml(d.step1_data.cig)}" oninput="this.value = this.value.toUpperCase();" class="w-full bg-slate-900 border ${cigValidation.ok ? 'border-slate-800 focus:border-cyan-400' : 'border-rose-500/80 focus:border-rose-400'} rounded-xl px-3 py-2 text-cyan-400 font-mono font-bold text-xs uppercase">
-              <button type="button" onclick="navigator.clipboard.writeText(document.getElementById('w_cig').value); showNotification('CIG copiato negli appunti!');" class="px-2.5 py-1 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-mono text-[11px] shrink-0" title="Copia CIG">Copia</button>
-            </div>
-            <span class="text-[10px] ${cigValidation.ok ? 'text-slate-500' : 'text-rose-400'} font-mono">
-              ${cigValidation.ok ? 'Esattamente 10 caratteri alfanumerici (ANAC BDNCP)' : escapeHtml(cigValidation.msg)}
+      <!-- WORKSPACE A DUE COLONNE: FORM A SINISTRA, FASCICOLO DIGITALE A DESTRA -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 text-xs">
+        
+        <!-- Colonna Principale: Form Dati Bando & Cronoprogramma (2 Colonne Desktop) -->
+        <div class="lg:col-span-2 bg-slate-900/90 border border-slate-800 rounded-3xl p-5 sm:p-7 shadow-xl space-y-5">
+          <div class="text-xs font-mono uppercase tracking-wider text-slate-400 font-bold border-b border-slate-800 pb-2.5 flex items-center justify-between">
+            <span class="flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-cyan-400"></span>
+              <span>Dati Ufficiali del Bando &amp; Cronoprogramma</span>
             </span>
+            <span class="text-[11px] text-slate-500 font-normal">Tutti i campi con (?) includono guida operativa</span>
           </div>
 
-          <!-- Termine Domande Q&A -->
-          <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-1.5">
-            <div class="flex items-center justify-between">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+            <!-- CIG -->
+            <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-1.5 shadow-inner">
               <label class="flex items-center text-slate-300 font-semibold">
-                <span>Scadenza Chiarimenti (Q&A):</span>
-                ${renderHelpBtn('qa_deadline')}
+                <span>Codice Identificativo Gara (CIG):</span>
+                ${renderHelpBtn('cig')}
               </label>
-              <button type="button" onclick="window.autoSuggestQaDeadline()" class="text-[10px] text-cyan-400 hover:underline font-mono" title="Calcola 10 giorni prima della scadenza offerta">Auto (-10gg)</button>
+              <div class="flex gap-1.5">
+                <input id="w_cig" type="text" maxlength="10" value="${escapeHtml(d.step1_data.cig)}" oninput="this.value = this.value.toUpperCase();" class="w-full bg-slate-900 border ${cigValidation.ok ? 'border-slate-800 focus:border-cyan-400' : 'border-rose-500/80 focus:border-rose-400'} rounded-xl px-3 py-2 text-cyan-400 font-mono font-bold text-xs uppercase">
+                <button type="button" onclick="navigator.clipboard.writeText(document.getElementById('w_cig').value); showNotification('CIG copiato negli appunti!');" class="px-2.5 py-1 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-mono text-[11px] shrink-0 border border-slate-700" title="Copia CIG">Copia</button>
+              </div>
+              <span class="text-[10px] ${cigValidation.ok ? 'text-slate-500' : 'text-rose-400'} font-mono block">
+                ${cigValidation.ok ? '✓ Esattamente 10 caratteri alfanumerici (ANAC BDNCP)' : escapeHtml(cigValidation.msg)}
+              </span>
             </div>
-            <input id="w_qa_deadline" type="date" value="${escapeHtml(d.step1_data.qa_deadline)}" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-amber-300 font-mono text-xs focus:border-cyan-400">
-            <span class="text-[10px] text-slate-500 font-mono">Art. 92 c.2: risposte PA almeno 6gg prima</span>
-            <button type="button" onclick="window.openQaFacsimileModal()" class="mt-2 w-full px-3 py-1.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 text-xs font-semibold border border-amber-500/30 flex items-center justify-center gap-1.5 transition cursor-pointer" title="Genera testo formale per quesito da inviare su MePA o via PEC">
-              <span>📝 Genera Fac-Simile Quesito Q&A</span>
-            </button>
-          </div>
 
-          <!-- Scadenza Presentazione -->
-          <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-1.5">
-            <label class="flex items-center text-slate-300 font-semibold">
-              <span>Scadenza Presentazione Offerta:</span>
-              ${renderHelpBtn('deadline')}
-            </label>
-            <input id="w_deadline" type="datetime-local" value="${escapeHtml(d.step1_data.deadline ? d.step1_data.deadline.substring(0, 16) : '')}" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-rose-300 font-mono font-bold text-xs focus:border-cyan-400">
-            <span class="text-[10px] text-slate-500 font-mono">Termine perentorio non prorogabile</span>
-          </div>
+            <!-- Termine Domande Q&A -->
+            <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-1.5 shadow-inner">
+              <div class="flex items-center justify-between">
+                <label class="flex items-center text-slate-300 font-semibold">
+                  <span>Scadenza Chiarimenti (Q&A):</span>
+                  ${renderHelpBtn('qa_deadline')}
+                </label>
+                <button type="button" onclick="window.autoSuggestQaDeadline()" class="text-[10px] text-cyan-400 hover:underline font-mono" title="Calcola 10 giorni prima della scadenza offerta">Auto (-10gg)</button>
+              </div>
+              <input id="w_qa_deadline" type="date" value="${escapeHtml(d.step1_data.qa_deadline)}" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-amber-300 font-mono text-xs focus:border-cyan-400">
+              <div class="flex items-center justify-between pt-1">
+                <span class="text-[10px] text-slate-500 font-mono">Art. 92 c.2: risposte PA &ge;6gg prima</span>
+                <button type="button" onclick="window.openQaFacsimileModal()" class="text-[11px] text-amber-400 hover:text-amber-300 font-semibold underline flex items-center gap-1 cursor-pointer">
+                  <span>📝 Genera Fac-Simile Quesito</span>
+                </button>
+              </div>
+            </div>
 
-          <!-- Stazione Appaltante -->
-          <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-1.5 md:col-span-2">
-            <label class="flex items-center text-slate-300 font-semibold">
-              <span>Stazione Appaltante / Amministrazione:</span>
-              ${renderHelpBtn('authority')}
-            </label>
-            <input id="w_authority" type="text" value="${escapeHtml(d.step1_data.authority)}" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-slate-200 text-xs focus:border-cyan-400">
-            <span class="text-[10px] text-slate-500 font-mono">Ente committente titolare del bando</span>
-          </div>
+            <!-- Scadenza Presentazione -->
+            <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-1.5 shadow-inner">
+              <label class="flex items-center text-slate-300 font-semibold">
+                <span>Scadenza Presentazione Offerta:</span>
+                ${renderHelpBtn('deadline')}
+              </label>
+              <input id="w_deadline" type="datetime-local" value="${escapeHtml(d.step1_data.deadline ? d.step1_data.deadline.substring(0, 16) : '')}" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-rose-300 font-mono font-bold text-xs focus:border-cyan-400">
+              <span class="text-[10px] text-slate-500 font-mono">Termine perentorio non prorogabile a sistema</span>
+            </div>
 
-          <!-- RUP -->
-          <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-1.5">
-            <label class="flex items-center text-slate-300 font-semibold">
-              <span>RUP (Responsabile Unico del Progetto):</span>
-              ${renderHelpBtn('rup_name')}
-            </label>
-            <input id="w_rup_name" type="text" placeholder="Nome RUP dal disciplinare..." value="${escapeHtml(d.step1_data.rup_name || '')}" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-slate-200 text-xs focus:border-cyan-400">
-            <span class="text-[10px] text-slate-500 font-mono">Referente unico istituzionale</span>
-          </div>
+            <!-- RUP -->
+            <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-1.5 shadow-inner">
+              <label class="flex items-center text-slate-300 font-semibold">
+                <span>RUP (Responsabile Unico del Progetto):</span>
+                ${renderHelpBtn('rup_name')}
+              </label>
+              <input id="w_rup_name" type="text" placeholder="Nome RUP dal disciplinare..." value="${escapeHtml(d.step1_data.rup_name || '')}" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-slate-200 text-xs focus:border-cyan-400">
+              <span class="text-[10px] text-slate-500 font-mono">Referente unico istituzionale per la procedura</span>
+            </div>
 
-          <!-- Oggetto della Gara -->
-          <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-1.5 md:col-span-3">
-            <label class="flex items-center text-slate-300 font-semibold">
-              <span>Oggetto Fornitura / Servizio:</span>
-              ${renderHelpBtn('title')}
-            </label>
-            <textarea id="w_title" rows="2" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-slate-200 text-xs focus:border-cyan-400 leading-relaxed">${escapeHtml(d.step1_data.title)}</textarea>
-            <span class="text-[10px] text-slate-500 font-mono">Verifica piena conformita' con i tuoi codici ATECO</span>
+            <!-- Stazione Appaltante -->
+            <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-1.5 shadow-inner md:col-span-2">
+              <label class="flex items-center text-slate-300 font-semibold">
+                <span>Stazione Appaltante / Amministrazione:</span>
+                ${renderHelpBtn('authority')}
+              </label>
+              <input id="w_authority" type="text" value="${escapeHtml(d.step1_data.authority)}" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-slate-200 text-xs focus:border-cyan-400">
+              <span class="text-[10px] text-slate-500 font-mono">Ente committente titolare del bando su piattaforma MePA</span>
+            </div>
+
+            <!-- Oggetto della Gara -->
+            <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-1.5 shadow-inner md:col-span-2">
+              <label class="flex items-center text-slate-300 font-semibold">
+                <span>Oggetto Fornitura / Servizio:</span>
+                ${renderHelpBtn('title')}
+              </label>
+              <textarea id="w_title" rows="2" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-slate-200 text-xs focus:border-cyan-400 leading-relaxed">${escapeHtml(d.step1_data.title)}</textarea>
+              <span class="text-[10px] text-slate-500 font-mono">Verifica piena conformita' merceologica con i codici ATECO aziendali</span>
+            </div>
           </div>
         </div>
 
-        <!-- CARD DOWNLOAD DOCUMENTI FASE 1 -->
-        <div class="bg-slate-900/90 p-5 sm:p-6 rounded-3xl border border-cyan-500/30 space-y-3 shadow-xl">
-          <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-3">
-            <div class="flex items-center gap-2">
-              <span class="w-7 h-7 rounded-lg bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 flex items-center justify-center font-bold text-xs">📥</span>
-              <div>
-                <h4 class="text-xs sm:text-sm font-bold text-white">Documenti Scaricabili &amp; Fascicolo Bando</h4>
-                <span class="text-[11px] text-slate-400 font-mono">Esporta scheda gara, scadenzario perentorio e file calendario</span>
+        <!-- Colonna Laterale: Fascicolo Digitale & Download Bando (1 Colonna Desktop) -->
+        <div class="space-y-4">
+          <div class="bg-slate-900/90 p-5 rounded-3xl border border-cyan-500/30 space-y-3 shadow-xl">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-2.5">
+              <div class="flex items-center gap-2">
+                <span class="w-7 h-7 rounded-lg bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 flex items-center justify-center font-bold text-xs">📥</span>
+                <div>
+                  <h4 class="text-xs font-bold text-white">Fascicolo Bando &amp; Export</h4>
+                  <span class="text-[10px] text-slate-400 font-mono">Download documenti immediati</span>
+                </div>
               </div>
+              <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-800 text-cyan-300 border border-slate-700">1-Click</span>
             </div>
-            <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-800 text-cyan-300 border border-slate-700">Export Immediato</span>
+
+            <div class="space-y-2 text-xs">
+              <!-- 1. Scheda Bando Markdown -->
+              <button type="button" onclick="window.downloadFase1Scheda('md')" class="w-full p-3 rounded-2xl bg-slate-950 border border-slate-800 hover:border-cyan-500/50 text-left transition group cursor-pointer shadow-sm">
+                <div class="flex items-center justify-between text-xs mb-1">
+                  <span class="font-bold text-slate-200 group-hover:text-cyan-300">📋 Scheda Bando</span>
+                  <span class="font-mono text-[10px] text-cyan-400 font-bold bg-cyan-950/60 px-1.5 py-0.5 rounded border border-cyan-800/60">.MD</span>
+                </div>
+                <p class="text-[11px] text-slate-400 leading-tight">Riepilogo scadenze perentorie, RUP e note legali in Markdown.</p>
+              </button>
+
+              <!-- 2. Scheda Bando Word -->
+              <button type="button" onclick="window.downloadFase1Scheda('docx')" class="w-full p-3 rounded-2xl bg-slate-950 border border-slate-800 hover:border-cyan-500/50 text-left transition group cursor-pointer shadow-sm">
+                <div class="flex items-center justify-between text-xs mb-1">
+                  <span class="font-bold text-slate-200 group-hover:text-cyan-300">📄 Scheda Word</span>
+                  <span class="font-mono text-[10px] text-cyan-400 font-bold bg-cyan-950/60 px-1.5 py-0.5 rounded border border-cyan-800/60">.DOCX</span>
+                </div>
+                <p class="text-[11px] text-slate-400 leading-tight">Documento Word formattato per archiviazione nel fascicolo d'appalto.</p>
+              </button>
+
+              <!-- 3. Calendario iCalendar -->
+              <button type="button" onclick="window.exportCurrentTenderIcs()" class="w-full p-3 rounded-2xl bg-slate-950 border border-slate-800 hover:border-cyan-500/50 text-left transition group cursor-pointer shadow-sm">
+                <div class="flex items-center justify-between text-xs mb-1">
+                  <span class="font-bold text-slate-200 group-hover:text-cyan-300">📅 Calendario Alert</span>
+                  <span class="font-mono text-[10px] text-cyan-400 font-bold bg-cyan-950/60 px-1.5 py-0.5 rounded border border-cyan-800/60">.ICS</span>
+                </div>
+                <p class="text-[11px] text-slate-400 leading-tight">Evento scadenze per Microsoft Outlook, Google e Apple Calendar.</p>
+              </button>
+            </div>
           </div>
 
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-1 text-xs">
-            <!-- 1. Scheda Bando Markdown -->
-            <button type="button" onclick="window.downloadFase1Scheda('md')" class="p-3 rounded-2xl bg-slate-950 border border-slate-800 hover:border-cyan-500/50 text-left transition group cursor-pointer">
-              <div class="flex items-center justify-between text-xs mb-1">
-                <span class="font-bold text-slate-200 group-hover:text-cyan-300">📋 Scheda Bando</span>
-                <span class="font-mono text-[10px] text-cyan-400 font-bold">.MD</span>
-              </div>
-              <p class="text-[11px] text-slate-400 leading-tight">Riepilogo scadenze perentorie, RUP e note legali in Markdown.</p>
-            </button>
-
-            <!-- 2. Scheda Bando Word -->
-            <button type="button" onclick="window.downloadFase1Scheda('docx')" class="p-3 rounded-2xl bg-slate-950 border border-slate-800 hover:border-cyan-500/50 text-left transition group cursor-pointer">
-              <div class="flex items-center justify-between text-xs mb-1">
-                <span class="font-bold text-slate-200 group-hover:text-cyan-300">📄 Scheda Word</span>
-                <span class="font-mono text-[10px] text-cyan-400 font-bold">.DOCX</span>
-              </div>
-              <p class="text-[11px] text-slate-400 leading-tight">Documento Word formattato per archiviazione nel fascicolo d'appalto.</p>
-            </button>
-
-            <!-- 3. Calendario iCalendar -->
-            <button type="button" onclick="window.exportCurrentTenderIcs()" class="p-3 rounded-2xl bg-slate-950 border border-slate-800 hover:border-cyan-500/50 text-left transition group cursor-pointer">
-              <div class="flex items-center justify-between text-xs mb-1">
-                <span class="font-bold text-slate-200 group-hover:text-cyan-300">📅 Calendario Alert</span>
-                <span class="font-mono text-[10px] text-cyan-400 font-bold">.ICS</span>
-              </div>
-              <p class="text-[11px] text-slate-400 leading-tight">Evento scadenze per Microsoft Outlook, Google e Apple Calendar.</p>
-            </button>
+          <!-- Promemoria Normativo Rapido -->
+          <div class="bg-slate-950 p-4 rounded-3xl border border-slate-800 space-y-2 text-xs">
+            <div class="flex items-center gap-2 text-cyan-400 font-mono font-bold text-[11px]">
+              <span>💡 D.Lgs. 36/2023 - Promemoria:</span>
+            </div>
+            <p class="text-slate-400 text-[11px] leading-relaxed">
+              Il mancato rispetto dei termini di presentazione comporta l'inammissibilita' automatica da parte della piattaforma MePA, non sanabile con soccorso istruttorio.
+            </p>
+          </div>
         </div>
+
       </div>
     `;
   }
@@ -1090,12 +1152,14 @@ function renderCurrentStepContent(tender) {
   // -------------------------------------------------------------
   if (currentWizardStep === 2) {
     const s2 = d.step2_data || {};
+    const marginTarget = s2.margin_estimated_pct || 12.5;
+    
     return `
       <!-- BANNER GUIDA DELLA FASE 2 -->
-      <div class="bg-gradient-to-br from-amber-950/50 via-slate-900 to-slate-950 border border-amber-500/40 rounded-3xl p-5 sm:p-6 shadow-xl space-y-3">
+      <div class="bg-gradient-to-br from-amber-950/60 via-slate-900 to-slate-950 border border-amber-500/40 rounded-3xl p-5 sm:p-6 shadow-xl space-y-3">
         <div class="flex items-center justify-between border-b border-amber-500/20 pb-3">
           <div class="flex items-center gap-2.5">
-            <span class="w-7 h-7 rounded-lg bg-amber-500 text-slate-950 font-black text-xs flex items-center justify-center">2</span>
+            <span class="w-7 h-7 rounded-lg bg-amber-500 text-slate-950 font-black text-xs flex items-center justify-center shadow-md shadow-amber-500/30">2</span>
             <div>
               <h3 class="text-sm sm:text-base font-bold text-white flex items-center gap-2">
                 <span>🎯 Cosa devi fare in questa Fase 2: Valutazione Idoneita' &amp; Delibera Go / No-Go</span>
@@ -1103,14 +1167,14 @@ function renderCurrentStepContent(tender) {
               <span class="text-[11px] text-amber-300 font-mono">Analisi di Convenienza &bull; Checklist Requisiti Giuridici ed Economici</span>
             </div>
           </div>
-          <button onclick="window.showWizardHelpModal('go_decision')" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-300 text-xs font-mono inline-flex items-center gap-1.5 border border-slate-700 shadow-sm">
+          <button onclick="window.showWizardHelpModal('go_decision')" class="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-300 text-xs font-mono inline-flex items-center gap-1.5 border border-slate-700 shadow-sm transition">
             <span>Guida Delibera ?</span>
           </button>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs pt-1">
           <div class="bg-slate-950/80 p-3 rounded-2xl border border-slate-800">
-            <strong class="text-amber-400 block font-mono text-[11px] mb-1">Passo 2.1: Spunta la Checklist</strong>
+            <strong class="text-amber-400 block font-mono text-[11px] mb-1">Passo 2.1: Spunta i 4 Pilastri</strong>
             <p class="text-slate-300 leading-relaxed">Verifica fatturato triennale, certificazioni ISO (riduzione 30% cauzione), sopralluogo e capienza castelletto garanzie.</p>
           </div>
           <div class="bg-slate-950/80 p-3 rounded-2xl border border-slate-800">
@@ -1124,23 +1188,27 @@ function renderCurrentStepContent(tender) {
         </div>
       </div>
 
-      <!-- FORM SEZIONI FASE 2 -->
+      <!-- WORKSPACE FASE 2: I 4 PILASTRI A SINISTRA, MARGINE E DELIBERA A DESTRA -->
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 text-xs">
         
-        <!-- Checklist Requisiti con pulsantini info -->
+        <!-- I 4 PILASTRI DI QUALIFICAZIONE -->
         <div class="bg-slate-900/90 p-5 sm:p-6 rounded-3xl border border-slate-800 space-y-4 shadow-xl">
           <div class="border-b border-slate-800 pb-2.5 flex items-center justify-between">
-            <span class="font-mono font-bold text-amber-400 uppercase text-xs">Checklist Requisiti Disciplinare</span>
-            <span class="text-[10px] text-slate-500 font-mono">D.Lgs. 36/2023 art. 100</span>
+            <span class="font-mono font-bold text-amber-400 uppercase text-xs flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+              <span>I 4 Pilastri di Qualificazione (D.Lgs. 36/2023 art. 100)</span>
+            </span>
+            <span class="text-[10px] text-slate-500 font-mono">Requisiti Speciali</span>
           </div>
 
           <div class="space-y-3">
-            <div class="p-3 rounded-2xl bg-slate-950 border border-slate-800/80 hover:border-slate-700 transition">
+            <!-- Pilastro 1: Fatturato -->
+            <div class="p-3.5 rounded-2xl bg-slate-950 border border-slate-800/80 hover:border-slate-700 transition shadow-inner">
               <label class="flex items-start gap-2.5 cursor-pointer">
                 <input id="w_check_fatturato" type="checkbox" ${s2.check_fatturato ? 'checked' : ''} class="rounded bg-slate-900 border-slate-700 text-cyan-500 focus:ring-0 mt-0.5">
                 <div class="flex-1">
                   <div class="flex items-center">
-                    <strong class="text-slate-200">Fatturato Specifico nel Settore</strong>
+                    <strong class="text-slate-200">1. Fatturato Specifico nel Settore</strong>
                     ${renderHelpBtn('check_fatturato')}
                   </div>
                   <span class="text-[11px] text-slate-400 block mt-0.5">Fatturato negli ultimi 3 esercizi idoneo a coprire quanto richiesto dal bando.</span>
@@ -1151,12 +1219,13 @@ function renderCurrentStepContent(tender) {
               </label>
             </div>
 
-            <div class="p-3 rounded-2xl bg-slate-950 border border-slate-800/80 hover:border-slate-700 transition">
+            <!-- Pilastro 2: ISO 9001 -->
+            <div class="p-3.5 rounded-2xl bg-slate-950 border border-slate-800/80 hover:border-slate-700 transition shadow-inner">
               <label class="flex items-start gap-2.5 cursor-pointer">
                 <input id="w_check_iso" type="checkbox" ${s2.check_iso ? 'checked' : ''} class="rounded bg-slate-900 border-slate-700 text-cyan-500 focus:ring-0 mt-0.5">
                 <div class="flex-1">
                   <div class="flex items-center">
-                    <strong class="text-slate-200">Certificazioni di Qualita' (ISO 9001 / CAM)</strong>
+                    <strong class="text-slate-200">2. Certificazioni di Qualita' (ISO 9001 / CAM)</strong>
                     ${renderHelpBtn('check_iso')}
                   </div>
                   <span class="text-[11px] text-slate-400 block mt-0.5">ISO 9001 valida (riduzione 30% cauzione provvisoria ex art. 106 c.8).</span>
@@ -1167,12 +1236,13 @@ function renderCurrentStepContent(tender) {
               </label>
             </div>
 
-            <div class="p-3 rounded-2xl bg-slate-950 border border-slate-800/80 hover:border-slate-700 transition">
+            <!-- Pilastro 3: Sopralluogo -->
+            <div class="p-3.5 rounded-2xl bg-slate-950 border border-slate-800/80 hover:border-slate-700 transition shadow-inner">
               <label class="flex items-start gap-2.5 cursor-pointer">
                 <input id="w_check_sopralluogo" type="checkbox" ${s2.check_sopralluogo ? 'checked' : ''} class="rounded bg-slate-900 border-slate-700 text-cyan-500 focus:ring-0 mt-0.5">
                 <div class="flex-1">
                   <div class="flex items-center">
-                    <strong class="text-slate-200">Sopralluogo Obbligatorio (ove prescritto)</strong>
+                    <strong class="text-slate-200">3. Sopralluogo Obbligatorio (ove prescritto)</strong>
                     ${renderHelpBtn('check_sopralluogo')}
                   </div>
                   <span class="text-[11px] text-slate-400 block mt-0.5">Attestato di sopralluogo rilasciato dal RUP dell'ente (se richiesto dal bando).</span>
@@ -1183,12 +1253,13 @@ function renderCurrentStepContent(tender) {
               </label>
             </div>
 
-            <div class="p-3 rounded-2xl bg-slate-950 border border-slate-800/80 hover:border-slate-700 transition">
+            <!-- Pilastro 4: Garanzie e Fidi -->
+            <div class="p-3.5 rounded-2xl bg-slate-950 border border-slate-800/80 hover:border-slate-700 transition shadow-inner">
               <label class="flex items-start gap-2.5 cursor-pointer">
                 <input id="w_check_garanzie" type="checkbox" ${s2.check_garanzie ? 'checked' : ''} class="rounded bg-slate-900 border-slate-700 text-cyan-500 focus:ring-0 mt-0.5">
                 <div class="flex-1">
                   <div class="flex items-center">
-                    <strong class="text-slate-200">Fido Assicurativo / Castelletto Fideiussorio</strong>
+                    <strong class="text-slate-200">4. Fido Assicurativo / Castelletto Fideiussorio</strong>
                     ${renderHelpBtn('check_garanzie')}
                   </div>
                   <span class="text-[11px] text-slate-400 block mt-0.5">Capienza confermata per emissione cauzione provvisoria e futura definitiva.</span>
@@ -1201,47 +1272,57 @@ function renderCurrentStepContent(tender) {
           </div>
         </div>
 
-        <!-- Delibera Go / No-Go & Marginalita' -->
-        <div class="bg-slate-900/90 p-5 sm:p-6 rounded-3xl border border-slate-800 space-y-4 shadow-xl">
-          <div class="border-b border-slate-800 pb-2.5 flex items-center justify-between">
-            <span class="font-mono font-bold text-emerald-400 uppercase text-xs">Stima Margine &amp; Delibera Finale</span>
-            <span class="text-[10px] text-slate-500 font-mono">Decisione Strategica</span>
-          </div>
-
-          <!-- Pulsante Pipeline Business Case Deterministico -->
-          <button type="button" onclick="window.openMargineModal()" class="w-full py-2.5 px-3 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-slate-950 font-bold text-xs flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 transition cursor-pointer">
-            <span>⚡ Calcolatore Analitico Margine di Commessa (Business Case)</span>
-          </button>
-
-          <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-2">
-            <label class="flex items-center text-slate-300 font-semibold">
-              <span>Margine Operativo Netto Target (%):</span>
-              ${renderHelpBtn('margin_pct')}
-            </label>
-            <div class="flex items-center gap-3">
-              <input id="w_margin_pct" type="number" step="0.5" value="${s2.margin_estimated_pct || 12.5}" class="w-32 bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-emerald-400 font-mono font-bold text-sm focus:border-cyan-400">
-              <span class="text-slate-400 text-xs">Soglia di sicurezza consigliata: &ge; 8.0%</span>
+        <!-- DELIBERA GO / NO-GO & MARGINALITA' -->
+        <div class="bg-slate-900/90 p-5 sm:p-6 rounded-3xl border border-slate-800 space-y-4 shadow-xl flex flex-col justify-between">
+          <div class="space-y-4">
+            <div class="border-b border-slate-800 pb-2.5 flex items-center justify-between">
+              <span class="font-mono font-bold text-emerald-400 uppercase text-xs flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                <span>Stima Margine &amp; Delibera Finale</span>
+              </span>
+              <span class="text-[10px] text-slate-500 font-mono">Decisione Strategica</span>
             </div>
-          </div>
 
-          <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-2">
-            <label class="flex items-center text-slate-300 font-semibold">
-              <span>Esito Valutazione Formale Ufficio Gare:</span>
-              ${renderHelpBtn('go_decision')}
-            </label>
-            <select id="w_go_decision" onchange="window.handleGoDecisionChange(this.value)" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2.5 text-slate-100 font-bold text-xs focus:border-cyan-400">
-              <option value="GO" ${s2.go_decision === 'GO' ? 'selected' : ''}>🟢 GO — Requisiti ok, procedi con l'offerta</option>
-              <option value="NO_GO" ${s2.go_decision === 'NO_GO' ? 'selected' : ''}>🔴 NO-GO — Scarta la gara (blocca avanzamento alle buste)</option>
-              <option value="PENDING" ${s2.go_decision === 'PENDING' ? 'selected' : ''}>🟡 IN ATTESA — In attesa di chiarimenti ufficiali dal RUP</option>
-            </select>
-          </div>
+            <!-- Pulsante Pipeline Business Case Deterministico -->
+            <button type="button" onclick="window.openMargineModal()" class="w-full py-2.5 px-3 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-slate-950 font-bold text-xs flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 transition cursor-pointer">
+              <span>⚡ Calcolatore Analitico Margine di Commessa (Business Case)</span>
+            </button>
 
-          <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-2">
-            <label class="flex items-center text-slate-300 font-semibold">
-              <span>Note Strategiche (RTI, Subappalto, Partner):</span>
-              ${renderHelpBtn('step2_notes')}
-            </label>
-            <textarea id="w_step2_notes" rows="2" placeholder="Annotazioni su RTI, quote fornitura, avvalimento..." class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-slate-200 text-xs focus:border-cyan-400">${escapeHtml(s2.notes || '')}</textarea>
+            <!-- Box Margine Operativo Netto Target -->
+            <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-2 shadow-inner">
+              <label class="flex items-center text-slate-300 font-semibold">
+                <span>Margine Operativo Netto Target (%):</span>
+                ${renderHelpBtn('margin_pct')}
+              </label>
+              <div class="flex items-center gap-3">
+                <input id="w_margin_pct" type="number" step="0.5" value="${marginTarget}" class="w-32 bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-emerald-400 font-mono font-bold text-sm focus:border-cyan-400">
+                <span class="text-[11px] font-mono px-2 py-1 rounded-md ${marginTarget >= 12 ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30' : (marginTarget >= 8 ? 'bg-amber-500/10 text-amber-400 border border-amber-500/30' : 'bg-rose-500/10 text-rose-400 border border-rose-500/30')}">
+                  ${marginTarget >= 12 ? '🟢 Ottimale (&ge;12%)' : (marginTarget >= 8 ? '🟡 Accettabile (&ge;8%)' : '🔴 Rischio Anomalia (<8%)')}
+                </span>
+              </div>
+            </div>
+
+            <!-- Selettore Esito Delibera Formale -->
+            <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-2 shadow-inner">
+              <label class="flex items-center text-slate-300 font-semibold">
+                <span>Esito Valutazione Formale Ufficio Gare:</span>
+                ${renderHelpBtn('go_decision')}
+              </label>
+              <select id="w_go_decision" onchange="window.handleGoDecisionChange(this.value)" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2.5 text-slate-100 font-bold text-xs focus:border-cyan-400 cursor-pointer">
+                <option value="GO" ${s2.go_decision === 'GO' ? 'selected' : ''}>🟢 GO — Requisiti ok, procedi con l'offerta</option>
+                <option value="NO_GO" ${s2.go_decision === 'NO_GO' ? 'selected' : ''}>🔴 NO-GO — Scarta la gara (blocca avanzamento alle buste)</option>
+                <option value="PENDING" ${s2.go_decision === 'PENDING' ? 'selected' : ''}>🟡 IN ATTESA — In attesa di chiarimenti ufficiali dal RUP</option>
+              </select>
+            </div>
+
+            <!-- Note Strategiche -->
+            <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-2 shadow-inner">
+              <label class="flex items-center text-slate-300 font-semibold">
+                <span>Note Strategiche (RTI, Subappalto, Partner):</span>
+                ${renderHelpBtn('step2_notes')}
+              </label>
+              <textarea id="w_step2_notes" rows="2" placeholder="Annotazioni su RTI, quote fornitura, avvalimento..." class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-slate-200 text-xs focus:border-cyan-400">${escapeHtml(s2.notes || '')}</textarea>
+            </div>
           </div>
         </div>
 
@@ -1262,37 +1343,37 @@ function renderCurrentStepContent(tender) {
 
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 pt-1 text-xs">
           <!-- 1. Verbale Word/Doc -->
-          <button type="button" onclick="window.downloadFase2Verbale('docx')" class="p-3 rounded-2xl bg-slate-950 border border-slate-800 hover:border-cyan-500/50 text-left transition group cursor-pointer">
+          <button type="button" onclick="window.downloadFase2Verbale('docx')" class="p-3 rounded-2xl bg-slate-950 border border-slate-800 hover:border-cyan-500/50 text-left transition group cursor-pointer shadow-sm">
             <div class="flex items-center justify-between text-xs mb-1">
               <span class="font-bold text-slate-200 group-hover:text-cyan-300">📄 Verbale Delibera</span>
-              <span class="font-mono text-[10px] text-cyan-400 font-bold">.DOCX / .DOC</span>
+              <span class="font-mono text-[10px] text-cyan-400 font-bold bg-cyan-950/60 px-1.5 py-0.5 rounded border border-cyan-800/60">.DOCX</span>
             </div>
             <p class="text-[11px] text-slate-400 leading-tight">Verbale formale di Go/No-Go per fascicolo aziendale e firma direzione.</p>
           </button>
 
           <!-- 2. Verbale Markdown -->
-          <button type="button" onclick="window.downloadFase2Verbale('md')" class="p-3 rounded-2xl bg-slate-950 border border-slate-800 hover:border-cyan-500/50 text-left transition group cursor-pointer">
+          <button type="button" onclick="window.downloadFase2Verbale('md')" class="p-3 rounded-2xl bg-slate-950 border border-slate-800 hover:border-cyan-500/50 text-left transition group cursor-pointer shadow-sm">
             <div class="flex items-center justify-between text-xs mb-1">
               <span class="font-bold text-slate-200 group-hover:text-cyan-300">📝 Verbale Markdown</span>
-              <span class="font-mono text-[10px] text-cyan-400 font-bold">.MD</span>
+              <span class="font-mono text-[10px] text-cyan-400 font-bold bg-cyan-950/60 px-1.5 py-0.5 rounded border border-cyan-800/60">.MD</span>
             </div>
             <p class="text-[11px] text-slate-400 leading-tight">Report di qualificazione in formato Markdown interoperabile.</p>
           </button>
 
           <!-- 3. Business Case Excel CSV -->
-          <button type="button" onclick="window.downloadFase2BusinessCaseCsv()" class="p-3 rounded-2xl bg-slate-950 border border-slate-800 hover:border-emerald-500/50 text-left transition group cursor-pointer">
+          <button type="button" onclick="window.downloadFase2BusinessCaseCsv()" class="p-3 rounded-2xl bg-slate-950 border border-slate-800 hover:border-emerald-500/50 text-left transition group cursor-pointer shadow-sm">
             <div class="flex items-center justify-between text-xs mb-1">
               <span class="font-bold text-slate-200 group-hover:text-emerald-300">📊 Business Case</span>
-              <span class="font-mono text-[10px] text-emerald-400 font-bold">.CSV (EXCEL)</span>
+              <span class="font-mono text-[10px] text-emerald-400 font-bold bg-emerald-950/60 px-1.5 py-0.5 rounded border border-emerald-800/60">.CSV</span>
             </div>
             <p class="text-[11px] text-slate-400 leading-tight">Foglio di calcolo costi commessa, manodopera art. 108 e marginalità.</p>
           </button>
 
           <!-- 4. Scheda Qualificazione JSON -->
-          <button type="button" onclick="window.downloadFase2Json()" class="p-3 rounded-2xl bg-slate-950 border border-slate-800 hover:border-purple-500/50 text-left transition group cursor-pointer">
+          <button type="button" onclick="window.downloadFase2Json()" class="p-3 rounded-2xl bg-slate-950 border border-slate-800 hover:border-purple-500/50 text-left transition group cursor-pointer shadow-sm">
             <div class="flex items-center justify-between text-xs mb-1">
               <span class="font-bold text-slate-200 group-hover:text-purple-300">💾 Dati Qualificazione</span>
-              <span class="font-mono text-[10px] text-purple-400 font-bold">.JSON</span>
+              <span class="font-mono text-[10px] text-purple-400 font-bold bg-purple-950/60 px-1.5 py-0.5 rounded border border-purple-800/60">.JSON</span>
             </div>
             <p class="text-[11px] text-slate-400 leading-tight">Dati completi per archiviazione documentale, ERP o agenti AI.</p>
           </button>
@@ -1327,14 +1408,14 @@ function renderCurrentStepContent(tender) {
       : null;
 
     return `
-      <!-- BANNER GUIDA DELLA FASE 3 -->
-      <div class="bg-gradient-to-br from-purple-950/50 via-slate-900 to-slate-950 border border-purple-500/40 rounded-3xl p-5 sm:p-6 shadow-xl space-y-3">
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-purple-500/20 pb-3">
+      <!-- BANNER GUIDA DELLA FASE 3 CON TAB BAR DELLE 3 BUSTE -->
+      <div class="bg-gradient-to-br from-purple-950/60 via-slate-900 to-slate-950 border border-purple-500/40 rounded-3xl p-5 sm:p-6 shadow-xl space-y-4">
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-purple-500/20 pb-3">
           <div class="flex items-center gap-2.5">
-            <span class="w-7 h-7 rounded-lg bg-purple-500 text-slate-950 font-black text-xs flex items-center justify-center">3</span>
+            <span class="w-7 h-7 rounded-lg bg-purple-500 text-slate-950 font-black text-xs flex items-center justify-center shadow-md shadow-purple-500/30">3</span>
             <div>
               <h3 class="text-sm sm:text-base font-bold text-white flex items-center gap-2">
-                <span>🎯 Cosa devi fare in questa Fase 3: Predisposizione delle 3 Buste Telematiche</span>
+                <span>🎯 Predisposizione delle 3 Buste Telematiche</span>
                 ${renderHelpBtn('buste_overview')}
               </h3>
               <span class="text-[11px] text-purple-300 font-mono">D.Lgs. 36/2023 &bull; Rigorosa Separazione tra Offerta Tecnica ed Economica</span>
@@ -1342,21 +1423,30 @@ function renderCurrentStepContent(tender) {
           </div>
 
           <!-- BUSTA SELECTOR TABS -->
-          <div class="inline-flex rounded-2xl bg-slate-950 p-1.5 border border-slate-800 text-xs shrink-0 self-start sm:self-auto">
-            <button onclick="window.setWizardBustaTab('A')" class="px-3.5 py-1.5 rounded-xl font-bold transition flex items-center gap-1.5 ${activeBusta === 'A' ? 'bg-cyan-500 text-slate-950 shadow-sm' : 'text-slate-400 hover:text-white'}">
+          <div class="inline-flex rounded-2xl bg-slate-950 p-1.5 border border-slate-800 text-xs shrink-0 self-start lg:self-auto shadow-inner">
+            <button onclick="window.setWizardBustaTab('A')" class="px-3.5 py-1.5 rounded-xl font-bold transition flex items-center gap-2 cursor-pointer ${activeBusta === 'A' ? 'bg-cyan-500 text-slate-950 shadow-sm' : 'text-slate-400 hover:text-white'}">
               <span>Busta A: Amministrativa</span>
+              <span class="text-[10px] font-mono px-1.5 py-0.2 rounded-md ${activeBusta === 'A' ? 'bg-slate-950/30 text-slate-950' : 'bg-slate-800 text-cyan-400'}">
+                ${s3.busta_a_dgue_ready && s3.busta_a_fideiussione_ready ? '✓' : 'A'}
+              </span>
             </button>
-            <button onclick="window.setWizardBustaTab('B')" class="px-3.5 py-1.5 rounded-xl font-bold transition flex items-center gap-1.5 ${activeBusta === 'B' ? 'bg-purple-500 text-slate-950 shadow-sm' : 'text-slate-400 hover:text-white'}">
+            <button onclick="window.setWizardBustaTab('B')" class="px-3.5 py-1.5 rounded-xl font-bold transition flex items-center gap-2 cursor-pointer ${activeBusta === 'B' ? 'bg-purple-500 text-slate-950 shadow-sm' : 'text-slate-400 hover:text-white'}">
               <span>Busta B: Tecnica</span>
+              <span class="text-[10px] font-mono px-1.5 py-0.2 rounded-md ${activeBusta === 'B' ? 'bg-slate-950/30 text-slate-950' : 'bg-slate-800 text-purple-400'}">
+                ${s3.busta_b_ready ? '✓' : 'B'}
+              </span>
             </button>
-            <button onclick="window.setWizardBustaTab('C')" class="px-3.5 py-1.5 rounded-xl font-bold transition flex items-center gap-1.5 ${activeBusta === 'C' ? 'bg-emerald-500 text-slate-950 shadow-sm' : 'text-slate-400 hover:text-white'}">
+            <button onclick="window.setWizardBustaTab('C')" class="px-3.5 py-1.5 rounded-xl font-bold transition flex items-center gap-2 cursor-pointer ${activeBusta === 'C' ? 'bg-emerald-500 text-slate-950 shadow-sm' : 'text-slate-400 hover:text-white'}">
               <span>Busta C: Economica</span>
+              <span class="text-[10px] font-mono px-1.5 py-0.2 rounded-md ${activeBusta === 'C' ? 'bg-slate-950/30 text-slate-950' : 'bg-slate-800 text-emerald-400'}">
+                ${s3.offerta_inviata ? '✓' : 'C'}
+              </span>
             </button>
           </div>
         </div>
 
-        <div class="p-3 rounded-2xl bg-purple-950/40 border border-purple-800/40 text-purple-200 text-xs leading-relaxed flex items-center gap-2">
-          <span class="text-base">⚠️</span>
+        <div class="p-3 rounded-2xl bg-purple-950/40 border border-purple-800/40 text-purple-200 text-xs leading-relaxed flex items-center gap-2.5">
+          <span class="text-base shrink-0">⚠️</span>
           <span><strong>Regola di Esclusione Automatica:</strong> Nessun elemento di prezzo (cifre in euro o percentuali di sconto) deve MAI comparire nella Busta A o Busta B, pena l'esclusione insanabile della gara.</span>
         </div>
       </div>
@@ -1367,12 +1457,16 @@ function renderCurrentStepContent(tender) {
           
           <div class="bg-slate-900/90 p-5 sm:p-6 rounded-3xl border border-slate-800 space-y-4 shadow-xl">
             <div class="border-b border-slate-800 pb-2.5 flex items-center justify-between">
-              <span class="font-mono font-bold text-cyan-400 uppercase text-xs">Documenti Amministrativi (Busta A)</span>
+              <span class="font-mono font-bold text-cyan-400 uppercase text-xs flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-cyan-400"></span>
+                <span>Documenti Amministrativi (Busta A)</span>
+              </span>
               <span class="text-[10px] text-slate-500 font-mono">Conformita' e Garanzie</span>
             </div>
 
             <div class="space-y-3">
-              <div class="p-3 rounded-2xl bg-slate-950 border border-slate-800">
+              <!-- DGUE -->
+              <div class="p-3.5 rounded-2xl bg-slate-950 border border-slate-800 shadow-inner">
                 <label class="flex items-start gap-2.5 cursor-pointer">
                   <input id="w_busta_a_dgue" type="checkbox" ${s3.busta_a_dgue_ready ? 'checked' : ''} class="rounded bg-slate-900 border-slate-700 text-cyan-500 mt-0.5">
                   <div class="flex-1">
@@ -1389,7 +1483,7 @@ function renderCurrentStepContent(tender) {
               </div>
 
               <!-- SEZIONE CALCOLATORE CAUZIONE PROVVISORIA (ART. 106 C.8) -->
-              <div class="p-3.5 rounded-2xl bg-slate-950 border border-slate-800 space-y-3">
+              <div class="p-3.5 rounded-2xl bg-slate-950 border border-slate-800 space-y-3 shadow-inner">
                 <div class="flex items-center justify-between border-b border-slate-800/80 pb-2">
                   <label class="flex items-start gap-2.5 cursor-pointer">
                     <input id="w_busta_a_fideiussione" type="checkbox" ${s3.busta_a_fideiussione_ready ? 'checked' : ''} class="rounded bg-slate-900 border-slate-700 text-cyan-500 mt-0.5">
@@ -1443,16 +1537,16 @@ function renderCurrentStepContent(tender) {
               </div>
 
               <!-- Codice FVOE 2.0 -->
-              <div class="p-3.5 rounded-2xl bg-slate-950 border border-slate-800 space-y-1.5">
+              <div class="p-3.5 rounded-2xl bg-slate-950 border border-slate-800 space-y-1.5 shadow-inner">
                 <label class="flex items-center text-slate-300 font-semibold">
                   <span>Codice Fascicolo FVOE 2.0 ANAC:</span>
                   ${renderHelpBtn('fvoe_passoe')}
                 </label>
                 <div class="flex gap-1.5">
                   <input id="w_fvoe_code" type="text" placeholder="Es. FVOE-99214..." value="${escapeHtml(s3.busta_a_fvoe_passoe || '')}" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-cyan-300 font-mono text-xs focus:border-cyan-400">
-                  <button type="button" onclick="navigator.clipboard.writeText(document.getElementById('w_fvoe_code').value); showNotification('Codice FVOE copiato!');" class="px-2.5 py-1 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-mono text-[11px] shrink-0">Copia</button>
+                  <button type="button" onclick="navigator.clipboard.writeText(document.getElementById('w_fvoe_code').value); showNotification('Codice FVOE copiato!');" class="px-2.5 py-1 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-mono text-[11px] shrink-0 border border-slate-700">Copia</button>
                 </div>
-                <span class="text-[10px] text-slate-500 font-mono">Consente all'ente il controllo dei requisiti generali</span>
+                <span class="text-[10px] text-slate-500 font-mono">Consente all'ente il controllo dei requisiti generali sul Fascicolo Virtuale</span>
                 <button type="button" onclick="window.openFvoeModal()" class="mt-2 w-full px-3 py-1.5 rounded-xl bg-purple-500/10 hover:bg-purple-500/20 text-purple-300 text-xs font-semibold border border-purple-500/30 flex items-center justify-center gap-1.5 transition cursor-pointer" title="Guida passo-passo per generare il codice FVOE sul portale ANAC">
                   <span>⚡ Assistente FVOE 2.0 ANAC</span>
                 </button>
@@ -1470,11 +1564,11 @@ function renderCurrentStepContent(tender) {
               <span class="text-[10px] text-slate-500 font-mono">Firma Digitale CAdES</span>
             </div>
 
-            <p class="text-[11px] text-slate-400">Rinomina i documenti con la seguente nomenclatura prima di apporre la firma digitale:</p>
+            <p class="text-[11px] text-slate-400 leading-relaxed">Rinomina i documenti con la seguente nomenclatura prima di apporre la firma digitale:</p>
             
             <div class="space-y-2.5">
               ${(s3.busta_a_files || []).map((file, idx) => `
-                <div class="p-3 rounded-2xl bg-slate-950 border border-slate-800 flex items-center justify-between gap-2">
+                <div class="p-3 rounded-2xl bg-slate-950 border border-slate-800 flex items-center justify-between gap-2 shadow-inner">
                   <span class="font-mono text-cyan-300 text-[11px] truncate select-all">${file}</span>
                   <button type="button" onclick="navigator.clipboard.writeText('${file}'); showNotification('Nome file copiato!');" class="px-2.5 py-1 rounded-xl bg-slate-800 hover:bg-cyan-950 text-slate-300 hover:text-cyan-300 font-mono text-[10px] border border-slate-700 shrink-0">Copia Nome</button>
                 </div>
@@ -1491,12 +1585,15 @@ function renderCurrentStepContent(tender) {
           
           <div class="bg-slate-900/90 p-5 sm:p-6 rounded-3xl border border-slate-800 space-y-4 shadow-xl">
             <div class="border-b border-slate-800 pb-2.5 flex items-center justify-between">
-              <span class="font-mono font-bold text-purple-400 uppercase text-xs">Offerta Tecnica &amp; CAM (Busta B)</span>
+              <span class="font-mono font-bold text-purple-400 uppercase text-xs flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-purple-400"></span>
+                <span>Offerta Tecnica &amp; CAM (Busta B)</span>
+              </span>
               <span class="text-[10px] text-slate-500 font-mono">Qualita' e Punteggi</span>
             </div>
 
             <div class="space-y-3">
-              <div class="p-3 rounded-2xl bg-slate-950 border border-slate-800">
+              <div class="p-3.5 rounded-2xl bg-slate-950 border border-slate-800 shadow-inner">
                 <label class="flex items-start gap-2.5 cursor-pointer">
                   <input id="w_busta_b_ready" type="checkbox" ${s3.busta_b_ready ? 'checked' : ''} class="rounded bg-slate-900 border-slate-700 text-purple-500 mt-0.5">
                   <div class="flex-1">
@@ -1504,7 +1601,7 @@ function renderCurrentStepContent(tender) {
                       <strong class="text-slate-200">Relazione Tecnica Descrittiva Completa</strong>
                       ${renderHelpBtn('busta_b_ready')}
                     </div>
-                    <span class="text-[11px] text-slate-400 block mt-0.5">Impaginata rigorosamente entro il limite massimo di pagine del disciplinare.</span>
+                    <span class="text-[11px] text-slate-400 block mt-0.5">Impaginata rigorosamente entro il limite massimo di pagine prescritto dal disciplinare.</span>
                   </div>
                 </label>
                 <button type="button" onclick="window.openBustaBCheckModal()" class="mt-2.5 w-full px-3 py-1.5 rounded-xl bg-purple-500/10 hover:bg-purple-500/20 text-purple-300 text-xs font-semibold border border-purple-500/30 flex items-center justify-center gap-1.5 transition cursor-pointer" title="Checklist pre-invio e struttura proposta tecnica">
@@ -1512,7 +1609,7 @@ function renderCurrentStepContent(tender) {
                 </button>
               </div>
 
-              <div class="p-3 rounded-2xl bg-slate-950 border border-slate-800">
+              <div class="p-3.5 rounded-2xl bg-slate-950 border border-slate-800 shadow-inner">
                 <label class="flex items-start gap-2.5 cursor-pointer">
                   <input id="w_busta_b_cam" type="checkbox" ${s3.busta_b_criteri_cam ? 'checked' : ''} class="rounded bg-slate-900 border-slate-700 text-purple-500 mt-0.5">
                   <div class="flex-1">
@@ -1520,7 +1617,7 @@ function renderCurrentStepContent(tender) {
                       <strong class="text-slate-200">Criteri Ambientali Minimi (CAM) &amp; Premialita'</strong>
                       ${renderHelpBtn('busta_b_cam')}
                     </div>
-                    <span class="text-[11px] text-slate-400 block mt-0.5">Schede dei produttori e certificati ecologici per massimo punteggio.</span>
+                    <span class="text-[11px] text-slate-400 block mt-0.5">Schede tecniche produttori e certificati ecologici per massimo punteggio tabellare.</span>
                   </div>
                 </label>
                 <button type="button" onclick="window.openBustaBCamModal()" class="mt-2.5 w-full px-3 py-1.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 text-xs font-semibold border border-emerald-500/30 flex items-center justify-center gap-1.5 transition cursor-pointer" title="Verifica certificazioni ambientali possedute per la fornitura">
@@ -1537,14 +1634,16 @@ function renderCurrentStepContent(tender) {
                 <span>File Busta Tecnica (.p7m)</span>
                 ${renderHelpBtn('busta_b_files')}
               </span>
-              <span class="text-[10px] text-slate-500 font-mono">Zero elementi di prezzo</span>
+              <span class="text-[10px] text-rose-400 font-mono">Zero elementi di prezzo</span>
             </div>
+
+            <p class="text-[11px] text-slate-400 leading-relaxed">Nessun prezzo o percentuale economica deve apparire in questi allegati:</p>
 
             <div class="space-y-2.5">
               ${(s3.busta_b_files || []).map((file, idx) => `
-                <div class="p-3 rounded-2xl bg-slate-950 border border-slate-800 flex items-center justify-between gap-2">
+                <div class="p-3 rounded-2xl bg-slate-950 border border-slate-800 flex items-center justify-between gap-2 shadow-inner">
                   <span class="font-mono text-purple-300 text-[11px] truncate select-all">${file}</span>
-                  <button type="button" onclick="navigator.clipboard.writeText('${file}'); showNotification('Nome file copiato!');" class="px-2.5 py-1 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-mono text-[10px] shrink-0">Copia Nome</button>
+                  <button type="button" onclick="navigator.clipboard.writeText('${file}'); showNotification('Nome file copiato!');" class="px-2.5 py-1 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-mono text-[10px] shrink-0 border border-slate-700">Copia Nome</button>
                 </div>
               `).join('')}
             </div>
@@ -1559,12 +1658,15 @@ function renderCurrentStepContent(tender) {
           
           <div class="bg-slate-900/90 p-5 sm:p-6 rounded-3xl border border-slate-800 space-y-4 shadow-xl">
             <div class="border-b border-slate-800 pb-2.5 flex items-center justify-between">
-              <span class="font-mono font-bold text-emerald-400 uppercase text-xs">Calcolo Offerta Economica (Busta C)</span>
+              <span class="font-mono font-bold text-emerald-400 uppercase text-xs flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                <span>Calcolo Offerta Economica (Busta C)</span>
+              </span>
               <span class="text-[10px] text-slate-500 font-mono">D.Lgs. 36/2023 art. 108</span>
             </div>
 
             <div class="grid grid-cols-2 gap-3.5">
-              <div class="bg-slate-950 p-3.5 rounded-2xl border border-slate-800">
+              <div class="bg-slate-950 p-3.5 rounded-2xl border border-slate-800 shadow-inner">
                 <label class="flex items-center text-slate-300 font-semibold mb-1">
                   <span>Base d'Asta (€):</span>
                   ${renderHelpBtn('busta_c_base')}
@@ -1572,7 +1674,7 @@ function renderCurrentStepContent(tender) {
                 <input type="text" readonly value="${formatEUR(s3.busta_c_base_amount || tender.amount)}" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-slate-300 font-mono text-xs">
               </div>
 
-              <div class="bg-slate-950 p-3.5 rounded-2xl border border-slate-800">
+              <div class="bg-slate-950 p-3.5 rounded-2xl border border-slate-800 shadow-inner">
                 <label class="flex items-center text-slate-300 font-semibold mb-1">
                   <span>Ribasso Offerto (%):</span>
                   ${renderHelpBtn('busta_c_discount')}
@@ -1582,14 +1684,14 @@ function renderCurrentStepContent(tender) {
             </div>
 
             <!-- Prezzo Netto Ricalcolato & Marginalita' -->
-            <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-2">
+            <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-2 shadow-inner">
               <label class="flex items-center text-slate-300 font-semibold">
                 <span>Prezzo Complessivo Netto Offerto:</span>
                 ${renderHelpBtn('busta_c_price')}
               </label>
               <div class="flex gap-1.5">
                 <input id="w_offered_price" type="text" readonly value="${formatEUR(s3.busta_c_offered_price)}" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-emerald-400 font-mono font-black text-sm">
-                <button type="button" onclick="navigator.clipboard.writeText('${s3.busta_c_offered_price ? s3.busta_c_offered_price.toFixed(2) : '0'}'); showNotification('Cifra netta copiata!');" class="px-3 py-1 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-mono text-xs shrink-0 font-semibold">Copia Cifra</button>
+                <button type="button" onclick="navigator.clipboard.writeText('${s3.busta_c_offered_price ? s3.busta_c_offered_price.toFixed(2) : '0'}'); showNotification('Cifra netta copiata!');" class="px-3 py-1 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-mono text-xs shrink-0 font-semibold border border-slate-700">Copia Cifra</button>
               </div>
 
               <!-- Indicatore Margine Residuo -->
@@ -1616,7 +1718,7 @@ function renderCurrentStepContent(tender) {
             </div>
 
             <!-- Manodopera & Oneri Sicurezza ex art. 108 c. 9 -->
-            <div id="boxManodoperaSicurezza" class="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-3 ${s3.fornitura_senza_posa ? 'opacity-40 pointer-events-none' : ''}">
+            <div id="boxManodoperaSicurezza" class="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-3 shadow-inner ${s3.fornitura_senza_posa ? 'opacity-40 pointer-events-none' : ''}">
               <div class="flex items-center justify-between border-b border-slate-800/80 pb-2">
                 <strong class="text-slate-200 font-mono text-xs">Scorporo Costi ex art. 108 c. 9 D.Lgs. 36/2023</strong>
                 <span class="text-[10px] text-rose-400 font-mono">Obbligatorio a pena di esclusione</span>
@@ -1674,9 +1776,9 @@ function renderCurrentStepContent(tender) {
             
             <div class="space-y-2.5">
               ${(s3.busta_c_files || []).map((file, idx) => `
-                <div class="p-3 rounded-2xl bg-slate-950 border border-slate-800 flex items-center justify-between gap-2">
+                <div class="p-3 rounded-2xl bg-slate-950 border border-slate-800 flex items-center justify-between gap-2 shadow-inner">
                   <span class="font-mono text-emerald-300 text-[11px] truncate select-all">${file}</span>
-                  <button type="button" onclick="navigator.clipboard.writeText('${file}'); showNotification('Nome file copiato!');" class="px-2.5 py-1 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-mono text-[10px] shrink-0">Copia Nome</button>
+                  <button type="button" onclick="navigator.clipboard.writeText('${file}'); showNotification('Nome file copiato!');" class="px-2.5 py-1 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-mono text-[10px] shrink-0 border border-slate-700">Copia Nome</button>
                 </div>
               `).join('')}
             </div>
@@ -1700,37 +1802,37 @@ function renderCurrentStepContent(tender) {
 
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 pt-1 text-xs">
           <!-- 1. Istanza e Dichiarazione Integrativa Word/Doc -->
-          <button type="button" onclick="window.downloadFase3Istanza('docx')" class="p-3 rounded-2xl bg-slate-950 border border-slate-800 hover:border-cyan-500/50 text-left transition group cursor-pointer">
+          <button type="button" onclick="window.downloadFase3Istanza('docx')" class="p-3 rounded-2xl bg-slate-950 border border-slate-800 hover:border-cyan-500/50 text-left transition group cursor-pointer shadow-sm">
             <div class="flex items-center justify-between text-xs mb-1">
               <span class="font-bold text-slate-200 group-hover:text-cyan-300">📄 Domanda Partecipazione</span>
-              <span class="font-mono text-[10px] text-cyan-400 font-bold">.DOCX / .DOC</span>
+              <span class="font-mono text-[10px] text-cyan-400 font-bold bg-cyan-950/60 px-1.5 py-0.5 rounded border border-cyan-800/60">.DOCX</span>
             </div>
             <p class="text-[11px] text-slate-400 leading-tight">Dichiarazione integrativa omnicomprensiva Buste A-B-C pronta per firma digitale .p7m.</p>
           </button>
 
           <!-- 2. Fascicolo Buste Markdown -->
-          <button type="button" onclick="window.downloadFase3FascicoloMd()" class="p-3 rounded-2xl bg-slate-950 border border-slate-800 hover:border-cyan-500/50 text-left transition group cursor-pointer">
+          <button type="button" onclick="window.downloadFase3FascicoloMd()" class="p-3 rounded-2xl bg-slate-950 border border-slate-800 hover:border-cyan-500/50 text-left transition group cursor-pointer shadow-sm">
             <div class="flex items-center justify-between text-xs mb-1">
               <span class="font-bold text-slate-200 group-hover:text-cyan-300">📝 Fascicolo Buste</span>
-              <span class="font-mono text-[10px] text-cyan-400 font-bold">.MD</span>
+              <span class="font-mono text-[10px] text-cyan-400 font-bold bg-cyan-950/60 px-1.5 py-0.5 rounded border border-cyan-800/60">.MD</span>
             </div>
             <p class="text-[11px] text-slate-400 leading-tight">Checklist tecnica e riepilogo documenti e file .p7m da caricare a portale MePA.</p>
           </button>
 
           <!-- 3. Computo Offerta Economica Excel CSV -->
-          <button type="button" onclick="window.downloadFase3ComputoCsv()" class="p-3 rounded-2xl bg-slate-950 border border-slate-800 hover:border-emerald-500/50 text-left transition group cursor-pointer">
+          <button type="button" onclick="window.downloadFase3ComputoCsv()" class="p-3 rounded-2xl bg-slate-950 border border-slate-800 hover:border-emerald-500/50 text-left transition group cursor-pointer shadow-sm">
             <div class="flex items-center justify-between text-xs mb-1">
               <span class="font-bold text-slate-200 group-hover:text-emerald-300">📊 Computo Economico</span>
-              <span class="font-mono text-[10px] text-emerald-400 font-bold">.CSV (EXCEL)</span>
+              <span class="font-mono text-[10px] text-emerald-400 font-bold bg-emerald-950/60 px-1.5 py-0.5 rounded border border-emerald-800/60">.CSV</span>
             </div>
             <p class="text-[11px] text-slate-400 leading-tight">Tabella offerta con scorporo analitico manodopera art. 108 c.9 e sicurezza per Excel.</p>
           </button>
 
           <!-- 4. Scheda Buste JSON -->
-          <button type="button" onclick="window.downloadFase3Json()" class="p-3 rounded-2xl bg-slate-950 border border-slate-800 hover:border-purple-500/50 text-left transition group cursor-pointer">
+          <button type="button" onclick="window.downloadFase3Json()" class="p-3 rounded-2xl bg-slate-950 border border-slate-800 hover:border-purple-500/50 text-left transition group cursor-pointer shadow-sm">
             <div class="flex items-center justify-between text-xs mb-1">
               <span class="font-bold text-slate-200 group-hover:text-purple-300">💾 Payload Buste</span>
-              <span class="font-mono text-[10px] text-purple-400 font-bold">.JSON</span>
+              <span class="font-mono text-[10px] text-purple-400 font-bold bg-purple-950/60 px-1.5 py-0.5 rounded border border-purple-800/60">.JSON</span>
             </div>
             <p class="text-[11px] text-slate-400 leading-tight">Dataset completo per caricamento automatico o handoff con agente Browser-Use.</p>
           </button>
@@ -1744,12 +1846,16 @@ function renderCurrentStepContent(tender) {
   // -------------------------------------------------------------
   if (currentWizardStep === 4) {
     const s4 = d.step4_data || {};
+    const outcomeVal = s4.outcome || "In Valutazione";
+    const isVinta = outcomeVal === "Vinta";
+    const isPersa = outcomeVal === "Persa";
+
     return `
       <!-- BANNER GUIDA DELLA FASE 4 -->
-      <div class="bg-gradient-to-br from-emerald-950/50 via-slate-900 to-slate-950 border border-emerald-500/40 rounded-3xl p-5 sm:p-6 shadow-xl space-y-3">
+      <div class="bg-gradient-to-br from-emerald-950/60 via-slate-900 to-slate-950 border border-emerald-500/40 rounded-3xl p-5 sm:p-6 shadow-xl space-y-3">
         <div class="flex items-center justify-between border-b border-emerald-500/20 pb-3">
           <div class="flex items-center gap-2.5">
-            <span class="w-7 h-7 rounded-lg bg-emerald-500 text-slate-950 font-black text-xs flex items-center justify-center">4</span>
+            <span class="w-7 h-7 rounded-lg bg-emerald-500 text-slate-950 font-black text-xs flex items-center justify-center shadow-md shadow-emerald-500/30">4</span>
             <div>
               <h3 class="text-sm sm:text-base font-bold text-white flex items-center gap-2">
                 <span>🎯 Cosa devi fare in questa Fase 4: Esito, Aggiudicazione &amp; Svincolo Polizze</span>
@@ -1757,7 +1863,7 @@ function renderCurrentStepContent(tender) {
               <span class="text-[11px] text-emerald-300 font-mono">Post-Gara &bull; Gestione Graduatoria &amp; Richiesta Liberatoria Fideiussione</span>
             </div>
           </div>
-          <button onclick="window.showWizardHelpModal('fase4_svincolo')" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-emerald-300 text-xs font-mono inline-flex items-center gap-1.5 border border-slate-700 shadow-sm">
+          <button onclick="window.showWizardHelpModal('fase4_svincolo')" class="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-emerald-300 text-xs font-mono inline-flex items-center gap-1.5 border border-slate-700 shadow-sm transition">
             <span>Guida Svincolo ?</span>
           </button>
         </div>
@@ -1774,28 +1880,58 @@ function renderCurrentStepContent(tender) {
         </div>
       </div>
 
-      <!-- FORM SEZIONI FASE 4 -->
+      <!-- WORKSPACE FASE 4 -->
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 text-xs">
         
         <div class="bg-slate-900/90 p-5 sm:p-6 rounded-3xl border border-slate-800 space-y-4 shadow-xl">
           <div class="border-b border-slate-800 pb-2.5 flex items-center justify-between">
-            <span class="font-mono font-bold text-emerald-400 uppercase text-xs">Registrazione Esito Gara</span>
+            <span class="font-mono font-bold text-emerald-400 uppercase text-xs flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+              <span>Registrazione Esito Gara</span>
+            </span>
             <span class="text-[10px] text-slate-500 font-mono">Verbale di Gara</span>
           </div>
 
-          <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-2">
+          <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-2 shadow-inner">
             <label class="flex items-center text-slate-300 font-semibold">
-              <span>Stato Aggiudicazione:</span>
+              <span>Stato Aggiudicazione Ufficiale:</span>
               ${renderHelpBtn('fase4_outcome')}
             </label>
-            <select id="w_outcome" onchange="window.handleOutcomeChange(this.value)" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2.5 text-slate-100 font-bold text-xs focus:border-cyan-400">
-              <option value="Vinta" ${s4.outcome === 'Vinta' ? 'selected' : ''}>🏆 Gara Vinta (Aggiudicazione Definitiva)</option>
-              <option value="Persa" ${s4.outcome === 'Persa' ? 'selected' : ''}>❌ Gara Non Aggiudicata (Secondi classificati o scartati)</option>
-              <option value="In Valutazione" ${s4.outcome === 'In Valutazione' ? 'selected' : ''}>⏳ In Valutazione (In attesa di seduta pubblica o anomalia)</option>
+            <select id="w_outcome" onchange="window.handleOutcomeChange(this.value)" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2.5 text-slate-100 font-bold text-xs focus:border-cyan-400 cursor-pointer">
+              <option value="Vinta" ${outcomeVal === 'Vinta' ? 'selected' : ''}>🏆 Gara Vinta (Aggiudicazione Definitiva)</option>
+              <option value="Persa" ${outcomeVal === 'Persa' ? 'selected' : ''}>❌ Gara Non Aggiudicata (Secondi classificati o scartati)</option>
+              <option value="In Valutazione" ${outcomeVal === 'In Valutazione' ? 'selected' : ''}>⏳ In Valutazione (In attesa di seduta pubblica o anomalia)</option>
             </select>
           </div>
 
-          <div class="p-3.5 rounded-2xl bg-slate-950 border border-slate-800">
+          <!-- BANNER ADATTIVO VINTA VS PERSA -->
+          ${isVinta ? `
+            <div class="p-4 rounded-2xl bg-emerald-950/40 border border-emerald-500/50 text-emerald-200 space-y-2 shadow-inner">
+              <div class="flex items-center gap-2 font-bold text-emerald-300">
+                <span class="text-base">🏆</span>
+                <span>Gara Aggiudicata: Adempimenti Contrattuali (art. 117)</span>
+              </div>
+              <p class="text-[11px] leading-relaxed">
+                Predisporre la <strong>Garanzia Definitiva</strong> pari al 10% dell'importo contrattuale netto aggiudicato prima della stipula su MePA. La cauzione provvisoria viene automaticamente svincolata con la consegna della definitiva.
+              </p>
+            </div>
+          ` : (isPersa ? `
+            <div class="p-4 rounded-2xl bg-amber-950/40 border border-amber-500/50 text-amber-200 space-y-2 shadow-inner">
+              <div class="flex items-center gap-2 font-bold text-amber-300">
+                <span class="text-base">ℹ️</span>
+                <span>Procedura Conclusa: Recupero Castelletto Fideiussorio</span>
+              </div>
+              <p class="text-[11px] leading-relaxed">
+                Richiedi immediatamente al RUP lo svincolo formale della cauzione provvisoria ex art. 106 c.11 per liberare il massimale presso il tuo broker o compagnia assicurativa.
+              </p>
+            </div>
+          ` : `
+            <div class="p-3.5 rounded-2xl bg-slate-950 border border-slate-800 text-slate-400 text-[11px]">
+              Gara in fase di esame delle offerte o verifica delle anomalie da parte del seggio di gara.
+            </div>
+          `)}
+
+          <div class="p-3.5 rounded-2xl bg-slate-950 border border-slate-800 shadow-inner">
             <label class="flex items-start gap-2.5 cursor-pointer">
               <input id="w_fideiussione_svincolata" type="checkbox" ${s4.fideiussione_svincolata ? 'checked' : ''} class="rounded bg-slate-900 border-slate-700 text-cyan-500 mt-0.5">
               <div class="flex-1">
@@ -1806,7 +1942,7 @@ function renderCurrentStepContent(tender) {
                 <span class="text-[11px] text-slate-400 block mt-0.5">Richiesta formale inviata al RUP per liberare il massimale fideiussorio.</span>
               </div>
             </label>
-            <button type="button" onclick="window.openSvincoloFacsimileModal()" class="mt-2 w-full px-3 py-1.5 rounded-xl bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-300 text-xs font-semibold border border-cyan-500/30 flex items-center justify-center gap-1.5 transition cursor-pointer" title="Genera testo PEC formale per richiesta liberatoria fideiussione al RUP">
+            <button type="button" onclick="window.openSvincoloFacsimileModal()" class="mt-2.5 w-full px-3 py-1.5 rounded-xl bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-300 text-xs font-semibold border border-cyan-500/30 flex items-center justify-center gap-1.5 transition cursor-pointer" title="Genera testo PEC formale per richiesta liberatoria fideiussione al RUP">
               <span>🏛️ Genera Istanza Svincolo Provvisoria (PEC)</span>
             </button>
           </div>
@@ -1814,16 +1950,20 @@ function renderCurrentStepContent(tender) {
 
         <div class="bg-slate-900/90 p-5 sm:p-6 rounded-3xl border border-slate-800 space-y-4 shadow-xl">
           <div class="border-b border-slate-800 pb-2.5 flex items-center justify-between">
-            <span class="font-mono font-bold text-slate-300 uppercase text-xs">Verbale &amp; Dati Concorrenti</span>
+            <span class="font-mono font-bold text-slate-300 uppercase text-xs flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-slate-400"></span>
+              <span>Verbale &amp; Dati Concorrenti</span>
+            </span>
             <span class="text-[10px] text-slate-500 font-mono">Archivio Storico</span>
           </div>
 
-          <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-2">
+          <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-2 shadow-inner">
             <label class="flex items-center text-slate-300 font-semibold">
               <span>Note sull'Aggiudicazione &amp; Classifica:</span>
               ${renderHelpBtn('fase4_notes')}
             </label>
-            <textarea id="w_step4_notes" rows="4" placeholder="Nome dell'aggiudicatario, ribasso vincente, distacco punteggi..." class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-slate-200 text-xs focus:border-cyan-400 leading-relaxed">${escapeHtml(s4.note_conclusive || '')}</textarea>
+            <textarea id="w_step4_notes" rows="6" placeholder="Nome dell'aggiudicatario, ribasso vincente, graduatoria, distacco punteggi..." class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-slate-200 text-xs focus:border-cyan-400 leading-relaxed">${escapeHtml(s4.note_conclusive || '')}</textarea>
+            <span class="text-[10px] text-slate-500 font-mono">Questi dati concorrono all'analisi delle serie storiche e ai benchmark futuri</span>
           </div>
         </div>
 
